@@ -16,8 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
-  CATKIN_DEPENDS controller_interface  cnr_logger
-  DEPENDS 
+  CATKIN_DEPENDS controller_interface cnr_logger
 )
 
 include_directories(
@@ -26,7 +25,7 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME} src/cnr_controller_interface/cnr_controller_interface.cpp )
-
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
 # Mark cpp header files for installation
 install(DIRECTORY include/${PROJECT_NAME}/
