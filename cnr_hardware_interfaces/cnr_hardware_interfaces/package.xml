@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>cnr_hardware_interfaces</name>
+  <version>0.0.0</version>
+  <description>The cnr_hardware_interfaces package</description>
+
+  <maintainer email="wsl@todo.todo">wsl</maintainer>
+
+  <license>BSD</license>
+
+  <!-- <url type="website">http://wiki.ros.org/cnr_hardware_interfaces</url> -->
+  <!-- <author email="jane.doe@example.com">Jane Doe</author> -->
+  <exec_depend> cnr_hardware_interface </exec_depend> 
+  <exec_depend> cnr_topic_hardware_interface </exec_depend>
+  <exec_depend> cnr_hardware_nodelet_interface </exec_depend>
+  <exec_depend> cnr_topics_hardware_interface </exec_depend>
+  <buildtool_depend>catkin</buildtool_depend>
+
+
+  <!-- The export tag contains other, unspecified, tags -->
+  <export>
+    <!-- Other tools can request additional information be placed here -->
+    <metapackage/>
+  </export>
+</package>

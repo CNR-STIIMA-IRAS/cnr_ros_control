@@ -1,0 +1,13 @@
+*~
+*.kdev4
+kdev4/
+*.user
+*.user*
+*.creator
+*.creator*
+*.files*
+*.includes*
+*.qtcreator*
+*.kate-swp
+*.vscode
+.vscode/

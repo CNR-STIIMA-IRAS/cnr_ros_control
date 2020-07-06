@@ -1,0 +1,11 @@
+<launch>
+  <arg name="debug" default="false" />
+  <arg unless="$(arg debug)" name="launch_prefix" value="" />
+  <arg     if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args" />
+
+  <node pkg="nodelet" type="nodelet" name="configuration_nodelet_manager"  args="manager" output="screen">
+    <param name="num_worker_threads" value="40" />
+  </node>
+</launch>
+
+

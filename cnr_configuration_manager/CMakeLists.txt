@@ -1,0 +1,94 @@
+cmake_minimum_required(VERSION 3.1)
+
+project(cnr_configuration_manager)
+
+
+set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+# Debug only, collects stats on how callbacks are doled out to worker threads
+#add_definitions(-DNODELET_QUEUE_DEBUG)
+
+
+find_package(catkin REQUIRED COMPONENTS
+  cmake_modules
+  pluginlib
+  rosconsole
+  configuration_msgs
+  control_msgs
+  cnr_controller_manager_interface
+  cnr_controller_interface
+  cnr_hardware_nodelet_interface
+  cnr_hardware_interface
+  controller_manager
+  hardware_interface
+  actionlib
+  nodelet
+  roscpp
+  configuration_msgs
+  subscription_notifier
+  cnr_logger
+)
+
+## Find Boost (only headers)
+find_package(Boost REQUIRED)
+
+## Find UUID libraries
+find_package(UUID REQUIRED)
+
+
+
+catkin_package(
+  INCLUDE_DIRS include
+  LIBRARIES cnr_configuration_manager
+  CATKIN_DEPENDS cnr_controller_manager_interface  cnr_controller_interface cnr_hardware_nodelet_interface cnr_hardware_interface cnr_logger configuration_msgs actionlib control_msgs controller_manager hardware_interface nodelet configuration_msgs subscription_notifier pluginlib rosconsole roscpp
+  DEPENDS Boost
+)
+
+include_directories(
+ include
+ ${catkin_INCLUDE_DIRS}
+ ${BOOST_INCLUDE_DIRS}
+ ${UUID_INCLUDE_DIRS}
+ )
+
+
+#add_library(hardware_nodelet_loader
+#   src/${PROJECT_NAME}/hardware_nodelet_interface.cpp
+#   src/${PROJECT_NAME}/cnr_robot_hw_nodelet.cpp
+#)
+
+
+
+add_executable(${PROJECT_NAME}_node src/configuration_manager_node.cpp src/${PROJECT_NAME}/signal_handler.cpp)
+add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(${PROJECT_NAME}_node
+  ${catkin_LIBRARIES}
+)
+
+#add_executable(configuration_nodelet_manager src/configuration_nodelet_manager.cpp)
+#add_dependencies(configuration_nodelet_manager ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#target_link_libraries(configuration_nodelet_manager ${UUID_LIBRARIES} ${catkin_LIBRARIES} ${BOOST_LIBRARIES} )
+
+
+
+
+add_executable(configuration_user_interface src/ui_configuration_manager.cpp)
+add_dependencies(configuration_user_interface ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(configuration_user_interface
+  ${catkin_LIBRARIES}
+)
+
+add_executable(joy_teach_pendant src/joy_teach_pendant.cpp)
+add_dependencies(joy_teach_pendant ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(joy_teach_pendant
+  ${catkin_LIBRARIES}
+)
+
+add_executable(dispatcher src/dispatcher.cpp)
+add_dependencies(dispatcher ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(dispatcher
+  ${catkin_LIBRARIES}
+)

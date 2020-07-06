@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format2.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="2">
+  <name>cnr_configuration_manager</name>
+  <version>0.0.0</version>
+  <description>The cnr_configuration_manager package</description>
+  <maintainer email="iras@itia.cnr.it">ada</maintainer>
+  <license>TODO</license>
+
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend version_gte="0.3.2">cmake_modules</build_depend>
+
+  <depend>boost</depend>
+  <depend version_gte="1.10.0">pluginlib</depend>
+  <depend>rosconsole</depend>
+  <depend>roscpp</depend>
+  <depend>uuid</depend>
+  <depend>nodelet</depend>
+
+  <depend>actionlib</depend>
+  <depend>control_msgs</depend>
+  <depend>configuration_msgs</depend>
+  <depend>cnr_controller_manager_interface</depend>
+  <depend>cnr_controller_interface</depend>
+  <depend>cnr_hardware_interface</depend>
+  <depend>cnr_hardware_nodelet_interface</depend>
+  <depend>controller_manager</depend>
+  <depend>hardware_interface</depend>
+  <depend>subscription_notifier</depend>
+  <depend>cnr_logger</depend>
+
+  <!-- The export tag contains other, unspecified, tags -->
+  <export>
+    <nodelet plugin="${prefix}/plugin.xml" />
+  </export>
+
+
+</package>
