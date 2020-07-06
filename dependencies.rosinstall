@@ -1,0 +1,10 @@
+- git:
+    local-name: cnr_logger
+    uri: https://github.com/CNR-STIIMA-IRAS/cnr_logger
+- git:
+    local-name: realtime_utilities
+    uri:  https://github.com/CNR-STIIMA-IRAS/realtime_utilities
+- git:
+    local-name: name_sorting
+    uri:  https://github.com/CNR-STIIMA-IRAS/name_sorting
+
