@@ -10,7 +10,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 
 find_package(catkin REQUIRED COMPONENTS
-  controller_interface diagnostic_msgs cnr_logger
+  controller_interface diagnostic_msgs cnr_logger rosconsole
 )
 
 catkin_package(
