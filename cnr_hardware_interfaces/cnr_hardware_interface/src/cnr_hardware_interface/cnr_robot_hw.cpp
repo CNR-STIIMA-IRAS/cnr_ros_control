@@ -1,3 +1,4 @@
+#include <ros/ros.h>
 #include <cnr_logger/cnr_logger.h>
 #include <cnr_hardware_interface/cnr_robot_hw.h>
 

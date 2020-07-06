@@ -1,3 +1,4 @@
+#include <ros/ros.h>
 #include <nodelet/nodelet.h>
 #include <nodelet/NodeletLoad.h>
 #include <nodelet/NodeletUnload.h>
