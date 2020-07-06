@@ -23,7 +23,7 @@
   <build_export_depend>diagnostic_msgs</build_export_depend>
   <exec_depend>diagnostic_msgs</exec_depend>
 
-  <build_depend>rosconsoles</build_depend>
+  <build_depend>rosconsole</build_depend>
   <build_export_depend>rosconsole</build_export_depend>
   <exec_depend>rosconsole</exec_depend>
   
