@@ -2,13 +2,12 @@
 
 The repository contains the implementation of an exstension of the [ros_control](http://wiki.ros.org/ros_control "ros_control") framework developed by the Institute of Intelligent Industrial Technologies and Systems for Advanced Manufacturing (STIIMA), of the National Research Council of Italy (CNR-ITIA).
 
-
-## Design 
+## Design
 
 The extension is based on one package and two meta-packages.
 
-* The `cnr_hardware_interfaces` [(readme)](cnr_hardware_interface/README.md)
-* The `cnr_controller_interfaces` [(readme)](cnr_hardware_interface/README.md)
+* The `cnr_hardware_interfaces` [(readme)](cnr_hardware_interfaces/README.md)
+* The `cnr_controller_interfaces` [(readme)](cnr_hardware_interfaces/README.md)
 * The `cnr_controller_configuration` [(readme()](cnr_controller_configuration/README.md)
 
 The core of the extension is having encapsulated the lifecyle of the `RobotHw` [(link)](https://github.com/ros-controls/ros_control/wiki/hardware_interface) in a [`nodelet`](http://wiki.ros.org/nodelet).
@@ -17,12 +16,11 @@ This design choice allows the implementation of cascade controller architectures
 
 A special `RobotHw` called `TopicRobotHw` is provided by the `cnr_hardware_interfaces` package, and it has been designed in order to encaspulate generic topics in the standard `hardware_interface` [(link)](https://github.com/ros-controls/ros_control/wiki/hardware_interface), and therefore to allows the controller accessing the topic content using the handle-based mechanism.  
 
-
 ## cnr_hardware_interfaces [(readme)](cnr_hardware_interfaces/README.md)
 
-The metapackage is built up on five packages: 
+The metapackage is built up on five packages:
 
-1. `cnr_hardware_interface` [(readme)](cnr_hardware_interfaces/cnr_hardware_interface/README.md): this package is **fully compatible with [ros_control](http://wiki.ros.org/ros_control "ros_control")**. It implements a derived class  `cnr_hardware_interface::RobotHW` that inherits the standard `RobotHW`. The class implements some useful functionalities: 
+1. `cnr_hardware_interface` [(readme)](cnr_hardware_interface/cnr_hardware_interface/README.md): this package is **fully compatible with [ros_control](http://wiki.ros.org/ros_control "ros_control")**. It implements a derived class  `cnr_hardware_interface::RobotHW` that inherits the standard `RobotHW`. The class implements some useful functionalities: 
     - It Integrates a [diagnostics](http://wiki.ros.org/diagnostics) module, to track the times of the read/write and update functions 
     - It provides a tracking of the state of the class, and it reacts in case of error
     - It provides a `prepareSwitch` function to ease the inherited classes
