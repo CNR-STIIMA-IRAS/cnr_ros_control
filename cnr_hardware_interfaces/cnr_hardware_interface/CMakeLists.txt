@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   cnr_controller_manager_interface
   cnr_controller_interface
   controller_manager
+  diagnostic_updater
   diagnostic_msgs
   hardware_interface
   nodelet
