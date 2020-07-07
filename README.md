@@ -2,10 +2,10 @@
 
 ## CI ##
 
-| service   | Kinetic                                                                                                                                        | Melodic                                                                                                                                                      | Master                                                                                                                                                       |
-|:----------|:----------------------------------------------------------------------------------------------------------------------------------------------:|:------------------------------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------:|
-| Travis    | [![Build Status](https://travis-ci.org/CNR-STIIMA-IRAS/cnr_ros_control.svg?branch=kinetic-devel)](https://travis-ci.org/CNR-STIIMA-IRAS/cnr_ros_control) | [![Build Status](https://travis-ci.org/CNR-STIIMA-IRAS/cnr_ros_control.svg?branch=melodic-devel)](https://travis-ci.org/CNR-STIIMA-IRAS/cnr_ros_control)    | [![Build Status](https://travis-ci.org/CNR-STIIMA-IRAS/cnr_ros_control.svg?branch=master)](https://travis-ci.org/CNR-STIIMA-IRAS/cnr_ros_control)             |
-| Codecov   | [![codecov](https://codecov.io/gh/CNR-STIIMA-IRAS/cnr_ros_control/branch/master/graph/badge.svg)](https://codecov.io/gh/CNR-STIIMA-IRAS/cnr_ros_control) | [![codecov](https://codecov.io/gh/CNR-STIIMA-IRAS/cnr_ros_control/branch/master/graph/badge.svg)](https://codecov.io/gh/CNR-STIIMA-IRAS/cnr_ros_control) | [![codecov](https://codecov.io/gh/CNR-STIIMA-IRAS/cnr_ros_control/branch/master/graph/badge.svg)](https://codecov.io/gh/CNR-STIIMA-IRAS/cnr_ros_control) |
+| service   | Master                                                                                                                                                                              |
+|:----------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
+| Travis    | [![Build Status](https://travis-ci.org/CNR-STIIMA-IRAS/cnr_ros_control.svg?branch=master)](https://travis-ci.org/CNR-STIIMA-IRAS/cnr_ros_control)             |
+| Codecov   | [![codecov](https://codecov.io/gh/CNR-STIIMA-IRAS/cnr_ros_control/branch/master/graph/badge.svg)](https://codecov.io/gh/CNR-STIIMA-IRAS/cnr_ros_control)             |
 
 ## Design ##
 
