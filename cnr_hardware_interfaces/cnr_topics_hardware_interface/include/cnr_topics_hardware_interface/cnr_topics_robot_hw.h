@@ -535,7 +535,7 @@ m_p_jh_active(false),
 m_v_jh_active(false),
 m_e_jh_active(false),
 {
-  m_nAx  = m_resource_names .size();
+  m_nAx  = m_resource_names.size();
   m_pos.resize(m_nAx, 0);
   m_vel.resize(m_nAx, 0);
   m_eff.resize(m_nAx, 0);
