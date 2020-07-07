@@ -190,7 +190,6 @@ bool TopicsRobotHW::doInit()
         break;
         case cnr_hardware_interface::POSE_RESOURCE:
         {
-
           std::shared_ptr< cnr_hardware_interface::PoseResource > pr(new cnr_hardware_interface::PoseResource());
           std::string frame_id;
           if (!m_robothw_nh.getParam(it->second + "/frame_id", frame_id))

@@ -383,8 +383,8 @@ struct PoseClaimedResource : ClaimedResource< geometry_msgs::PoseStamped >
   hardware_interface::PoseStateInterface      m_p_sh; //interface for reading joint state
   hardware_interface::PoseCommandInterface    m_p_h;
 
-  bool                                        m_p_sh_active;
   bool                                        m_p_h_active;
+  bool                                        m_p_sh_active;
 
   geometry_msgs::Pose                         m_state;  // subscribed
   geometry_msgs::Pose                         m_output; // published
