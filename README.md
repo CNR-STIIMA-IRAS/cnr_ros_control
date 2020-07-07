@@ -1,3 +1,5 @@
+![EC-H2020](.media/logo-stiima-stiima-cnr-HI.png)
+
 # Extension of ROS-CONTROL #
 
 ## developed by CNR-STIIMA (www.stiima.cnr.it) ##
