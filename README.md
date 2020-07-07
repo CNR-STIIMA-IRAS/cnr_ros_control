@@ -1,6 +1,6 @@
 # Extension of ROS-CONTROL #
 
-<a href="www.stiima.cnr.it"><img src=".media/logo-stiima-stiima-cnr-HI.png" width="400"></a>
+<a href="http://www.stiima.cnr.it"><img src=".media/logo-stiima-stiima-cnr-HI.png" width="400"></a>
 
 ## Continuous Integration ##
 
