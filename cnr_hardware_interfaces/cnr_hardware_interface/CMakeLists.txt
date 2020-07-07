@@ -28,7 +28,7 @@ roslint_cpp()
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES cnr_hardware_interface
- CATKIN_DEPENDS cnr_controller_manager_interface cnr_controller_interface controller_manager diagnostic_msgs hardware_interface  nodelet roscpp sensor_msgs configuration_msgs realtime_utilities pluginlib
+ CATKIN_DEPENDS cnr_controller_manager_interface cnr_controller_interface controller_manager diagnostic_updater diagnostic_msgs hardware_interface  nodelet roscpp sensor_msgs configuration_msgs realtime_utilities pluginlib
  DEPENDS 
 )
 
