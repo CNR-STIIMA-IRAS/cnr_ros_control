@@ -1,4 +1,4 @@
-![EC-H2020](.media/logo-stiima-stiima-cnr-HI.png)
+![EC-H2020](.media/logo-stiima-stiima-cnr-HI.png =400x)
 
 # Extension of ROS-CONTROL #
 
