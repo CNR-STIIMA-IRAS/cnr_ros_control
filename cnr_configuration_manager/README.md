@@ -103,9 +103,9 @@ rosservice call /configuration_manager/list_configurations "{}"
 ## Developer Contact
 
 **Authors:**   
-- Manuel Beschi (manuel.beschi@itia.cnr.it)  
-- Nicola Pedrocchi (nicola.pedrocchi@itia.cnr.it)  
-- Stefano Ghidini (stefano.ghidini@itia.cnr.it)  
+- Manuel Beschi (<mailto:manuel.beschi@stiima.cnr.it>)  
+- Nicola Pedrocchi (<mailto:nicola.pedrocchi@stiima.cnr.it>)  
+- Stefano Ghidini (<mailto:stefano.ghidini@stiima.cnr.it>)  
  
 _Software License Agreement (BSD License)_    
 _Copyright (c) 2017, National Research Council of Italy, Institute of Industrial Technologies and Automation_    

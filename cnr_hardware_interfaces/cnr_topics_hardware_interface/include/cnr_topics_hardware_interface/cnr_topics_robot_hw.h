@@ -532,7 +532,7 @@ JointClaimedResource::JointClaimedResource(const cnr_hardware_interface::JointRe
                                            ros::NodeHandle& robothw_nh, 
                                            std::map<std::string, bool> & topics_received)
 : cnr_hardware_interface::ClaimedResource<sensor_msgs::JointState> (jr, jr.m_joint_names, robothw_nh, topics_received), 
-m_nAx(0)
+m_nAx(0),
 m_p_jh_active(false),
 m_v_jh_active(false),
 m_e_jh_active(false),
@@ -735,8 +735,12 @@ bool JointClaimedResource::prepareSwitch(const std::list< hardware_interface::Co
  *
  */
 inline
-AnalogClaimedResource::AnalogClaimedResource(const cnr_hardware_interface::AnalogResource& ar, ros::NodeHandle& robothw_nh, std::map< std::string, bool> & topics_received)
-  : cnr_hardware_interface::ClaimedResource<std_msgs::Float64MultiArray> (ar, ar.m_channel_names, robothw_nh, topics_received)
+AnalogClaimedResource::AnalogClaimedResource(const cnr_hardware_interface::AnalogResource& ar, 
+                                             ros::NodeHandle& robothw_nh, 
+                                             std::map< std::string, bool> & topics_received)
+: cnr_hardware_interface::ClaimedResource<std_msgs::Float64MultiArray>(ar, ar.m_channel_names, robothw_nh, topics_received)
+, m_a_h_active( false )
+, m_a_sh_active( false )
 {
   m_state.resize(ar.m_num_channels, 0);
   m_output.resize(ar.m_num_channels, 0);
@@ -834,7 +838,8 @@ void AnalogClaimedResource::write(const ros::Time& time, const ros::Duration& pe
 }
 
 inline
-bool AnalogClaimedResource::prepareSwitch(const std::list< hardware_interface::ControllerInfo >& start_list, const std::list< hardware_interface::ControllerInfo >& stop_list)
+bool AnalogClaimedResource::prepareSwitch(const std::list< hardware_interface::ControllerInfo >& start_list,
+                                          const std::list< hardware_interface::ControllerInfo >& stop_list)
 {
   bool a_h_active = m_a_h_active;
   bool a_sh_active = m_a_sh_active;
@@ -863,11 +868,13 @@ bool AnalogClaimedResource::prepareSwitch(const std::list< hardware_interface::C
  *
  */
 inline
-ForceTorqueClaimedResource::ForceTorqueClaimedResource(const cnr_hardware_interface::ForceTorqueResource& wr, ros::NodeHandle& robothw_nh, std::map< std::string, bool> & topics_received)
-  : cnr_hardware_interface::ClaimedResource< geometry_msgs::WrenchStamped > (wr,
-{
-  wr.m_sensor_name
-}, robothw_nh, topics_received)
+ForceTorqueClaimedResource::ForceTorqueClaimedResource(const cnr_hardware_interface::ForceTorqueResource& wr,
+                                                       ros::NodeHandle& robothw_nh,
+                                                       std::map< std::string, bool> & topics_received)
+: cnr_hardware_interface::ClaimedResource<geometry_msgs::WrenchStamped> (wr, {wr.m_sensor_name}, robothw_nh, topics_received)
+, m_w_h_active(false)
+, m_w_sh_active(false)
+
 {
   assert(wr.m_subscribed_topics.size() == 1);
   size_t l = __LINE__;
@@ -1006,10 +1013,9 @@ bool ForceTorqueClaimedResource::prepareSwitch(const std::list< hardware_interfa
  */
 inline
 PoseClaimedResource::PoseClaimedResource(const cnr_hardware_interface::PoseResource& pr, ros::NodeHandle& robothw_nh, std::map< std::string, bool> & topics_received)
-  : cnr_hardware_interface::ClaimedResource< geometry_msgs::PoseStamped > (pr,
-{
-  pr.m_frame_id
-}, robothw_nh, topics_received)
+: cnr_hardware_interface::ClaimedResource< geometry_msgs::PoseStamped > (pr, {pr.m_frame_id}, robothw_nh, topics_received)
+, m_p_h_active(false)
+, m_p_sh_active(false)
 {
   size_t l = __LINE__;
   try

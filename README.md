@@ -73,9 +73,9 @@ A collaction of Matlab scripts useful for the...
 
 **Authors:**
 
-* Manuel Beschi (manuel.beschi@stiima.cnr.it)  
-* Nicola Pedrocchi (nicola.pedrocchi@stiima.cnr.it)  
-* Stefano Ghidini (stefano.ghidini@stiima.cnr.it)  
+* Manuel Beschi (<mailto:<mailto:manuel.beschi@stiima.cnr.it>>)  
+* Nicola Pedrocchi (<mailto:<mailto:nicola.pedrocchi@stiima.cnr.it>>)  
+* Stefano Ghidini (<mailto:<mailto:stefano.ghidini@stiima.cnr.it>>)  
 
 _Software License Agreement (BSD License)_
 _Copyright (c) 2020, National Research Council of Italy, Institute of Intelligent Industrial Technologies and Systems for Advanced Manufacturing_
