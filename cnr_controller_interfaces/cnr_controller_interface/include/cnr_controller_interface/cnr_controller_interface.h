@@ -140,11 +140,11 @@ public:
     return true;
   }
   bool init(T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh) final;
-  void starting(const ros::Time& time)                                           final;
-  void update(const ros::Time& time, const ros::Duration& period)              final;
-  void stopping(const ros::Time& time)                                           final;
-  void waiting(const ros::Time& time)                                           final;
-  void aborting(const ros::Time& time)                                           final;
+  void starting(const ros::Time& time)                                       final;
+  void update(const ros::Time& time, const ros::Duration& period)            final;
+  void stopping(const ros::Time& time)                                       final;
+  void waiting(const ros::Time& time)                                        final;
+  void aborting(const ros::Time& time)                                       final;
 
   virtual bool doInit()
   {
@@ -191,6 +191,23 @@ public:
 
   void add_diagnostic_message(const std::string& msg, const std::string& name, const std::string& level, const bool verbose);
 
+  bool shutdown(const std::string& state_final)
+  {
+    m_controller_nh_callback_queue.callAvailable(ros::WallDuration(5.0));
+    for (auto & t : m_sub)
+    {
+      t.second.sub.shutdown();
+    }
+    for (auto & t : m_pub)
+    {
+      t.second.pub.shutdown();
+    }
+    if(state_final=="")
+    {
+      return dump_state();
+    }
+    return dump_state(state_final);
+  }
 protected:
 
   virtual bool enterInit();

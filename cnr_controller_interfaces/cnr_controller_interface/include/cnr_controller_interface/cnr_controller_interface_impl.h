@@ -48,17 +48,7 @@ template< class T >
 Controller< T >::~Controller()
 {
   CNR_TRACE_START(*m_logger);
-  m_controller_nh_callback_queue.callAvailable(ros::WallDuration(5.0));
-  for (auto & t : m_sub)
-  {
-    t.second.sub.shutdown();
-  }
-  for (auto & t : m_pub)
-  {
-    t.second.pub.shutdown();
-  }
-
-  dump_state("UNLOADED");
+  shutdown("UNLOADED");
   CNR_TRACE(*m_logger, "[ DONE]");
   m_logger.reset();
 }
@@ -275,17 +265,12 @@ bool Controller< T >::enterStopping()
 template< class T >
 bool Controller< T >::exitStopping()
 {
-  m_controller_nh_callback_queue.callAvailable(ros::WallDuration(5.0));
-  for (auto & t : m_sub)
+  bool ret = shutdown("STOPPED");
+  if (ret)
   {
-    t.second.sub.shutdown();
+    m_controller_nh_callback_queue.disable();
   }
-  for (auto & t : m_pub)
-  {
-    t.second.pub.shutdown();
-  }
-  m_controller_nh_callback_queue.disable();
-  return dump_state("STOPPED");
+  return ret;
 }
 
 template< class T >
@@ -297,16 +282,7 @@ bool Controller< T >::enterWaiting()
 template< class T >
 bool Controller< T >::exitWaiting()
 {
-  m_controller_nh_callback_queue.callAvailable(ros::WallDuration(5.0));
-  for (auto & t : m_sub)
-  {
-    t.second.sub.shutdown();
-  }
-  for (auto & t : m_pub)
-  {
-    t.second.pub.shutdown();
-  }
-  return dump_state();
+  return shutdown("");
 }
 
 template< class T >
@@ -318,17 +294,12 @@ bool Controller< T >::enterAborting()
 template< class T >
 bool Controller< T >::exitAborting()
 {
-  m_controller_nh_callback_queue.callAvailable(ros::WallDuration(5.0));
-  for (auto & t : m_sub)
+  bool ret = shutdown( "" );
+  if(ret)
   {
-    t.second.sub.shutdown();
+    m_controller_nh_callback_queue.disable();
   }
-  for (auto & t : m_pub)
-  {
-    t.second.pub.shutdown();
-  }
-  m_controller_nh_callback_queue.disable();
-  return dump_state();
+  return ret;
 }
 
 template< class T >
