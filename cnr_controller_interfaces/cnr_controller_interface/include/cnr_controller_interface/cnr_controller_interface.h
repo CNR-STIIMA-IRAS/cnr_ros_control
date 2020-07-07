@@ -101,8 +101,8 @@
   *  POSSIBILITY OF SUCH DAMAGE.
   */
 
-#ifndef __CNR__CONTROLLER_INTERFACE__
-#define __CNR__CONTROLLER_INTERFACE__
+#ifndef CNR_CONTROLLER_INTERFACE_CNR_CONTROLLER_INTERFACE_H
+#define CNR_CONTROLLER_INTERFACE_CNR_CONTROLLER_INTERFACE_H
 
 #include <ctime>
 #include <chrono>
@@ -292,9 +292,9 @@ private:
 
 };
 
-} // cnr_controller_interface
+}  // namespace cnr_controller_interface
 
 
 #include <cnr_controller_interface/cnr_controller_interface_impl.h>
 
-#endif
+#endif  // CNR_CONTROLLER_INTERFACE_CNR_CONTROLLER_INTERFACE_H
