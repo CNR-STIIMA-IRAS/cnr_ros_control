@@ -26,8 +26,6 @@ hardware_interface_name:
   joint_names:
   - "joint_1"
   - "joint_2"
-  allowed_controller_types:
-  - "controller_type1"  
   feedback_joint_state_topic: "/joint_states" # subscribing topic
   command_joint_state_topic: "/joint_command" # publishing topic
   sampling_period: 0.001

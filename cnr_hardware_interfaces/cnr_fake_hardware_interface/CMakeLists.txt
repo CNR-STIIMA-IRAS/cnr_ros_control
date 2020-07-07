@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   cnr_hardware_interface
   nodelet
   roscpp
+  roslint 
 )
 
 catkin_package(
@@ -33,3 +34,6 @@ add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EX
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
+
+roslint_cpp()
+set(ROSLINT_CPP_OPTS "--filter=-runtime/references,-runtime/int --line-length=150")
