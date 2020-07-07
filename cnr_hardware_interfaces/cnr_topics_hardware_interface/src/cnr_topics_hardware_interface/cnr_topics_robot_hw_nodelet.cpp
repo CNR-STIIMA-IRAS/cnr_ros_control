@@ -39,7 +39,7 @@ namespace cnr_hardware_nodelet_interface
       {
         std::map< cnr_hardware_interface::RESOURCE_ID, std::string >::const_iterator it = cnr_hardware_interface::RESOURCES().begin();
 
-        for( it = cnr_hardware_interface::RESOURCES().begin() ; it !=  cnr_hardware_interface::RESOURCES().end(); it++ )
+        for( it = cnr_hardware_interface::RESOURCES().begin() ; it !=  cnr_hardware_interface::RESOURCES().end(); ++it )
         {
           if( it->second == resource )
           {
