@@ -2,6 +2,7 @@
 #define __CNR_CONTROLLER_INFERFACE__IMPL__H__
 
 #include <ros/ros.h>
+#include <ros/console.h>
 #include <ros/time.h>
 #include <cnr_controller_interface/cnr_controller_interface.h>
 
