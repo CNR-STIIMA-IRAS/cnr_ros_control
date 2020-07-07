@@ -81,19 +81,19 @@ namespace cnr_hardware_interface
 
 void setParam(TopicRobotHW* hw, const std::string& ns)
 {
-  hw->m_robot_hw_nh.setParam("status/" + ns + "/feedback/name", hw->m_resource_names);
-  hw->m_robot_hw_nh.setParam("status/" + ns + "/feedback/position", hw->m_pos);
-  hw->m_robot_hw_nh.setParam("status/" + ns + "/feedback/velocity", hw->m_vel);
-  hw->m_robot_hw_nh.setParam("status/" + ns + "/feedback/effort", hw->m_eff);
-  hw->m_robot_hw_nh.setParam("status/" + ns + "/command/name", hw->m_resource_names);
-  hw->m_robot_hw_nh.setParam("status/" + ns + "/command/position", hw->m_cmd_pos);
-  hw->m_robot_hw_nh.setParam("status/" + ns + "/command/velocity", hw->m_cmd_vel);
-  hw->m_robot_hw_nh.setParam("status/" + ns + "/command/effort", hw->m_cmd_eff);
+  hw->m_robothw_nh.setParam("status/" + ns + "/feedback/name", hw->m_resource_names);
+  hw->m_robothw_nh.setParam("status/" + ns + "/feedback/position", hw->m_pos);
+  hw->m_robothw_nh.setParam("status/" + ns + "/feedback/velocity", hw->m_vel);
+  hw->m_robothw_nh.setParam("status/" + ns + "/feedback/effort", hw->m_eff);
+  hw->m_robothw_nh.setParam("status/" + ns + "/command/name", hw->m_resource_names);
+  hw->m_robothw_nh.setParam("status/" + ns + "/command/position", hw->m_cmd_pos);
+  hw->m_robothw_nh.setParam("status/" + ns + "/command/velocity", hw->m_cmd_vel);
+  hw->m_robothw_nh.setParam("status/" + ns + "/command/effort", hw->m_cmd_eff);
 }
 
 TopicRobotHW::TopicRobotHW()
 {
-  m_set_param = boost::bind(setParam, this, _1);
+  m_set_status_param = boost::bind(setParam, this, _1);
 }
 TopicRobotHW::~TopicRobotHW()
 {
@@ -110,16 +110,16 @@ bool TopicRobotHW::doInit()
   CNR_TRACE_START(*m_logger);
 
   CNR_TRACE_START(*m_logger);
-  if (!m_robot_hw_nh.getParam("joint_names", m_resource_names))
+  if (!m_robothw_nh.getParam("joint_names", m_resource_names))
   {
-    CNR_FATAL(*m_logger, m_robot_hw_nh.getNamespace() + "/joint_names' does not exist");
-    CNR_FATAL(*m_logger, "ERROR DURING STARTING HARDWARE INTERFACE '" << m_robot_hw_nh.getNamespace() << "'");
+    CNR_FATAL(*m_logger, m_robothw_nh.getNamespace() + "/joint_names' does not exist");
+    CNR_FATAL(*m_logger, "ERROR DURING STARTING HARDWARE INTERFACE '" << m_robothw_nh.getNamespace() << "'");
     CNR_RETURN_FALSE(*m_logger);
   }
   CNR_DEBUG(*m_logger, "Create the TopicRobotHW (joint names: " << m_resource_names.size() << ")");
 
   std::string read_js_topic;
-  if (!m_robot_hw_nh.getParam("feedback_joint_state_topic", read_js_topic))
+  if (!m_robothw_nh.getParam("feedback_joint_state_topic", read_js_topic))
   {
     add_diagnostic_message("ERROR", "feedback_joint_state_topic not defined", {{"Transition", "switching"}}, true);
     m_status = cnr_hardware_interface::ERROR;
@@ -127,7 +127,7 @@ bool TopicRobotHW::doInit()
   }
 
   std::string write_js_topic;
-  if (!m_robot_hw_nh.getParam("command_joint_state_topic", write_js_topic))
+  if (!m_robothw_nh.getParam("command_joint_state_topic", write_js_topic))
   {
     add_diagnostic_message("ERROR", "command_joint_state_topic not defined", {{"Transition", "switching"}}, true);
     m_status = cnr_hardware_interface::ERROR;
@@ -135,7 +135,7 @@ bool TopicRobotHW::doInit()
   }
 
   int tmp;
-  if (!m_robot_hw_nh.getParam("maximum_missing_cycles", tmp))
+  if (!m_robothw_nh.getParam("maximum_missing_cycles", tmp))
   {
     add_diagnostic_message("WARN", "maximum_missing_cycles not defined, set equal to 50", {{"Transition", "switching"}}, true);
     tmp = 50;
@@ -152,11 +152,11 @@ bool TopicRobotHW::doInit()
 
   m_topic_received = false;
 
-  m_js_sub = m_robot_hw_nh.subscribe<sensor_msgs::JointState>(read_js_topic, 1, &cnr_hardware_interface::TopicRobotHW::jointStateCallback, this);
-  m_js_pub = m_robot_hw_nh.advertise<sensor_msgs::JointState>(write_js_topic, 1);
+  m_js_sub = m_robothw_nh.subscribe<sensor_msgs::JointState>(read_js_topic, 1, &cnr_hardware_interface::TopicRobotHW::jointStateCallback, this);
+  m_js_pub = m_robothw_nh.advertise<sensor_msgs::JointState>(write_js_topic, 1);
 
   double timeout = 10;
-  if (!m_robot_hw_nh.getParam("feedback_joint_state_timeout", timeout))
+  if (!m_robothw_nh.getParam("feedback_joint_state_timeout", timeout))
   {
     add_diagnostic_message("WARN", "feedback_joint_state_timeout not defined, set equal to 10", {{"Transition", "switching"}}, true);
     timeout = 10;

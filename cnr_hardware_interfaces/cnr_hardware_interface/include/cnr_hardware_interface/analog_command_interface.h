@@ -66,8 +66,8 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef HARDWARE_INTERFACE_ANALOG_COMMAND_INTERFACE_H
-#define HARDWARE_INTERFACE_ANALOG_COMMAND_INTERFACE_H
+#ifndef CNR_HARDWARE_INTERFACE_ANALOG_COMMAND_INTERFACE_H
+#define CNR_HARDWARE_INTERFACE_ANALOG_COMMAND_INTERFACE_H
 
 #include <cnr_hardware_interface/analog_state_interface.h>
 
@@ -114,6 +114,6 @@ class AnalogCommandInterface : public HardwareResourceManager<AnalogHandle, Clai
 class PwmInterface : public AnalogCommandInterface {};
 
 
-}
+}  // namespace hardware_interface
 
-#endif
+#endif  // CNR_HARDWARE_INTERFACE_ANALOG_COMMAND_INTERFACE_H

@@ -80,21 +80,21 @@ namespace cnr_hardware_interface
 
 void setParam(FakeRobotHW* hw, const std::string& ns)
 {
-  hw->m_robot_hw_nh.setParam("status/" + ns + "/feedback/name", hw->m_resource_names);
-  hw->m_robot_hw_nh.setParam("status/" + ns + "/feedback/position", hw->m_pos);
-  hw->m_robot_hw_nh.setParam("status/" + ns + "/feedback/velocity", hw->m_vel);
-  hw->m_robot_hw_nh.setParam("status/" + ns + "/feedback/effort", hw->m_eff);
-  hw->m_robot_hw_nh.setParam("status/" + ns + "/command/name", hw->m_resource_names);
-  hw->m_robot_hw_nh.setParam("status/" + ns + "/command/position", hw->m_cmd_pos);
-  hw->m_robot_hw_nh.setParam("status/" + ns + "/command/velocity", hw->m_cmd_vel);
-  hw->m_robot_hw_nh.setParam("status/" + ns + "/command/effort", hw->m_cmd_eff);
+  hw->m_robothw_nh.setParam("status/" + ns + "/feedback/name", hw->m_resource_names);
+  hw->m_robothw_nh.setParam("status/" + ns + "/feedback/position", hw->m_pos);
+  hw->m_robothw_nh.setParam("status/" + ns + "/feedback/velocity", hw->m_vel);
+  hw->m_robothw_nh.setParam("status/" + ns + "/feedback/effort", hw->m_eff);
+  hw->m_robothw_nh.setParam("status/" + ns + "/command/name", hw->m_resource_names);
+  hw->m_robothw_nh.setParam("status/" + ns + "/command/position", hw->m_cmd_pos);
+  hw->m_robothw_nh.setParam("status/" + ns + "/command/velocity", hw->m_cmd_vel);
+  hw->m_robothw_nh.setParam("status/" + ns + "/command/effort", hw->m_cmd_eff);
 }
 
 FakeRobotHW::FakeRobotHW()
   : m_msg(nullptr)
 {
 
-  m_set_param = boost::bind(setParam, this, _1);
+  m_set_status_param = boost::bind(setParam, this, _1);
 
 }
 
@@ -120,9 +120,9 @@ bool FakeRobotHW::doInit()
 {
   CNR_TRACE_START(*m_logger);
 
-  if (!m_robot_hw_nh.getParam("joint_names", m_resource_names))
+  if (!m_robothw_nh.getParam("joint_names", m_resource_names))
   {
-    CNR_FATAL(*m_logger, m_robot_hw_nh.getNamespace() + "/joint_names' does not exist");
+    CNR_FATAL(*m_logger, m_robothw_nh.getNamespace() + "/joint_names' does not exist");
     CNR_RETURN_FALSE(*m_logger, "doInit FAILED");
   }
 
@@ -135,34 +135,34 @@ bool FakeRobotHW::doInit()
   std::fill(m_vel.begin(), m_vel.end(), 0.0);
   std::fill(m_eff.begin(), m_eff.end(), 0.0);
 
-  if (m_robot_hw_nh.hasParam("initial_position"))
+  if (m_robothw_nh.hasParam("initial_position"))
   {
-    m_robot_hw_nh.getParam("initial_position", m_pos);
+    m_robothw_nh.getParam("initial_position", m_pos);
     std::string ss;
     for (auto const & p : m_pos) ss += std::to_string(p) + ", ";
     CNR_DEBUG(*m_logger, "Initial Position: <" << ss << ">");
   }
-  else if (m_robot_hw_nh.hasParam("initial_position_from"))
+  else if (m_robothw_nh.hasParam("initial_position_from"))
   {
     std::string position_from;
-    m_robot_hw_nh.getParam("position_from", position_from);
+    m_robothw_nh.getParam("position_from", position_from);
 
     CNR_DEBUG(*m_logger, "Position From: '" << position_from << "'");
     std::string position_ns = "/" + position_from + "/status/shutdown_configuration/position";
-    if (!m_robot_hw_nh.hasParam(position_ns))
+    if (!m_robothw_nh.hasParam(position_ns))
     {
       CNR_ERROR(*m_logger, "The param '" + position_ns + "' does not exit. pos superimposed to zero");
     }
-    m_robot_hw_nh.getParam(position_ns, m_pos);
+    m_robothw_nh.getParam(position_ns, m_pos);
     std::string ss;
     for (auto const & p : m_pos) ss += std::to_string(p) + ", ";
     CNR_DEBUG(*m_logger, "Initial Position: <" << ss << ">");
   }
 
   double timeout = 10;
-  if (!m_robot_hw_nh.getParam("feedback_joint_state_timeout", timeout))
+  if (!m_robothw_nh.getParam("feedback_joint_state_timeout", timeout))
   {
-    CNR_WARN(*m_logger, "The param '" << m_robot_hw_nh.getNamespace() << "/feedback_joint_state_timeout' not defined, set equal to 10");
+    CNR_WARN(*m_logger, "The param '" << m_robothw_nh.getNamespace() << "/feedback_joint_state_timeout' not defined, set equal to 10");
     timeout = 10;
   }
 
@@ -333,10 +333,10 @@ bool FakeRobotHW::doCheckForConflict(const std::list< hardware_interface::Contro
             {
               ROS_ERROR("Joint %s is already used by another controller", name.c_str());
               diagnostic_msgs::DiagnosticStatus diag;
-              diag.name = m_robot_hw_nh.getNamespace();
-              diag.hardware_id = m_robot_hw_nh.getNamespace();
+              diag.name = m_robothw_nh.getNamespace();
+              diag.hardware_id = m_robothw_nh.getNamespace();
               diag.level = diagnostic_msgs::DiagnosticStatus::ERROR;
-              diag.message = "Hardware interface " + m_robot_hw_nh.getNamespace() + " run time: Joint " + name + " is already used by another controller";
+              diag.message = "Hardware interface " + m_robothw_nh.getNamespace() + " run time: Joint " + name + " is already used by another controller";
 
               std::lock_guard<std::mutex> lock(m_mutex);
               m_diagnostic.status.push_back(diag);

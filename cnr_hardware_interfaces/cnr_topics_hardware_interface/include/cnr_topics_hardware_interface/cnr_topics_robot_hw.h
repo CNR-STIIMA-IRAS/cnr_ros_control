@@ -32,40 +32,6 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
-/*
- *  Software License Agreement (New BSD License)
- *
- *  Copyright 2020 National Council of Research of Italy (CNR)
- *
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *   * Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above
- *     copyright notice, this list of conditions and the following
- *     disclaimer in the documentation and/or other materials provided
- *     with the distribution.
- *   * Neither the name of the copyright holder(s) nor the names of its
- *     contributors may be used to endorse or promote products derived
- *     from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- *  POSSIBILITY OF SUCH DAMAGE.
- */
 #ifndef __ITIA_TOPIC_HARDWARE_INTERFACE__
 #define __ITIA_TOPIC_HARDWARE_INTERFACE__
 
@@ -80,13 +46,13 @@
 #include <cnr_hardware_interface/force_torque_command_interface.h>
 
 #include <cnr_hardware_interface/analog_state_interface.h>
-#include <cnr_hardware_interface/analog_comand_interface.h>
+#include <cnr_hardware_interface/analog_command_interface.h>
 
 #include <cnr_hardware_interface/pose_state_interface.h>
-#include <cnr_hardware_interface/pose_comand_interface.h>
+#include <cnr_hardware_interface/pose_command_interface.h>
 
 #include <cnr_hardware_interface/twist_state_interface.h>
-#include <cnr_hardware_interface/twist_comand_interface.h>
+#include <cnr_hardware_interface/twist_command_interface.h>
 
 
 #include <sensor_msgs/JointState.h>
@@ -167,7 +133,7 @@ struct ClaimedResource
                   , const std::vector<std::string>            resource_names
                   , ros::NodeHandle&                          robot_hw_nh
                   , std::map< std::string, bool> &            topics_received)
-    : m_robot_hw_nh(robot_hw_nh)
+    : m_robothw_nh(robot_hw_nh)
     , m_console(robot_hw_nh.getNamespace())
     , m_topics_received(topics_received)
     , m_resource_names(resource_names)
@@ -308,7 +274,7 @@ struct ClaimedResource
     return false;
   }
 
-  ros::NodeHandle&                                     m_robot_hw_nh;
+  ros::NodeHandle&                                     m_robothw_nh;
   const std::string                                    m_console;
   std::map< std::string, bool>&                        m_topics_received;
   std::vector< std::shared_ptr<ros::Subscriber> >      m_sub;
@@ -663,14 +629,14 @@ void JointClaimedResource::shutdown()
 inline
 void JointClaimedResource::setParam(const std::string& ns)
 {
-  m_robot_hw_nh.setParam("status/joint_resource/" + ns + "/feedback/name", m_resource_names);
-  m_robot_hw_nh.setParam("status/joint_resource/" + ns + "/feedback/position", m_pos);
-  m_robot_hw_nh.setParam("status/joint_resource/" + ns + "/feedback/velocity", m_vel);
-  m_robot_hw_nh.setParam("status/joint_resource/" + ns + "/feedback/effort", m_eff);
-  m_robot_hw_nh.setParam("status/joint_resource/" + ns + "/command/name", m_resource_names);
-  m_robot_hw_nh.setParam("status/joint_resource/" + ns + "/command/position", m_cmd_pos);
-  m_robot_hw_nh.setParam("status/joint_resource/" + ns + "/command/velocity", m_cmd_vel);
-  m_robot_hw_nh.setParam("status/joint_resource/" + ns + "/command/effort", m_cmd_eff);
+  m_robothw_nh.setParam("status/joint_resource/" + ns + "/feedback/name", m_resource_names);
+  m_robothw_nh.setParam("status/joint_resource/" + ns + "/feedback/position", m_pos);
+  m_robothw_nh.setParam("status/joint_resource/" + ns + "/feedback/velocity", m_vel);
+  m_robothw_nh.setParam("status/joint_resource/" + ns + "/feedback/effort", m_eff);
+  m_robothw_nh.setParam("status/joint_resource/" + ns + "/command/name", m_resource_names);
+  m_robothw_nh.setParam("status/joint_resource/" + ns + "/command/position", m_cmd_pos);
+  m_robothw_nh.setParam("status/joint_resource/" + ns + "/command/velocity", m_cmd_vel);
+  m_robothw_nh.setParam("status/joint_resource/" + ns + "/command/effort", m_cmd_eff);
 }
 
 inline
@@ -844,10 +810,10 @@ void AnalogClaimedResource::shutdown()
 inline
 void AnalogClaimedResource::setParam(const std::string& ns)
 {
-  m_robot_hw_nh.setParam("status/analog_resource/" + ns + "/feedback/name", m_resource_names);
-  m_robot_hw_nh.setParam("status/analog_resource/" + ns + "/feedback/values", m_state);
-  m_robot_hw_nh.setParam("status/analog_resource/" + ns + "/command/name", m_resource_names);
-  m_robot_hw_nh.setParam("status/analog_resource/" + ns + "/command/values", m_output);
+  m_robothw_nh.setParam("status/analog_resource/" + ns + "/feedback/name", m_resource_names);
+  m_robothw_nh.setParam("status/analog_resource/" + ns + "/feedback/values", m_state);
+  m_robothw_nh.setParam("status/analog_resource/" + ns + "/command/name", m_resource_names);
+  m_robothw_nh.setParam("status/analog_resource/" + ns + "/command/values", m_output);
 }
 
 inline
@@ -978,10 +944,10 @@ void ForceTorqueClaimedResource::shutdown()
 inline
 void ForceTorqueClaimedResource::setParam(const std::string& ns)
 {
-  m_robot_hw_nh.setParam("status/analog_resource/" + ns + "/feedback/name", m_resource_names);
-  m_robot_hw_nh.setParam("status/analog_resource/" + ns + "/feedback/values", m_state);
-  m_robot_hw_nh.setParam("status/analog_resource/" + ns + "/command/name", m_resource_names);
-  m_robot_hw_nh.setParam("status/analog_resource/" + ns + "/command/values", m_output);
+  m_robothw_nh.setParam("status/analog_resource/" + ns + "/feedback/name", m_resource_names);
+  m_robothw_nh.setParam("status/analog_resource/" + ns + "/feedback/values", m_state);
+  m_robothw_nh.setParam("status/analog_resource/" + ns + "/command/name", m_resource_names);
+  m_robothw_nh.setParam("status/analog_resource/" + ns + "/command/values", m_output);
 }
 
 inline
@@ -1111,10 +1077,10 @@ void PoseClaimedResource::shutdown()
 inline
 void PoseClaimedResource::setParam(const std::string& ns)
 {
-  m_robot_hw_nh.setParam("status/pose_resource/" + ns + "/feedback/name", m_resource_names);
-//m_robot_hw_nh.setParam("status/pose_resource/"+ns+"/feedback/values"  , m_state          );
-  m_robot_hw_nh.setParam("status/pose_resource/" + ns + "/command/name", m_resource_names);
-//m_robot_hw_nh.setParam("status/pose_resource/"+ns+"/command/values"   , m_output         );
+  m_robothw_nh.setParam("status/pose_resource/" + ns + "/feedback/name", m_resource_names);
+//m_robothw_nh.setParam("status/pose_resource/"+ns+"/feedback/values"  , m_state          );
+  m_robothw_nh.setParam("status/pose_resource/" + ns + "/command/name", m_resource_names);
+//m_robothw_nh.setParam("status/pose_resource/"+ns+"/command/values"   , m_output         );
 }
 
 
@@ -1265,10 +1231,10 @@ void TwistClaimedResource::shutdown()
 inline
 void TwistClaimedResource::setParam(const std::string& ns)
 {
-  m_robot_hw_nh.setParam("status/twist_resource/" + ns + "/feedback/name", m_resource_names);
-//m_robot_hw_nh.setParam("status/twist_resource/"+ns+"/feedback/values"  , m_state          );
-  m_robot_hw_nh.setParam("status/twist_resource/" + ns + "/command/name", m_resource_names);
-//m_robot_hw_nh.setParam("status/twist_resource/"+ns+"/command/values"   , m_output         );
+  m_robothw_nh.setParam("status/twist_resource/" + ns + "/feedback/name", m_resource_names);
+//m_robothw_nh.setParam("status/twist_resource/"+ns+"/feedback/values"  , m_state          );
+  m_robothw_nh.setParam("status/twist_resource/" + ns + "/command/name", m_resource_names);
+//m_robothw_nh.setParam("status/twist_resource/"+ns+"/command/values"   , m_output         );
 }
 
 

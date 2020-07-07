@@ -81,12 +81,12 @@ PLUGINLIB_EXPORT_CLASS(cnr_hardware_interface::TopicsRobotHW, cnr_hardware_inter
 
 
 #define CNR_FATAL_RETURN( MSG )\
-      CNR_RETURN_FALSE(*m_logger, "ERROR DURING STARTING HARDWARE INTERFACE ' "+m_robot_hw_nh.getNamespace()+" ':" + std::string( MSG ) );\
+      CNR_RETURN_FALSE(*m_logger, "ERROR DURING STARTING HARDWARE INTERFACE ' "+m_robothw_nh.getNamespace()+" ':" + std::string( MSG ) );\
       std::cout.flush();\
 
 
 #define WARNING( MSG )\
-      CNR_DEBUG(*m_logger, "[ "+ m_robot_hw_nh.getNamespace() + " ] RobotHW Nodelet: " + std::string( MSG ) );
+      CNR_DEBUG(*m_logger, "[ "+ m_robothw_nh.getNamespace() + " ] RobotHW Nodelet: " + std::string( MSG ) );
 
 static size_t line = __LINE__;
 #define __LL__ line = __LINE__;
@@ -117,7 +117,7 @@ std::vector<std::string> getResourceNames(const std::map< cnr_hardware_interface
 
 TopicsRobotHW::TopicsRobotHW()
 {
-  m_set_param = boost::bind(setParam, this, _1);
+  m_set_status_param = boost::bind(setParam, this, _1);
 }
 
 bool TopicsRobotHW::doInit()
@@ -127,7 +127,7 @@ bool TopicsRobotHW::doInit()
         CNR_INFO(*m_logger, "[ " << m_robot_name << " ] Create '" <<  #RES << "' Claimed Resource");\
         std::shared_ptr< cnr_hardware_interface::Resource > p  = m_resources.at( RES );\
         std::shared_ptr< cnr_hardware_interface::RES_TYPE > pp = std::static_pointer_cast<cnr_hardware_interface::RES_TYPE>( p );\
-        res_var.reset( new CLAIMED_RES_TYPE( *pp, m_robot_hw_nh, this->m_topics_subscribed ) );\
+        res_var.reset( new CLAIMED_RES_TYPE( *pp, m_robothw_nh, this->m_topics_subscribed ) );\
         CNR_INFO(*m_logger, "[ " << m_robot_name << " ] Initializing '" << #RES << "' Claimed Resource");\
         init##CLAIMED_RES_TYPE( );\
         CNR_INFO(*m_logger, "[ " << m_robot_name << " ] Claimed Resource '"<< #RES << "' succesfully initialized");\
@@ -138,15 +138,15 @@ bool TopicsRobotHW::doInit()
   try
   {
     std::vector<std::string> resources;
-    if (!m_robot_hw_nh.getParam("resources", resources))
+    if (!m_robothw_nh.getParam("resources", resources))
     {
-      CNR_FATAL_RETURN(m_robot_hw_nh.getNamespace() + "/resources' does not exist");
+      CNR_FATAL_RETURN(m_robothw_nh.getNamespace() + "/resources' does not exist");
     }
 
     int maximum_missing_cycles;
-    if (!m_robot_hw_nh.getParam("maximum_missing_cycles", maximum_missing_cycles))
+    if (!m_robothw_nh.getParam("maximum_missing_cycles", maximum_missing_cycles))
     {
-      CNR_FATAL_RETURN(m_robot_hw_nh.getNamespace() + "/maximum_missing_cycles does not exist");
+      CNR_FATAL_RETURN(m_robothw_nh.getNamespace() + "/maximum_missing_cycles does not exist");
     }
 
     for (auto const & resource : resources)
@@ -164,7 +164,7 @@ bool TopicsRobotHW::doInit()
       if (it != cnr_hardware_interface::RESOURCES().end())
       {
         CNR_DEBUG(*m_logger, "Reading param for resource: '" << it->second);
-        std::string ns = m_robot_hw_nh.getNamespace() + "/" + it->second;
+        std::string ns = m_robothw_nh.getNamespace() + "/" + it->second;
 
         std::shared_ptr< cnr_hardware_interface::Resource > claimed_resource;
         switch (it->first)
@@ -175,7 +175,7 @@ bool TopicsRobotHW::doInit()
           std::shared_ptr< cnr_hardware_interface::JointResource > jr(new cnr_hardware_interface::JointResource());
           std::vector<std::string>  joint_names;
           ROS_DEBUG_STREAM(ns << " Joint Names:");
-          if (!m_robot_hw_nh.getParam(it->second + "/joint_names", joint_names))
+          if (!m_robothw_nh.getParam(it->second + "/joint_names", joint_names))
           {
             CNR_FATAL_RETURN(ns + "/joint_names does not exist");
           }
@@ -196,12 +196,12 @@ bool TopicsRobotHW::doInit()
         {
           std::shared_ptr< cnr_hardware_interface::ForceTorqueResource > wr(new cnr_hardware_interface::ForceTorqueResource());
           std::string sensor_name;
-          if (!m_robot_hw_nh.getParam(it->second + "/sensor_name", sensor_name))
+          if (!m_robothw_nh.getParam(it->second + "/sensor_name", sensor_name))
           {
             CNR_FATAL_RETURN(ns + "/sensor_name does not exist");
           }
           std::string frame_id;
-          if (!m_robot_hw_nh.getParam(it->second + "/frame_id", frame_id))
+          if (!m_robothw_nh.getParam(it->second + "/frame_id", frame_id))
           {
             CNR_FATAL_RETURN(ns + "/frame_id does not exist");
           }
@@ -215,7 +215,7 @@ bool TopicsRobotHW::doInit()
         {
           std::shared_ptr< cnr_hardware_interface::AnalogResource > ar(new cnr_hardware_interface::AnalogResource());
           std::vector< std::string > channel_names;
-          if (!m_robot_hw_nh.getParam(it->second + "/channel_names", channel_names))
+          if (!m_robothw_nh.getParam(it->second + "/channel_names", channel_names))
           {
             CNR_FATAL_RETURN(ns + "/channel_names does not exist");
           }
@@ -229,7 +229,7 @@ bool TopicsRobotHW::doInit()
 
           std::shared_ptr< cnr_hardware_interface::PoseResource > pr(new cnr_hardware_interface::PoseResource());
           std::string frame_id;
-          if (!m_robot_hw_nh.getParam(it->second + "/frame_id", frame_id))
+          if (!m_robothw_nh.getParam(it->second + "/frame_id", frame_id))
           {
             CNR_FATAL_RETURN(ns + "/frame_id does not exist");
           }
@@ -241,7 +241,7 @@ bool TopicsRobotHW::doInit()
         {
           std::shared_ptr< cnr_hardware_interface::TwistResource > pr(new cnr_hardware_interface::TwistResource());
           std::vector< std::string > frames_id;
-          if (!m_robot_hw_nh.getParam(it->second + "/frames_id", frames_id))
+          if (!m_robothw_nh.getParam(it->second + "/frames_id", frames_id))
           {
             CNR_FATAL_RETURN(ns + "/frames_id does not exist");
           }
@@ -262,10 +262,10 @@ bool TopicsRobotHW::doInit()
         //********************************
         std::vector< std::string > published_topics;
 
-        if (!m_robot_hw_nh.getParam(it->second + "/published_topics", published_topics))
+        if (!m_robothw_nh.getParam(it->second + "/published_topics", published_topics))
         {
           std::string published_topic = "N/A";
-          if (!m_robot_hw_nh.getParam(it->second + "/published_topic", published_topic))
+          if (!m_robothw_nh.getParam(it->second + "/published_topic", published_topic))
           {
             WARNING(it->second + "/published_topic does not exist");
             WARNING(it->second + "/published_topics does not exist");
@@ -281,10 +281,10 @@ bool TopicsRobotHW::doInit()
         //
         //********************************
         std::vector< std::string > subscribed_topics;
-        if (!m_robot_hw_nh.getParam(ns + "/subscribed_topics", subscribed_topics))
+        if (!m_robothw_nh.getParam(ns + "/subscribed_topics", subscribed_topics))
         {
           std::string subscribed_topic = "N/A";
-          if (!m_robot_hw_nh.getParam(ns + "/subscribed_topic", subscribed_topic))
+          if (!m_robothw_nh.getParam(ns + "/subscribed_topic", subscribed_topic))
           {
             subscribed_topics.clear();
           }
@@ -310,7 +310,7 @@ bool TopicsRobotHW::doInit()
         claimed_resource->m_subscribed_topics =  subscribed_topics;
 
         double feedback_joint_state_timeout_s = 1e-3;
-        if (!m_robot_hw_nh.getParam(it->second + "/feedback_joint_state_timeout_s", published_topics))
+        if (!m_robothw_nh.getParam(it->second + "/feedback_joint_state_timeout_s", published_topics))
         {
           WARNING(it->second + +"/feedback_joint_state_timeout_s does not exist");
         }
@@ -321,7 +321,7 @@ bool TopicsRobotHW::doInit()
       }
       else
       {
-        CNR_WARN(*m_logger,  m_robot_hw_nh.getNamespace() << "/resources/" <<  resource << "'  is not supported");
+        CNR_WARN(*m_logger,  m_robothw_nh.getNamespace() << "/resources/" <<  resource << "'  is not supported");
         CNR_WARN(*m_logger,  " Available Resource: " << cnr_hardware_interface::AVAILABLE_RESOURCES());
       }
 
