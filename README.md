@@ -1,6 +1,6 @@
 # Extension of ROS-CONTROL #
 
-<img src=".media/logo-stiima-stiima-cnr-HI.png =400x" alt="Kitten" title="A cute kitten" width="150" height="100" />
+<img src=".media/logo-stiima-stiima-cnr-HI.png" alt="Logo" title="CNR-STIIMA" width="600" />
 
 ## developed by CNR-STIIMA (www.stiima.cnr.it) ##
 
