@@ -145,10 +145,7 @@ bool NodeletManagerInterface::purge_hw( const ros::Duration& watchdog )
 bool NodeletManagerInterface::load_hw( const std::string& hw_to_load_name, const ros::Duration& watchdog, bool double_check)
 {
 
-
-  size_t i=0;
   nodelet::NodeletLoad load_srv;
-  i++;
   if (!get_hw_param(getNamespace(), hw_to_load_name,load_srv.request))
   {
     error_ = "Loading RobotHW [" + hw_to_load_name + "] error_: " + error_;
