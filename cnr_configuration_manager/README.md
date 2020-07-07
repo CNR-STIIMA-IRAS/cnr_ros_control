@@ -3,7 +3,7 @@
 The repository contains the implementation of a controller manager which load and unload multiple hardware interfaces and the related controllers.
 The package is developed by the Institute of Industrial Technologies and Automation, of the National Research Council of Italy (CNR-ITIA).
 
-# Functionalities and code organization
+## Design
 
 The package **cnr_configuration_manager** is made the following classes:
 
@@ -18,14 +18,14 @@ The following node are provided:
 - "/configuration_manager/start_configuration" [type: configuration_msgs::StartConfiguration] start configuration:
 
 > _start_configuration_: name of the desired configuration
-> _strictness_ level can be equal to:
+> _strictness_: level can be equal to:
 > > 1: same behavior of ros control package (if the client ask to run an already running controller it will be leaved running)
 > > 2: same behavior of ros control package
 > > 0: like 1 but if the client ask to run an already running controller it will be restarted as well as its hardware interface
 
 - "/configuration_manager/stop_configuration" [type: configuration_msgs::StopConfiguration] stop running configuration:
 
-> _strictness_ level can be equal to:
+> _strictness_: level can be equal to:
 > > 1: same behavior of ros control package (if the client ask to run an already running controller it will be leaved running)
 > > 2: same behavior of ros control package
 > > 0: like 1 but if the client ask to run an already running controller it will be restarted as well as its hardware interface
