@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   cnr_controller_manager_interface
   cnr_hardware_interface
   cnr_logger
+  realtime_utilities
   nodelet
   roscpp
 )
@@ -20,7 +21,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES cnr_hardware_nodelet_interface
-  CATKIN_DEPENDS cnr_controller_interface cnr_controller_manager_interface cnr_hardware_interface cnr_logger nodelet roscpp
+  CATKIN_DEPENDS cnr_controller_interface cnr_controller_manager_interface cnr_hardware_interface cnr_logger realtime_utilities nodelet roscpp
 #  DEPENDS system_lib
 )
 
