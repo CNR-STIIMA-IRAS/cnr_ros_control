@@ -94,11 +94,11 @@ _All rights reserved._
 
 <table style="width:100%">
   <tr>
-    <th>![EC-H2020](.media/flag_yellow_low-300x201.jpg) </th>
+    <th><img src=".media/flag_yellow_low-300x201.jpg" alt="Logo" title="CNR-STIIMA" width="200" /></th>
     <th>This project has received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No. 820807. This website reflects only the author’s view and the European Commission is not responsible for any use that may be made of the information it contains.</th>
   </tr>
   <tr>
-    <td><img src=".media/logo-stiima-stiima-Sharework_logo_color_250px-HI.png" alt="Logo" title="CNR-STIIMA" width="200" /></td>
+    <td><img src=".media/Sharework_logo_color_250px-HI.png" alt="Logo" title="ShareWork" width="200" /></td>
     <td>[ShareWork webpage](https://sharework-project.eu/)</td>
   </tr>
   <tr>
