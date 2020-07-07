@@ -3,10 +3,9 @@
 The repository contains the implementation of a controller manager which load and unload multiple hardware interfaces and the related controllers.
 The package is developed by the Institute of Industrial Technologies and Automation, of the National Research Council of Italy (CNR-ITIA).
 
-
 # Functionalities and code organization
 
-The package **cnr_configuration_manager** is made the following classes: 
+The package **cnr_configuration_manager** is made the following classes:
 
 1) **ConfigurationManager** in the core of the package. It provides the services (defined in **configuration_msgs** package) to start/stop/list configuration.
 
@@ -16,31 +15,22 @@ The following node are provided:
 
 ## Service availables
 
-
 - "/configuration_manager/start_configuration" [type: configuration_msgs::StartConfiguration] start configuration:
 
-> _start_configuration_: name of the desired configuration. 
-
+> _start_configuration_: name of the desired configuration
 > _strictness_ level can be equal to:
-
 > > 1: same behavior of ros control package (if the client ask to run an already running controller it will be leaved running)
-
 > > 2: same behavior of ros control package
-
 > > 0: like 1 but if the client ask to run an already running controller it will be restarted as well as its hardware interface
 
 - "/configuration_manager/stop_configuration" [type: configuration_msgs::StopConfiguration] stop running configuration:
 
 > _strictness_ level can be equal to:
-
 > > 1: same behavior of ros control package (if the client ask to run an already running controller it will be leaved running)
-
 > > 2: same behavior of ros control package
-
 > > 0: like 1 but if the client ask to run an already running controller it will be restarted as well as its hardware interface
 
 - "/configuration_manager/list_configurations" [type: configuration_msgs::ListControllers] provides the list of available configurations and their status (running / loaded)
-
 
 ## Configurations
 
@@ -78,35 +68,41 @@ control_configurations:
 ```
 
 ## Example of use
+
 Load a configuration:
-```
+
+```shell
 rosservice call /configuration_manager/start_configuration "start_configuration: 'configuration1'
 strictness: 1"
 ```
 
 Force reload a configuration:
-```
+
+```shell
 rosservice call /configuration_manager/start_configuration "start_configuration: 'configuration1'
 strictness: 0"
 ```
 
 Stop a configuration:
-```
+
+```shell
 rosservice call /configuration_manager/stop_configuration "strictness: 0"
 ```
 
 List configuration
-```
+
+```shell
 rosservice call /configuration_manager/list_configurations "{}"
 ```
 
 ## Developer Contact
 
-**Authors:**   
-- Manuel Beschi (<mailto:manuel.beschi@stiima.cnr.it>)  
+**Authors:**
+
+- Manuel Beschi (<mailto:manuel.beschi@stiima.cnr.it>)
 - Nicola Pedrocchi (<mailto:nicola.pedrocchi@stiima.cnr.it>)  
 - Stefano Ghidini (<mailto:stefano.ghidini@stiima.cnr.it>)  
- 
-_Software License Agreement (BSD License)_    
-_Copyright (c) 2017, National Research Council of Italy, Institute of Industrial Technologies and Automation_    
+
+_Software License Agreement (BSD License)_
+_Copyright (c) 2017, National Research Council of Italy, Institute of Industrial Technologies and Automation_
 _All rights reserved._
