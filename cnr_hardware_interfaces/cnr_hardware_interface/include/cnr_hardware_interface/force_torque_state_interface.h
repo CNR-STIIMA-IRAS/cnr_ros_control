@@ -48,12 +48,6 @@ class ForceTorqueStateHandle
 public:
   ForceTorqueStateHandle() : name_(""), frame_id_(""), force_(0), torque_(0) {}
 
-  explicit ForceTorqueStateHandle(const ForceTorqueStateHandle& cpy)
-  : name_(cpy.name_), frame_id_(cpy.frame_id_), force_(cpy.force_), torque_(cpy.torque_)
-  {
-    // nothing to do so far
-  }
-
   explicit ForceTorqueStateHandle(const std::string& name, const std::string& frame_id)
   : name_(name), frame_id_(frame_id), force_(0), torque_(0)
   {

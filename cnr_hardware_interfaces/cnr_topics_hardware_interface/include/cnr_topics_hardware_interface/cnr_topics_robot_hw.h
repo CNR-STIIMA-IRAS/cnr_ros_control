@@ -32,8 +32,8 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __ITIA_TOPIC_HARDWARE_INTERFACE__
-#define __ITIA_TOPIC_HARDWARE_INTERFACE__
+#ifndef CNR_HARDWARE_INTERFACE_CNR_TOPICS_ROBOT_HW_H
+#define CNR_HARDWARE_INTERFACE_CNR_TOPICS_ROBOT_HW_H
 
 #include <hardware_interface/joint_command_interface.h>
 
@@ -130,11 +130,11 @@ struct ClaimedResource
 {
   ClaimedResource() = delete;
   ClaimedResource(const cnr_hardware_interface::Resource&  res
-                  , const std::vector<std::string>            resource_names
-                  , ros::NodeHandle&                          robot_hw_nh
+                  , const std::vector<std::string>&           resource_names
+                  , ros::NodeHandle&                          robothw_nh
                   , std::map< std::string, bool> &            topics_received)
-    : m_robothw_nh(robot_hw_nh)
-    , m_console(robot_hw_nh.getNamespace())
+    : m_robothw_nh(robothw_nh)
+    , m_console(robothw_nh.getNamespace())
     , m_topics_received(topics_received)
     , m_resource_names(resource_names)
     , m_msg_counter(0)
@@ -150,7 +150,7 @@ struct ClaimedResource
       for (const std::string & subscribed_topic : res.m_subscribed_topics)
       {
         std::shared_ptr< ros::Subscriber > sub(new ros::Subscriber());
-        *sub = robot_hw_nh.subscribe< MSG >(subscribed_topic, 1, boost::bind(&cnr_hardware_interface::ClaimedResource< MSG >::callback, this, _1, subscribed_topic));
+        *sub = robothw_nh.subscribe< MSG >(subscribed_topic, 1, boost::bind(&cnr_hardware_interface::ClaimedResource< MSG >::callback, this, _1, subscribed_topic));
         m_sub.push_back(sub);
       }
 
@@ -162,7 +162,7 @@ struct ClaimedResource
         for (size_t i = 0; i < m_pub.size(); i++)
         {
           m_pub.at(i).reset(new ros::Publisher());
-          *m_pub.at(i) = robot_hw_nh.advertise< MSG >(res.m_published_topics.at(i), 1);
+          *m_pub.at(i) = robothw_nh.advertise< MSG >(res.m_published_topics.at(i), 1);
           typename MSG::Ptr msg(new MSG());
           m_pub_msg.at(i) = msg;
         }
@@ -263,7 +263,7 @@ struct ClaimedResource
                 return true;
               }
               else
-                single_controller_joint_used.at(iJ);
+                single_controller_joint_used.at(iJ) = true;
             }
           }
         }
@@ -293,7 +293,7 @@ struct ClaimedResource
 struct JointClaimedResource : ClaimedResource< sensor_msgs::JointState >
 {
   JointClaimedResource() = delete;
-  JointClaimedResource(const cnr_hardware_interface::JointResource& jr, ros::NodeHandle& robot_hw_nh, std::map< std::string, bool> & topics_received);
+  JointClaimedResource(const cnr_hardware_interface::JointResource& jr, ros::NodeHandle& robothw_nh, std::map< std::string, bool> & topics_received);
 
   void init();
   void shutdown();
@@ -328,7 +328,7 @@ struct JointClaimedResource : ClaimedResource< sensor_msgs::JointState >
 struct AnalogClaimedResource : ClaimedResource< std_msgs::Float64MultiArray >
 {
   AnalogClaimedResource() = delete;
-  AnalogClaimedResource(const cnr_hardware_interface::AnalogResource& ar, ros::NodeHandle& robot_hw_nh, std::map< std::string, bool> & topics_received);
+  AnalogClaimedResource(const cnr_hardware_interface::AnalogResource& ar, ros::NodeHandle& robothw_nh, std::map< std::string, bool> & topics_received);
 
   void init();
   void shutdown();
@@ -350,7 +350,7 @@ struct AnalogClaimedResource : ClaimedResource< std_msgs::Float64MultiArray >
 struct ForceTorqueClaimedResource : ClaimedResource< geometry_msgs::WrenchStamped >
 {
   ForceTorqueClaimedResource() = delete;
-  ForceTorqueClaimedResource(const cnr_hardware_interface::ForceTorqueResource& ar, ros::NodeHandle& robot_hw_nh, std::map< std::string, bool> & topics_received);
+  ForceTorqueClaimedResource(const cnr_hardware_interface::ForceTorqueResource& ar, ros::NodeHandle& robothw_nh, std::map< std::string, bool> & topics_received);
 
   void init();
   void shutdown();
@@ -374,7 +374,7 @@ struct ForceTorqueClaimedResource : ClaimedResource< geometry_msgs::WrenchStampe
 struct PoseClaimedResource : ClaimedResource< geometry_msgs::PoseStamped >
 {
   PoseClaimedResource() = delete;
-  PoseClaimedResource(const cnr_hardware_interface::PoseResource& ar, ros::NodeHandle& robot_hw_nh, std::map< std::string, bool> & topics_received);
+  PoseClaimedResource(const cnr_hardware_interface::PoseResource& ar, ros::NodeHandle& robothw_nh, std::map< std::string, bool> & topics_received);
 
   void init();
   void shutdown();
@@ -397,7 +397,7 @@ struct PoseClaimedResource : ClaimedResource< geometry_msgs::PoseStamped >
 struct TwistClaimedResource : ClaimedResource< geometry_msgs::TwistStamped >
 {
   TwistClaimedResource() = delete;
-  TwistClaimedResource(const cnr_hardware_interface::TwistResource& ar, ros::NodeHandle& robot_hw_nh, std::map< std::string, bool> & topics_received);
+  TwistClaimedResource(const cnr_hardware_interface::TwistResource& ar, ros::NodeHandle& robothw_nh, std::map< std::string, bool> & topics_received);
 
   void init();
   void shutdown();
@@ -528,8 +528,14 @@ std::vector<std::string> getResourceNames(const std::map< cnr_hardware_interface
  *
  */
 inline
-JointClaimedResource::JointClaimedResource(const cnr_hardware_interface::JointResource& jr, ros::NodeHandle& robot_hw_nh, std::map< std::string, bool> & topics_received)
-  : cnr_hardware_interface::ClaimedResource<sensor_msgs::JointState> (jr, jr.m_joint_names, robot_hw_nh, topics_received)
+JointClaimedResource::JointClaimedResource(const cnr_hardware_interface::JointResource& jr,
+                                           ros::NodeHandle& robothw_nh, 
+                                           std::map<std::string, bool> & topics_received)
+: cnr_hardware_interface::ClaimedResource<sensor_msgs::JointState> (jr, jr.m_joint_names, robothw_nh, topics_received), 
+m_nAx(0)
+m_p_jh_active(false),
+m_v_jh_active(false),
+m_e_jh_active(false),
 {
   m_nAx  = m_resource_names .size();
   m_pos.resize(m_nAx, 0);
@@ -729,8 +735,8 @@ bool JointClaimedResource::prepareSwitch(const std::list< hardware_interface::Co
  *
  */
 inline
-AnalogClaimedResource::AnalogClaimedResource(const cnr_hardware_interface::AnalogResource& ar, ros::NodeHandle& robot_hw_nh, std::map< std::string, bool> & topics_received)
-  : cnr_hardware_interface::ClaimedResource<std_msgs::Float64MultiArray> (ar, ar.m_channel_names, robot_hw_nh, topics_received)
+AnalogClaimedResource::AnalogClaimedResource(const cnr_hardware_interface::AnalogResource& ar, ros::NodeHandle& robothw_nh, std::map< std::string, bool> & topics_received)
+  : cnr_hardware_interface::ClaimedResource<std_msgs::Float64MultiArray> (ar, ar.m_channel_names, robothw_nh, topics_received)
 {
   m_state.resize(ar.m_num_channels, 0);
   m_output.resize(ar.m_num_channels, 0);
@@ -857,11 +863,11 @@ bool AnalogClaimedResource::prepareSwitch(const std::list< hardware_interface::C
  *
  */
 inline
-ForceTorqueClaimedResource::ForceTorqueClaimedResource(const cnr_hardware_interface::ForceTorqueResource& wr, ros::NodeHandle& robot_hw_nh, std::map< std::string, bool> & topics_received)
+ForceTorqueClaimedResource::ForceTorqueClaimedResource(const cnr_hardware_interface::ForceTorqueResource& wr, ros::NodeHandle& robothw_nh, std::map< std::string, bool> & topics_received)
   : cnr_hardware_interface::ClaimedResource< geometry_msgs::WrenchStamped > (wr,
 {
   wr.m_sensor_name
-}, robot_hw_nh, topics_received)
+}, robothw_nh, topics_received)
 {
   assert(wr.m_subscribed_topics.size() == 1);
   size_t l = __LINE__;
@@ -999,11 +1005,11 @@ bool ForceTorqueClaimedResource::prepareSwitch(const std::list< hardware_interfa
  *
  */
 inline
-PoseClaimedResource::PoseClaimedResource(const cnr_hardware_interface::PoseResource& pr, ros::NodeHandle& robot_hw_nh, std::map< std::string, bool> & topics_received)
+PoseClaimedResource::PoseClaimedResource(const cnr_hardware_interface::PoseResource& pr, ros::NodeHandle& robothw_nh, std::map< std::string, bool> & topics_received)
   : cnr_hardware_interface::ClaimedResource< geometry_msgs::PoseStamped > (pr,
 {
   pr.m_frame_id
-}, robot_hw_nh, topics_received)
+}, robothw_nh, topics_received)
 {
   size_t l = __LINE__;
   try
@@ -1133,8 +1139,8 @@ bool PoseClaimedResource::prepareSwitch(const std::list< hardware_interface::Con
  *
  */
 inline
-TwistClaimedResource::TwistClaimedResource(const cnr_hardware_interface::TwistResource& pr, ros::NodeHandle& robot_hw_nh, std::map< std::string, bool> & topics_received)
-  : cnr_hardware_interface::ClaimedResource< geometry_msgs::TwistStamped > (pr, pr.m_frames_id, robot_hw_nh, topics_received)
+TwistClaimedResource::TwistClaimedResource(const cnr_hardware_interface::TwistResource& pr, ros::NodeHandle& robothw_nh, std::map< std::string, bool> & topics_received)
+  : cnr_hardware_interface::ClaimedResource< geometry_msgs::TwistStamped > (pr, pr.m_frames_id, robothw_nh, topics_received)
 #define ll l = __LINE__;
 {
   size_t l = __LINE__;
@@ -1275,32 +1281,6 @@ bool TwistClaimedResource::prepareSwitch(const std::list< hardware_interface::Co
   return true;
 }
 
+}  // namespace cnr_hardware_interface
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-}
-
-#endif
+#endif  // CNR_HARDWARE_INTERFACE_CNR_TOPICS_ROBOT_HW_H
