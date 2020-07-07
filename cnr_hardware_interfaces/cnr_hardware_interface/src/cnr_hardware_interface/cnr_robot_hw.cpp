@@ -198,7 +198,7 @@ bool RobotHW::enterPrepareSwitch(const std::list< hardware_interface::Controller
   {
     bool not_prensent=true;
     std::list<hardware_interface::ControllerInfo>::iterator stopped_controller;
-    for (std::list<hardware_interface::ControllerInfo>::iterator it=m_active_controllers.begin();it!=m_active_controllers.end();it++)
+    for (std::list<hardware_interface::ControllerInfo>::iterator it=m_active_controllers.begin();it!=m_active_controllers.end();++it)
     {
       if (!it->name.compare(ctrl.name))
       {
