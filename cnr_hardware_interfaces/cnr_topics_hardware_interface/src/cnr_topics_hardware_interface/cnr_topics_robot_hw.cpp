@@ -147,7 +147,6 @@ bool TopicsRobotHW::doInit()
           }
 
           jr->m_joint_names = joint_names;
-          jr->m_nAx = joint_names.size();
           if (joint_names.size() == 0)
           {
             CNR_FATAL_RETURN(ns + "/joint_names has size zero");
@@ -186,7 +185,6 @@ bool TopicsRobotHW::doInit()
             CNR_FATAL_RETURN(ns + "/channel_names does not exist");
           }
           ar->m_channel_names = channel_names;
-          ar->m_num_channels = ar->m_channel_names.size();
           claimed_resource = ar;
         }
         break;

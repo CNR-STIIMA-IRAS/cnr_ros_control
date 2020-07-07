@@ -320,7 +320,6 @@ struct JointClaimedResource : ClaimedResource< sensor_msgs::JointState >
   std::vector<double> m_cmd_vel; //target velocity
   std::vector<double> m_cmd_eff; //target effort
 
-  unsigned int m_nAx;
 };
 
 struct AnalogClaimedResource : ClaimedResource< std_msgs::Float64MultiArray >
@@ -338,8 +337,8 @@ struct AnalogClaimedResource : ClaimedResource< std_msgs::Float64MultiArray >
   hardware_interface::AnalogStateInterface   m_a_sh; //interface for reading joint state
   hardware_interface::AnalogCommandInterface m_a_h;
 
-  bool                                       m_a_sh_active;
   bool                                       m_a_h_active;
+  bool                                       m_a_sh_active;
 
   std::vector<double>                        m_state;  // subscribed
   std::vector<double>                        m_output; // published
@@ -360,9 +359,9 @@ struct ForceTorqueClaimedResource : ClaimedResource< geometry_msgs::WrenchStampe
   hardware_interface::ForceTorqueStateInterface  m_w_sh; //interface for reading joint state
   hardware_interface::ForceTorqueInterface       m_w_h;
 
-  bool                                        m_w_sh_active;
   bool                                        m_w_h_active;
-
+  bool                                        m_w_sh_active;
+  
   std::vector<double>                         m_state;  // subscribed
   std::vector<double>                         m_output; // published
 
@@ -530,19 +529,17 @@ JointClaimedResource::JointClaimedResource(const cnr_hardware_interface::JointRe
                                            ros::NodeHandle& robothw_nh, 
                                            std::map<std::string, bool> & topics_received)
 : cnr_hardware_interface::ClaimedResource<sensor_msgs::JointState> (jr, jr.m_joint_names, robothw_nh, topics_received), 
-m_nAx(0),
 m_p_jh_active(false),
 m_v_jh_active(false),
-m_e_jh_active(false),
+m_e_jh_active(false)
 {
-  m_nAx  = m_resource_names.size();
-  m_pos.resize(m_nAx, 0);
-  m_vel.resize(m_nAx, 0);
-  m_eff.resize(m_nAx, 0);
+  m_pos.resize(m_resource_names.size(), 0);
+  m_vel.resize(m_resource_names.size(), 0);
+  m_eff.resize(m_resource_names.size(), 0);
 
-  m_cmd_pos.resize(m_nAx, 0);
-  m_cmd_vel.resize(m_nAx, 0);
-  m_cmd_eff.resize(m_nAx, 0);
+  m_cmd_pos.resize(m_resource_names.size(), 0);
+  m_cmd_vel.resize(m_resource_names.size(), 0);
+  m_cmd_eff.resize(m_resource_names.size(), 0);
 
   m_cmd_pos = m_pos;
   m_cmd_vel = m_vel;
@@ -659,7 +656,7 @@ void JointClaimedResource::write(const ros::Time& time, const ros::Duration& per
     }
     else
     {
-      m_pub_msg.front()->position.resize(m_nAx);
+      m_pub_msg.front()->position.resize(m_cmd_pos.size());
       std::fill(m_pub_msg.front()->position.begin(), m_pub_msg.front()->position.end(), 0.0);
     }
 
@@ -667,7 +664,7 @@ void JointClaimedResource::write(const ros::Time& time, const ros::Duration& per
       m_pub_msg.front()->velocity = m_cmd_vel;
     else
     {
-      m_pub_msg.front()->velocity.resize(m_nAx);
+      m_pub_msg.front()->velocity.resize(m_cmd_vel.size());
       std::fill(m_pub_msg.front()->velocity.begin(), m_pub_msg.front()->velocity.end(), 0.0);
     }
 
@@ -675,7 +672,7 @@ void JointClaimedResource::write(const ros::Time& time, const ros::Duration& per
       m_pub_msg.front()->effort   = m_cmd_eff;
     else
     {
-      m_pub_msg.front()->effort.resize(m_nAx);
+      m_pub_msg.front()->effort.resize(m_cmd_eff.size());
       std::fill(m_pub_msg.front()->effort.begin(), m_pub_msg.front()->effort.end(), 0.0);
     }
     m_pub_msg.front()->name = m_resource_names;
@@ -740,8 +737,8 @@ AnalogClaimedResource::AnalogClaimedResource(const cnr_hardware_interface::Analo
 , m_a_h_active( false )
 , m_a_sh_active( false )
 {
-  m_state.resize(ar.m_num_channels, 0);
-  m_output.resize(ar.m_num_channels, 0);
+  m_state.resize(ar.m_channel_names.size(), 0);
+  m_output.resize(ar.m_channel_names.size(), 0);
 
 }
 inline
