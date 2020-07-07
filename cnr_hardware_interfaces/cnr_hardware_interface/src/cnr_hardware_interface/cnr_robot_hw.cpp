@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <ros/ros.h>
 #include <cnr_logger/cnr_logger.h>
 #include <cnr_hardware_interface/cnr_robot_hw.h>
@@ -193,21 +194,14 @@ bool RobotHW::exitInit()
 
 bool RobotHW::enterPrepareSwitch(const std::list< hardware_interface::ControllerInfo >& start_list, const std::list< hardware_interface::ControllerInfo >& stop_list)
 {
+
   CNR_TRACE_START(*m_logger);
   for (const hardware_interface::ControllerInfo& ctrl: stop_list)
   {
-    bool not_prensent=true;
-    std::list<hardware_interface::ControllerInfo>::iterator stopped_controller;
-    for (std::list<hardware_interface::ControllerInfo>::iterator it=m_active_controllers.begin();it!=m_active_controllers.end();++it)
-    {
-      if (!it->name.compare(ctrl.name))
-      {
-        stopped_controller=it;
-        not_prensent=false;
-        break;
-      }
-    }
-    if (not_prensent)
+    std::list<hardware_interface::ControllerInfo>::iterator stopped_controller = 
+      std::find_if(m_active_controllers.begin(),m_active_controllers.end(),[&ctrl]( auto & it) { return (it->name == ctrl.name); } );
+    
+    if (m_active_controllers.end() == stopped_controller )
     {
       add_diagnostic_message( "ERROR", "controller '" + ctrl.name + "' is not active, so I cannot stop it", { {"Transition", "switching"} }, true);
       dump_state( cnr_hardware_interface::CTRL_ERROR );
@@ -217,18 +211,9 @@ bool RobotHW::enterPrepareSwitch(const std::list< hardware_interface::Controller
   }
   for (const hardware_interface::ControllerInfo& ctrl: start_list)
   {
-    bool already_prensent=false;
-    std::list<hardware_interface::ControllerInfo>::iterator stopped_controller;
-    for (std::list<hardware_interface::ControllerInfo>::iterator it=m_active_controllers.begin();it!=m_active_controllers.end();++it)
-    {
-      if (!it->name.compare(ctrl.name))
-      {
-        stopped_controller=it;
-        already_prensent=true;
-        break;
-      }
-    }
-    if (already_prensent)
+    std::list<hardware_interface::ControllerInfo>::iterator stopped_controller = 
+      std::find_if(m_active_controllers.begin(),m_active_controllers.end(),[&ctrl]( auto & it) { return (it->name == ctrl.name); } );
+    if (m_active_controllers.end() != stopped_controller )
     {
       CNR_WARN(*m_logger, "controller "<< ctrl.name << "is not active, so I cannot stop it");
     }
