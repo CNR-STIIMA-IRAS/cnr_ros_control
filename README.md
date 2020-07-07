@@ -2,7 +2,7 @@
 
 ## developed by CNR-STIIMA (www.stiima.cnr.it) ##
 
-![EC-H2020](.media/logo-stiima-stiima-cnr-HI.png)
+<img src=".media/logo-stiima-stiima-cnr-HI.png" width="400">
 
 ## Continuous Integration ##
 
