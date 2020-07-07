@@ -332,11 +332,11 @@ template< class T >
 bool Controller< T >::dump_state()
 {
   std::string last_status = controller_interface::Controller< T >::isAborted()     ?  "ABORTED"
-                            : controller_interface::Controller< T >::isInitialized() ?  "INITIALIZED"
-                            : controller_interface::Controller< T >::isRunning()     ?  "RUNNING"
-                            : controller_interface::Controller< T >::isWaiting()     ?  "WAITING"
-                            : controller_interface::Controller< T >::isStopped()     ?  "STOPPED"
-                            : "CONSTRUCTED";
+                          : controller_interface::Controller< T >::isInitialized() ?  "INITIALIZED"
+                          : controller_interface::Controller< T >::isRunning()     ?  "RUNNING"
+                          : controller_interface::Controller< T >::isWaiting()     ?  "WAITING"
+                          : controller_interface::Controller< T >::isStopped()     ?  "STOPPED"
+                          : "CONSTRUCTED";
   return dump_state(last_status);
 }
 
