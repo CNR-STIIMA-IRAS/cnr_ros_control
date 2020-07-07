@@ -70,7 +70,7 @@ bool callRequest(ros::ServiceClient& clnt, MSG& msg, std::string& error, const r
 
 
 inline
-std::string to_string(const std::vector<std::string>& what, const std::string value_header = "ctrl")
+std::string to_string(const std::vector<std::string>& what, const std::string& value_header = "ctrl")
 {
   std::string ret = value_header + ": <";
   for (size_t j = 0; j < what.size(); j++)

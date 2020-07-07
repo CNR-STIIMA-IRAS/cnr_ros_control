@@ -17,15 +17,15 @@ The following node are provided:
 
 - "/configuration_manager/start_configuration" [type: configuration_msgs::StartConfiguration] start configuration:
 
-> _start_configuration_: name of the desired configuration
-> _strictness_: level can be equal to:
+>_start_configuration_: name of the desired configuration
+>_strictness_: level can be equal to:
 > > 1: same behavior of ros control package (if the client ask to run an already running controller it will be leaved running)
 > > 2: same behavior of ros control package
 > > 0: like 1 but if the client ask to run an already running controller it will be restarted as well as its hardware interface
 
 - "/configuration_manager/stop_configuration" [type: configuration_msgs::StopConfiguration] stop running configuration:
 
-> _strictness_: level can be equal to:
+>_strictness_: level can be equal to:
 > > 1: same behavior of ros control package (if the client ask to run an already running controller it will be leaved running)
 > > 2: same behavior of ros control package
 > > 0: like 1 but if the client ask to run an already running controller it will be restarted as well as its hardware interface
@@ -47,24 +47,24 @@ Configurations are read from the ROS parameter **control_configurations** which 
 ```yaml
 control_configurations:
   - name: "configuration1"
-    components: 
+    components:
       - description: "a brief description of the component"
         hardware_interface: "hardware_interface_1" # the name of the hardware interface
         controller        : "controller_1"
       - description: "a brief description of the component"
         hardware_interface: "hardware_interface_1"
-        controller        : "controller_2" 
+        controller        : "controller_2"
       - description: "a brief description of the component"
         hardware_interface: "hardware_interface_2"
         controller        : "controller_3" #it is strongly recommended (but not mandatory) to use different names also for controllers loaded in different hardware interfaces
   - name: "configuration2"
-    components: 
+    components:
       - description: "a brief description of the component"
         hardware_interface: "motor_velocity_hi"
         controller        : "linkpos_to_vel_jnt1_1"
       - description: "a brief description of the component" #different configurations can use the same hardware interfaces or the same controllers
         hardware_interface: "hardware_interface_1"
-        controller        : "controller_2" 
+        controller        : "controller_2"
 ```
 
 ## Example of use

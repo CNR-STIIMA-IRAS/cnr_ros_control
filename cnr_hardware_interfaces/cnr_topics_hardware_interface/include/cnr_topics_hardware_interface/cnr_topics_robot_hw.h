@@ -98,7 +98,6 @@ struct Resource
 struct JointResource : Resource
 {
   std::vector<std::string>  m_joint_names;
-  unsigned int              m_nAx;
 };
 
 struct ForceTorqueResource : Resource
@@ -110,7 +109,6 @@ struct ForceTorqueResource : Resource
 struct AnalogResource : Resource
 {
   std::vector<std::string>    m_channel_names;
-  int                         m_num_channels;
 };
 
 struct PoseResource : Resource
