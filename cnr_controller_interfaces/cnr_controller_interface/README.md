@@ -3,7 +3,7 @@
 Package to publish JointStates in nodelet fashion (shared memory). It allows sorting the joint_names.
 The published topic has this name:
 
-_/your_robot_hardware/your_controller_name/joint_states_
+> /your_robot_hardware/your_controller_name/joint_states
 
 use _nodelet_ remapping parameters to change it.
 
