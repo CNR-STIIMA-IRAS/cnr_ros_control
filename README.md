@@ -2,7 +2,7 @@
 
 ## developed by CNR-STIIMA (www.stiima.cnr.it) ##
 
-<img src=".media/logo-stiima-stiima-cnr-HI.png" alt="Logo" title="CNR-STIIMA" width="400" />
+<div style="text-align: right"><img src=".media/logo-stiima-stiima-cnr-HI.png" alt="Logo" title="CNR-STIIMA" width="400" /></div>
 
 ## CI ##
 
@@ -91,7 +91,15 @@ _Copyright (c) 2020, National Research Council of Italy, Institute of Intelligen
 _All rights reserved._
 
 ## Acknowledge ##
-| | |
-|-|-|
-| ![EC-H2020](.media/flag_yellow_low-300x201.jpg) | This project has received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No. 820807. This website reflects only the author’s view and the European Commission is not responsible for any use that may be made of the information it contains.|
-| ![EC-H2020](.media/Sharework_logo_color_250px.png) | [ShareWork webpage](https://sharework-project.eu/)|
+
+<table style="width:100%">
+  <tr>
+    <th>![EC-H2020](.media/flag_yellow_low-300x201.jpg) </th>
+    <th>This project has received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No. 820807. This website reflects only the author’s view and the European Commission is not responsible for any use that may be made of the information it contains.</th>
+  </tr>
+  <tr>
+    <td><img src=".media/logo-stiima-stiima-Sharework_logo_color_250px-HI.png" alt="Logo" title="CNR-STIIMA" width="200" /></td>
+    <td>[ShareWork webpage](https://sharework-project.eu/)</td>
+  </tr>
+  <tr>
+</table>
