@@ -279,7 +279,9 @@ bool RobotHW::enterCheckForConflict(const std::list< hardware_interface::Control
               return true;
             }
             else
-              single_controller_resource_used.at(iJ);
+	    {
+              single_controller_resource_used.at(iJ) = true;
+	    }
           }
         }
       }
