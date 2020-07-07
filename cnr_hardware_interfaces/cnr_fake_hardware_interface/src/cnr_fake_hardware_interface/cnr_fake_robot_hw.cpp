@@ -275,7 +275,7 @@ bool FakeRobotHW::doCheckForConflict(const std::list< hardware_interface::Contro
             }
             else
             {
-              single_controller_joint_used.at(iJ);
+              single_controller_joint_used.at(iJ) = true;
             }
           }
         }
