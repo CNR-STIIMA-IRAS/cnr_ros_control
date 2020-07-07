@@ -1,3 +1,106 @@
+/*
+ *  Software License Agreement (New BSD License)
+ *
+ *  Copyright 2020 National Council of Research of Italy (CNR)
+ *
+ *  All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions
+ *  are met:
+ *
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *   * Neither the name of the copyright holder(s) nor the names of its
+ *     contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *  POSSIBILITY OF SUCH DAMAGE.
+ */
+/*
+ *  Software License Agreement (New BSD License)
+ *
+ *  Copyright 2020 National Council of Research of Italy (CNR)
+ *
+ *  All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions
+ *  are met:
+ *
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *   * Neither the name of the copyright holder(s) nor the names of its
+ *     contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *  POSSIBILITY OF SUCH DAMAGE.
+ */
+/**
+  *  Software License Agreement (New BSD License)
+  *
+  *  Copyright 2020 National Council of Research of Italy (CNR)
+  *
+  *  All rights reserved.
+  *
+  *  Redistribution and use in source and binary forms, with or without
+  *  modification, are permitted provided that the following conditions
+  *  are met:
+  *
+  *   * Redistributions of source code must retain the above copyright
+  *     notice, this list of conditions and the following disclaimer.
+  *   * Redistributions in binary form must reproduce the above
+  *     copyright notice, this list of conditions and the following
+  *     disclaimer in the documentation and/or other materials provided
+  *     with the distribution.
+  *   * Neither the name of the copyright holder(s) nor the names of its
+  *     contributors may be used to endorse or promote products derived
+  *     from this software without specific prior written permission.
+  *
+  *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+  *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+  *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+  *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+  *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+  *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+  *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+  *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+  *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+  *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  *  POSSIBILITY OF SUCH DAMAGE.
+  */
+
 #ifndef __CNR__CONTROLLER_INTERFACE__
 #define __CNR__CONTROLLER_INTERFACE__
 
@@ -19,83 +122,116 @@ namespace cnr_controller_interface
 
 
 //============ FUNCTIONS TO DEFINE THE PARAMETERS WHERE THE CTRL STATUS IS LOADED
-std::vector<std::string> get_names        ( const std::vector< controller_manager_msgs::ControllerState >& controllers );
-std::string              ctrl_list_param  ( const std::string& hw_name );
-std::string              last_status_param( const std::string& hw_name, const std::string& ctrl_name );
-std::string              status_param     ( const std::string& hw_name, const std::string& ctrl_name );
-bool                     get_state        ( const std::string& hw_name, const std::string& ctrl_name, std::string& status, std::string& error, const ros::Duration& watchdog = ros::Duration(0.0) );
+std::vector<std::string> get_names(const std::vector< controller_manager_msgs::ControllerState >& controllers);
+std::string              ctrl_list_param(const std::string& hw_name);
+std::string              last_status_param(const std::string& hw_name, const std::string& ctrl_name);
+std::string              status_param(const std::string& hw_name, const std::string& ctrl_name);
+bool                     get_state(const std::string& hw_name, const std::string& ctrl_name, std::string& status, std::string& error, const ros::Duration& watchdog = ros::Duration(0.0));
 
 template< class T >
 class Controller: public ::controller_interface::Controller< T >
 {
 public:
 
-  ~Controller( );
+  ~Controller();
 
-  bool init     ( T*, ros::NodeHandle& )                                            final { return true; }
-  bool init     ( T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh ) final;
-  void starting ( const ros::Time& time )                                           final;
-  void update   ( const ros::Time& time, const ros::Duration& period )              final;
-  void stopping ( const ros::Time& time )                                           final;
-  void waiting  ( const ros::Time& time )                                           final;
-  void aborting ( const ros::Time& time )                                           final;
+  bool init(T*, ros::NodeHandle&)                                            final
+  {
+    return true;
+  }
+  bool init(T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh) final;
+  void starting(const ros::Time& time)                                           final;
+  void update(const ros::Time& time, const ros::Duration& period)              final;
+  void stopping(const ros::Time& time)                                           final;
+  void waiting(const ros::Time& time)                                           final;
+  void aborting(const ros::Time& time)                                           final;
 
-  virtual bool doInit       ( )                                                            { return true; }
-  virtual bool doStarting   ( const ros::Time& /*time*/ )                                  { return true; }
-  virtual bool doUpdate     ( const ros::Time& /*time*/, const ros::Duration& /*period*/ ) { return true; }
-  virtual bool doStopping   ( const ros::Time& /*time*/ )                                  { return true; }
-  virtual bool doWaiting    ( const ros::Time& /*time*/ )                                  { return true; }
-  virtual bool doAborting   ( const ros::Time& /*time*/ )                                  { return true; }
+  virtual bool doInit()
+  {
+    return true;
+  }
+  virtual bool doStarting(const ros::Time& /*time*/)
+  {
+    return true;
+  }
+  virtual bool doUpdate(const ros::Time& /*time*/, const ros::Duration& /*period*/)
+  {
+    return true;
+  }
+  virtual bool doStopping(const ros::Time& /*time*/)
+  {
+    return true;
+  }
+  virtual bool doWaiting(const ros::Time& /*time*/)
+  {
+    return true;
+  }
+  virtual bool doAborting(const ros::Time& /*time*/)
+  {
+    return true;
+  }
 
-  std::string getRootNamespace      ( ) { return m_root_nh.getNamespace(); }
-  std::string getControllerNamespace( ) { return m_controller_nh.getNamespace(); }
+  std::string getRootNamespace()
+  {
+    return m_root_nh.getNamespace();
+  }
+  std::string getControllerNamespace()
+  {
+    return m_controller_nh.getNamespace();
+  }
 
-  ros::NodeHandle& getRootNh        ( ) { return m_root_nh; }
-  ros::NodeHandle& getControllerNh  ( ) { return m_controller_nh; }
+  ros::NodeHandle& getRootNh()
+  {
+    return m_root_nh;
+  }
+  ros::NodeHandle& getControllerNh()
+  {
+    return m_controller_nh;
+  }
 
-  void add_diagnostic_message( const std::string& msg, const std::string& name, const std::string& level, const bool verbose);
+  void add_diagnostic_message(const std::string& msg, const std::string& name, const std::string& level, const bool verbose);
 
 protected:
 
-  virtual bool enterInit( );
-  virtual bool exitInit ( );
+  virtual bool enterInit();
+  virtual bool exitInit();
 
-  virtual bool enterStarting( );
-  virtual bool exitStarting ( );
+  virtual bool enterStarting();
+  virtual bool exitStarting();
 
-  virtual bool enterUpdate  ( );
-  virtual bool exitUpdate   ( );
+  virtual bool enterUpdate();
+  virtual bool exitUpdate();
 
   // stopping
-  virtual bool enterStopping( );
-  virtual bool exitStopping ( );
+  virtual bool enterStopping();
+  virtual bool exitStopping();
 
   // waiting
-  virtual bool enterWaiting ( );
-  virtual bool exitWaiting  ( );
+  virtual bool enterWaiting();
+  virtual bool exitWaiting();
 
   // aborting
-  virtual bool enterAborting( );
-  virtual bool exitAborting ( );
+  virtual bool enterAborting();
+  virtual bool exitAborting();
 
-  bool dump_state( const std::string& status );
+  bool dump_state(const std::string& status);
 
-  bool dump_state( );
+  bool dump_state();
 
 
   template<class M>
-  void add_publisher (const std::string& id, const std::string &topic, uint32_t queue_size, bool latch=false  );
+  void add_publisher(const std::string& id, const std::string &topic, uint32_t queue_size, bool latch = false);
 
   template<typename M>
-  bool publish (const std::string& id, const M &message);
+  bool publish(const std::string& id, const M &message);
 
-  template<class M , class K>
-  void add_subscriber(const std::string& id, const std::string &topic, uint32_t queue_size, void(K::*fp)(M), K *obj, const ros::TransportHints &transport_hints=ros::TransportHints());
+  template<class M, class K>
+  void add_subscriber(const std::string& id, const std::string &topic, uint32_t queue_size, void(K::*fp)(M), K *obj, const ros::TransportHints &transport_hints = ros::TransportHints());
 
-  bool tick( const std::string& id );
+  bool tick(const std::string& id);
 
-  ros::Subscriber& getSubscriber  ( const std::string& id );
-  ros::Publisher&  getPublisher   ( const std::string& id );
+  ros::Subscriber& getSubscriber(const std::string& id);
+  ros::Publisher&  getPublisher(const std::string& id);
 
 protected:
 
@@ -135,7 +271,7 @@ private:
   std::map< std::string, Publisher  > m_pub;
   std::map<std::string,  Subscriber > m_sub;
 
-  bool callAvailable( const double watchdog );
+  bool callAvailable(const double watchdog);
 
 };
 
