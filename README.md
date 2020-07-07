@@ -1,4 +1,6 @@
-# Extension of ROS-CONTROL developed by CNR-STIIMA (www.stiima.cnr.it) #
+# Extension of ROS-CONTROL #
+
+## developed by CNR-STIIMA (www.stiima.cnr.it) ##
 
 ## CI ##
 
@@ -16,7 +18,7 @@ The extension is based on one package and two meta-packages.
 
 * The `cnr_hardware_interfaces` [(readme)](cnr_hardware_interfaces/README.md)
 * The `cnr_controller_interfaces` [(readme)](cnr_hardware_interfaces/README.md)
-* The `cnr_controller_configuration` [(readme()](cnr_controller_configuration/README.md)
+* The `cnr_configuration_manager` [(readme()](cnr_configuration_manager/README.md)
 
 The core of the extension is having encapsulated the lifecyle of the `RobotHw` [(link)](https://github.com/ros-controls/ros_control/wiki/hardware_interface) in a [`nodelet`](http://wiki.ros.org/nodelet).
 
@@ -85,3 +87,9 @@ A collaction of Matlab scripts useful for the...
 _Software License Agreement (BSD License)_
 _Copyright (c) 2020, National Research Council of Italy, Institute of Intelligent Industrial Technologies and Systems for Advanced Manufacturing_
 _All rights reserved._
+
+## Acknowledge ##
+| | |
+|-|-|
+| ![EC-H2020](.media/flag_yellow_low-300x201.jpg) | This project has received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No. 820807. This website reflects only the author’s view and the European Commission is not responsible for any use that may be made of the information it contains.|
+| ![EC-H2020](.media/Sharework_logo_color_250px.png) | [ShareWork webpage](https://sharework-project.eu/)|
