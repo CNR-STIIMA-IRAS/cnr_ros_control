@@ -2,9 +2,9 @@
 
 ## developed by CNR-STIIMA (www.stiima.cnr.it) ##
 
-<div style="text-align: right"><img src=".media/logo-stiima-stiima-cnr-HI.png" alt="Logo" title="CNR-STIIMA" width="400" /></div>
+![EC-H2020](.media/logo-stiima-stiima-cnr-HI.png)
 
-## CI ##
+## Continuous Integration ##
 
 | service   | Master                                                                                                                                                                             |
 |:----------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
@@ -12,7 +12,7 @@
 | Codecov   | [![codecov](https://codecov.io/gh/CNR-STIIMA-IRAS/cnr_ros_control/branch/master/graph/badge.svg)](https://codecov.io/gh/CNR-STIIMA-IRAS/cnr_ros_control)                           |
 | Codacy    | [![Codacy Badge](https://api.codacy.com/project/badge/Grade/fd683d54c39443df9c685fb189300695)](https://app.codacy.com/gh/CNR-STIIMA-IRAS/cnr_ros_control?utm_source=github.com&utm_medium=referral&utm_content=CNR-STIIMA-IRAS/cnr_ros_control&utm_campaign=Badge_Grade_Dashboard) |
 
-## Package Design ##
+## Design ##
 
 The repository contains the implementation of an exstension of the [ros_control](http://wiki.ros.org/ros_control "ros_control") framework developed by the Institute of Intelligent Industrial Technologies and Systems for Advanced Manufacturing (STIIMA), of the National Research Council of Italy (CNR-ITIA).
 
@@ -91,15 +91,7 @@ _Copyright (c) 2020, National Research Council of Italy, Institute of Intelligen
 _All rights reserved._
 
 ## Acknowledge ##
-
-<table style="width:100%">
-  <tr>
-    <th><img src=".media/flag_yellow_low-300x201.jpg" alt="Logo" title="CNR-STIIMA" heigth="200" /></th>
-    <th>This project has received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No. 820807. This website reflects only the author’s view and the European Commission is not responsible for any use that may be made of the information it contains.</th>
-  </tr>
-  <tr>
-    <td><img src=".media/Sharework_logo_color_250px.png" alt="Logo" title="ShareWork" heigth="400" /></td>
-    <td>[ShareWork webpage](https://sharework-project.eu/)</td>
-  </tr>
-  <tr>
-</table>
+| | |
+|-|-|
+| ![EC-H2020](.media/flag_yellow_low-300x201.jpg) | This project has received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No. 820807. This website reflects only the author’s view and the European Commission is not responsible for any use that may be made of the information it contains.|
+| ![EC-H2020](.media/Sharework_logo_color_250px.png) | [ShareWork webpage](https://sharework-project.eu/)|
