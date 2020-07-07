@@ -22,7 +22,7 @@ Topics hardware interface requires the following parameters:
 ```yaml
 hardware_interface_name:
   type: "itia/control/TopicHwIfaceNodelet"
-  joint_names: 
+  joint_names:
   - "joint_1"
   - "joint_2"
   feedback_joint_state_topic: "/joint_states" # subscribing topic
