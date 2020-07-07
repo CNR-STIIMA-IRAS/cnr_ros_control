@@ -72,7 +72,7 @@ int main(int argc, char **argv)
       gazebo_wait_time=4;
     gazebo_timer=nh.createWallTimer(ros::WallDuration(gazebo_wait_time), gazebo_cb, true);
 
-    CNR_INFO(logger, "Waiting " << gazebo_wait_time << "seconds before unpausing gazebo");
+    CNR_INFO(logger, "Waiting " << gazebo_wait_time << "seconds before unpausing gazebo (timer started: " << gazebo_timer.hasStarted() <<") ");
 
   }
   else
