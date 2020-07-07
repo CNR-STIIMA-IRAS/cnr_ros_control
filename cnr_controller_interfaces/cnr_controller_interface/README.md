@@ -9,7 +9,7 @@ use _nodelet_ remapping parameters to change it.
 
 Plugins list:
 
-- *ros/control/JointStatePublisher*
+> ros/control/JointStatePublisher
 
 ## parameters ##
 
