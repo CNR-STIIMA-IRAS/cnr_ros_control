@@ -2,7 +2,7 @@
 
 ## developed by CNR-STIIMA (www.stiima.cnr.it) ##
 
-<img src=".media/logo-stiima-stiima-cnr-HI.png" alt="Logo" title="CNR-STIIMA" width="600" />
+<img src=".media/logo-stiima-stiima-cnr-HI.png" alt="Logo" title="CNR-STIIMA" width="400" />
 
 ## CI ##
 
@@ -12,7 +12,7 @@
 | Codecov   | [![codecov](https://codecov.io/gh/CNR-STIIMA-IRAS/cnr_ros_control/branch/master/graph/badge.svg)](https://codecov.io/gh/CNR-STIIMA-IRAS/cnr_ros_control)                           |
 | Codacy    | [![Codacy Badge](https://api.codacy.com/project/badge/Grade/fd683d54c39443df9c685fb189300695)](https://app.codacy.com/gh/CNR-STIIMA-IRAS/cnr_ros_control?utm_source=github.com&utm_medium=referral&utm_content=CNR-STIIMA-IRAS/cnr_ros_control&utm_campaign=Badge_Grade_Dashboard) |
 
-## Design ##
+## Package Design ##
 
 The repository contains the implementation of an exstension of the [ros_control](http://wiki.ros.org/ros_control "ros_control") framework developed by the Institute of Intelligent Industrial Technologies and Systems for Advanced Manufacturing (STIIMA), of the National Research Council of Italy (CNR-ITIA).
 
