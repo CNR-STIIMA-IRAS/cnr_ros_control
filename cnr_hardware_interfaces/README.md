@@ -1,4 +1,3 @@
-
 # Hardware Interfaces
 
 The metapackage is an extension of the [hardware_interface](https://github.com/ros-controls/ros_control/tree/noetic-devel/hardware_interface).
