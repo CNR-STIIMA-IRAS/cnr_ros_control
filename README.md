@@ -1,8 +1,8 @@
 # Extension of ROS-CONTROL #
 
-<img src=".media/logo-stiima-stiima-cnr-HI.png" alt="Logo" title="CNR-STIIMA" width="600" />
-
 ## developed by CNR-STIIMA (www.stiima.cnr.it) ##
+
+<img src=".media/logo-stiima-stiima-cnr-HI.png" alt="Logo" title="CNR-STIIMA" width="600" />
 
 ## CI ##
 
