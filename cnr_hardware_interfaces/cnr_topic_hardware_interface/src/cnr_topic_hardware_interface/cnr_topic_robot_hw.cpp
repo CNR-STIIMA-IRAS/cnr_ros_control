@@ -248,7 +248,7 @@ bool TopicRobotHW::doPrepareSwitch(const std::list< hardware_interface::Controll
 {
   CNR_TRACE_START(*m_logger);
   bool p_jh_active, v_jh_active, e_jh_active;
-  p_jh_active=v_jh_active=e_jh_active=false;
+
   
   p_jh_active=m_p_jh_active;
   v_jh_active=m_v_jh_active;
