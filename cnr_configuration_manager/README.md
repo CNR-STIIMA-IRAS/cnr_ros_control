@@ -15,7 +15,8 @@ The following node are provided:
 
 ## Service availables
 
-- "/configuration_manager/start_configuration" [type: configuration_msgs::StartConfiguration] start configuration:
+```shell
+"/configuration_manager/start_configuration" [type: configuration_msgs::StartConfiguration] start configuration:
 
 >_start_configuration_: name of the desired configuration
 >_strictness_: level can be equal to:
@@ -30,7 +31,8 @@ The following node are provided:
 > > 2: same behavior of ros control package
 > > 0: like 1 but if the client ask to run an already running controller it will be restarted as well as its hardware interface
 
-- "/configuration_manager/list_configurations" [type: configuration_msgs::ListControllers] provides the list of available configurations and their status (running / loaded)
+"/configuration_manager/list_configurations" [type: configuration_msgs::ListControllers] provides the list of available configurations and their status (running / loaded)
+```
 
 ## Configurations
 

@@ -1,4 +1,4 @@
-# nr_controller_interface#
+# nr_controller_interface #
 
 Package to publish JointStates in nodelet fashion (shared memory). It allows sorting the joint_names.
 The published topic has this name:
@@ -11,10 +11,8 @@ Plugins list:
 
 - *ros/control/JointStatePublisher*
 
+## parameters ##
 
-
-
-### parameters ###
 ```yaml
   type: "ros/control/JointStatePublisher"
 
