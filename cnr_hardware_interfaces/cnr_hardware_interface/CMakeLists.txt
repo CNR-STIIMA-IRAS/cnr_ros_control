@@ -23,12 +23,20 @@ find_package(catkin REQUIRED COMPONENTS
   roslint
 )
 
-roslint_cpp()
-
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES cnr_hardware_interface
- CATKIN_DEPENDS cnr_controller_manager_interface cnr_controller_interface controller_manager diagnostic_updater diagnostic_msgs hardware_interface  nodelet roscpp sensor_msgs configuration_msgs realtime_utilities pluginlib
+ CATKIN_DEPENDS cnr_controller_manager_interface 
+                cnr_controller_interface 
+                controller_manager 
+                diagnostic_updater 
+                diagnostic_msgs 
+                hardware_interface
+                nodelet roscpp
+                sensor_msgs
+                configuration_msgs
+                realtime_utilities
+                pluginlib
  DEPENDS 
 )
 
@@ -42,3 +50,5 @@ target_link_libraries(cnr_hardware_interface
   ${catkin_LIBRARIES}
 )
 
+set(ROSLINT_CPP_OPTS "--filter=-runtime/references,-runtime/int,-build/header_guard --linelength=150")
+roslint_cpp(src/${PROJECT_NAME}/cnr_robot_hw.cpp include/${PROJECT_NAME}/cnr_robot_hw.h)
