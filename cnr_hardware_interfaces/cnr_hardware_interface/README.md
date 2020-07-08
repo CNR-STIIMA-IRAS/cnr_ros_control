@@ -21,7 +21,7 @@ public:
   RobotHW();
   ~RobotHW();
 
-  // ======================================================= final methods (cannot be overriden by the derived clases
+  // ======================================================= final methods (cannot be overriden by the derived clases)
   bool init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw_nh) final;
   void read(const ros::Time& time, const ros::Duration& period) final;
   void write(const ros::Time& time, const ros::Duration& period) final;
@@ -66,7 +66,6 @@ private:
   virtual bool exitWrite();
   virtual bool exitPrepareSwitch();
   virtual bool exitCheckForConflict() const{ return true; }
-
 
 protected:
   std::string                                      m_robot_name;
