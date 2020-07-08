@@ -20,7 +20,7 @@ This design choice allows the implementation of cascade controller architectures
 
 A special `RobotHw` called `TopicRobotHw` is provided by the `cnr_hardware_interfaces` package, and it has been designed in order to encaspulate generic topics in the standard `hardware_interface` [(link)](https://github.com/ros-controls/ros_control/wiki/hardware_interface), and therefore to allows the controller accessing the topic content using the handle-based mechanism.  
 
- [![Alternate Text]({.media/Picture1.png})]({https://youtu.be/JGmhB_9PjZk} "Link Title")
+ [![Alternate Text](.media/Picture1.png)](https://youtu.be/JGmhB_9PjZk "Online presentation")
 
 ## cnr_hardware_interfaces [(readme)](cnr_hardware_interfaces/README.md) ##
 
