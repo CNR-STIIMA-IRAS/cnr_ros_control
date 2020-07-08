@@ -123,9 +123,6 @@ RobotHwNodelet::~RobotHwNodelet()
 
 void RobotHwNodelet::onInit()
 {
-
-  ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug);
-
   m_hw_namespace = getPrivateNodeHandle().getNamespace();
   m_hw_name      = extractRobotName(m_hw_namespace);
   m_updater.setHardwareID(m_hw_name);
