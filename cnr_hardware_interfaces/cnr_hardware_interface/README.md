@@ -31,8 +31,6 @@ public:
   bool shutdown();
   // ======================================================= End - final methods
 
-
-
   // ======================================================= Method to override inthe derived classes
   virtual bool doInit() { return true; }
   virtual bool doShutdown()  { return true;   }
@@ -43,33 +41,16 @@ public:
   // ======================================================= END - Method to override inthe derived classes
 
 
-  // =======================================================
-  void setResourceNames(const std::vector<std::string>& resource_names)
-  {
-    m_resource_names = resource_names;
-  }
-  // =======================================================
-
-  // ======================================================= utils
-  void diagnostics(diagnostic_updater::DiagnosticStatusWrapper &stat);
-  const cnr_hardware_interface::StatusHw&  getStatus() const
-  {
-    return m_status;
-  }
-  const std::string&                       getRobotHwNamespace() const
-  {
-    return m_robothw_nh.getNamespace();
-  }
-  // ======================================================= END - utils
-
+  void setResourceNames(const std::vector<std::string>& resource_names) { m_resource_names = resource_names; }
+  void diagnostics(diagnostic_updater::DiagnosticStatusWrapper &stat);  
+  const cnr_hardware_interface::StatusHw&  getStatus() const  {  return m_status;  }
+  const std::string&                       getRobotHwNamespace() const  {  return m_robothw_nh.getNamespace();  }
+  
 protected:
   virtual bool setParamServer(configuration_msgs::SetConfigRequest& req, configuration_msgs::SetConfigResponse& res);
   virtual bool getParamServer(configuration_msgs::GetConfigRequest& req, configuration_msgs::GetConfigResponse& res);
 
-  void add_diagnostic_message(const std::string& level,
-                              const std::string& summary,
-                              const std::map<std::string, std::string>& key_values,
-                              const bool verbose = false);
+  void add_diagnostic_message(const std::string& level, const std::string& summary, const std::map<std::string, std::string>& key_values, const bool verbose = false);
   bool dump_state(const cnr_hardware_interface::StatusHw& status) const;
   bool dump_state() const;
 
@@ -77,18 +58,14 @@ private:
   virtual bool enterInit(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw_nh);
   virtual bool enterShutdown();
   virtual bool enterWrite();
-  virtual bool enterPrepareSwitch(const std::list< hardware_interface::ControllerInfo >& start_list,
-                                  const std::list< hardware_interface::ControllerInfo >& stop_list);
+  virtual bool enterPrepareSwitch(const std::list< hardware_interface::ControllerInfo >& start_list, const std::list< hardware_interface::ControllerInfo >& stop_list);
   virtual bool enterCheckForConflict(const std::list< hardware_interface::ControllerInfo >& info) const;
 
   virtual bool exitInit();
   virtual bool exitShutdown();
   virtual bool exitWrite();
   virtual bool exitPrepareSwitch();
-  virtual bool exitCheckForConflict() const
-  {
-    return true;
-  }
+  virtual bool exitCheckForConflict() const{ return true; }
 
 
 protected:
