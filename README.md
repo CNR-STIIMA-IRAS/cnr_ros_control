@@ -46,7 +46,11 @@ The metapackage is built up on five packages:
 
 The metapackage is built up on five packages:
 
-1. `cnr_controller_interface` [(readme)](cnr_controller_interfaces/cnr_controller_interface/README.md): this package is **fully compatible with [ros_control](http://wiki.ros.org/ros_control "ros_control")**. It implements a  template derived by  `::controller_interface::Controller< T >` [(link)](https://github.com/ros-controls/ros_control/blob/noetic-devel/controller_interface/include/controller_interface/controller.h). The class implements some useful functionalities:
+1. `cnr_controller_interface` [(readme)](cnr_controller_interfaces/cnr_controller_interface/README.md): 
+   this package is **fully compatible with [ros_control](http://wiki.ros.org/ros_control "ros_control")**. 
+   It implements a  template derived by  `::controller_interface::Controller< T >` 
+   [(link)](https://github.com/ros-controls/ros_control/blob/noetic-devel/controller_interface/include/controller_interface/controller.h). 
+   The class implements some useful functionalities:
    1. It Integrates a [diagnostics](http://wiki.ros.org/diagnostics) module, to track the times of the read/write and update functions
    2. It provides a tracking of the state of the class, and it reacts in case of error
    3. It provides a `ros::CallbackQueue` to control the flow of the topics managed by the controller
@@ -60,7 +64,8 @@ The core of the extension is the `cnr_configuration_manager` [(readme)](cnr_conf
 
 The node has been desgined to allow a dynamic configuration of the controller architecture.
 
-First, it allows the dynamic loading/unloading of many `RobotHW` in parallel encapsulating each `RobotHW` in a different nodelet. Then, it allows the loading/unlaoding and start/stop of all the different controllers needed.
+First, it allows the dynamic loading/unloading of many `RobotHW` in parallel encapsulating each `RobotHW` in a different nodelet. 
+Then, it allows the loading/unlaoding and start/stop of all the different controllers needed.
 
 The configuration is done trough a proper yaml file, and it is possible to dynamically switch between many different configurations.
 
@@ -88,6 +93,7 @@ _All rights reserved._
 
 ![EC-H2020](.media/Sharework_logo_color_250px.png) [ShareWork webpage](https://sharework-project.eu/)
 
-![EC-H2020](.media/flag_yellow_low-300x201.jpg) 
+![EC-H2020](.media/flag_yellow_low-300x201.jpg)
+
 This project has received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No. 820807.
 This website reflects only the author’s view and the European Commission is not responsible for any use that may be made of the information it contains.|
