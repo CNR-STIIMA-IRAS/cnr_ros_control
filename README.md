@@ -4,7 +4,9 @@
 
 ## The design of the framework ##
 
-The repository contains the implementation of an exstension of the [ros_control](http://wiki.ros.org/ros_control "ros_control") framework developed by the Institute of Intelligent Industrial Technologies and Systems for Advanced Manufacturing (STIIMA), of the National Research Council of Italy (CNR-ITIA).
+The repository contains the implementation of an exstension of the [ros_control](http://wiki.ros.org/ros_control "ros_control") framework
+developed by the Institute of Intelligent Industrial Technologies and Systems for Advanced Manufacturing [(STIIMA)](http://www.stiima.cnr.it), 
+of the National Research Council of Italy [(CNR)](www.cnr.it).
 
 The extension is based on one package and two meta-packages.
 
