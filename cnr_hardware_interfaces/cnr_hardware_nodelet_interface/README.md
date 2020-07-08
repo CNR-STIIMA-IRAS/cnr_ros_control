@@ -1,10 +1,10 @@
 # Hardware Nodelet Interface
 
-The package provides two class to ease the configuration and the life-cycle management of the `nodelet`.
+The package provides two classes to ease the configuration and the life-cycle management of the `nodelet`.
 
 ## RobotHwNodelet Class
 
-1. `cnr_hardware_nodelet_interface::RobotHwNodelet : public nodelet::Nodelet`  embeds a `RobotHW` inside a `nodelet`. Basically, the Class implements the `onInit` function inherited from the `public nodelet::Nodelet`
+The class `cnr_hardware_nodelet_interface::RobotHwNodelet : public nodelet::Nodelet`  packs a `RobotHW` inside a `nodelet`. Basically, the Class implements the `onInit` function inherited from the `public nodelet::Nodelet`
 
 ```cpp
 void RobotHwNodelet::onInit()
@@ -86,14 +86,6 @@ bool RobotHwNodelet::doOnInit()
     }
     m_robot_hw_plugin_loader->loadLibraryForClass(robot_type);
     m_hw = m_robot_hw_plugin_loader->createInstance(robot_type);
-  }
-  catch (pluginlib::PluginlibException& ex)
-  {
-    const std::vector<std::string>& classes = m_robot_hw_plugin_loader->getDeclaredClasses();
-    std::stringstream ss;
-    for (std::size_t i = 0; i < classes.size(); ++i)
-      ss << classes[i] << " ";
-    CNR_ERROR(*m_logger, "Exception while loading '" << robot_type << "': " << ex.what() << "\n Available plugins: " << ss.str());
   }
   catch (std::exception& e)
   {
