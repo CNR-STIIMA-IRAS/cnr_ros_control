@@ -94,5 +94,6 @@ _All rights reserved._
 
 ![EC-H2020](.media/Sharework_logo_color_250px.png) [ShareWork webpage](https://sharework-project.eu/)
 
-|:----------------------------------------------- |:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ![EC-H2020](.media/flag_yellow_low-300x201.jpg) | This project has received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No. 820807. This website reflects only the author’s view and the European Commission is not responsible for any use that may be made of the information it contains.|
+![EC-H2020](.media/flag_yellow_low-300x201.jpg) 
+This project has received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No. 820807.
+This website reflects only the author’s view and the European Commission is not responsible for any use that may be made of the information it contains.|
