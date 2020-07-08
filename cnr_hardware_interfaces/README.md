@@ -2,7 +2,13 @@
 
 The metapackage is an extension of the [hardware_interface](https://github.com/ros-controls/ros_control/tree/noetic-devel/hardware_interface).
 
-Specifically, the extension built up on five packages:
+Specifically, the extension built on five packages:
+
+1. `cnr_hardware_interface` 
+2. `cnr_hardware_nodelet_interface`
+3. `cnr_topic_hardware_interface`
+4. `cnr_topics_hardware_interface`
+5. `cnr_fake_hardware_interface`
 
 ## CNR Hardware Interface [(readme)](cnr_hardware_interface/README.md)
 
