@@ -162,3 +162,45 @@ bool RobotHwNodelet::exitOnInit()
   CNR_RETURN_TRUE(*m_logger);
 }
 ```
+
+## NodeletManagerInterface Class
+
+The `NodeletManagerInterface` is a wrapper to load, unload the `RobotHwNodelet`, that is, to dynamically load a different `nodelet` where a different `RobotHW` performs the operations `read()` and `write()`.
+
+```cpp
+class NodeletManagerInterface
+{
+private:
+  ...
+  std::shared_ptr<nodelet::Loader>         nodelet_loader_;
+
+
+public:
+  std::map<std::string, cnr_controller_manager_interface::ControllerManagerInterface> cmi_;
+
+  NodeletManagerInterface(std::shared_ptr<cnr_logger::TraceLogger> log, const std::string& root_ns, const std::string& nodelet_manager_ns = "/configuration_nodelet_manager");
+  ~NodeletManagerInterface()
+  {
+    nodelet_loader_.reset();
+  }
+
+  ros::NodeHandle& getNamespace();
+  std::string      loadServiceName();
+  std::string      unloadServiceName();
+  std::string      listServiceName();
+
+  bool loadRequest(nodelet::NodeletLoad&   msg, std::string& error, const ros::Duration&  watchdog = ros::Duration(0.0));
+  bool unloadRequest(nodelet::NodeletUnload& msg, std::string& error, const ros::Duration&  watchdog = ros::Duration(0.0));
+  bool listRequest(nodelet::NodeletList&   msg, std::string& error, const ros::Duration&  watchdog = ros::Duration(0.0));
+
+  const std::string& error() const;
+
+  // inline implementation
+  bool get_hw_param(ros::NodeHandle &nh, const std::string& hw_name, nodelet::NodeletLoadRequest& request);
+  bool list_hw(std::vector<std::string>& hw_names_from_nodelet, const ros::Duration& watchdog);
+  bool purge_hw(const ros::Duration& watchdog);
+  bool load_hw(const std::string& hw_to_load_name, const ros::Duration& watchdog, bool double_check);
+  bool load_hw(const std::vector<std::string>& hw_to_load_names, const ros::Duration& watchdog, bool double_check);
+  bool unload_hw(const std::vector<std::string>& hw_to_unload_names, const ros::Duration& watchdog);
+};
+```
