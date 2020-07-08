@@ -41,8 +41,8 @@ hardware_interface_name:
 
 **Authors:**
 
-* Manuel Beschi (<mailto:manuel.beschi@stiima.cnr.it>)
-* Nicola Pedrocchi (<mailto:nicola.pedrocchi@stiima.cnr.it>)  
+- Manuel Beschi (<mailto:manuel.beschi@stiima.cnr.it>)
+- Nicola Pedrocchi (<mailto:nicola.pedrocchi@stiima.cnr.it>)  
 
 _Software License Agreement (BSD License)_
 _Copyright (c) 2017, National Research Council of Italy, Institute of Industrial Technologies and Automation_
