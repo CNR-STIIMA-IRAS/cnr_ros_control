@@ -1,20 +1,16 @@
 # Topic hardware interface
 
-The package implements an hardware interface which reads from a JointState topic and write in another JointState topic.
-It can be used in the configurations (aka metacontroller) managed by the cnr_controller_manager.
+The package implements an hardware interface which reads from a `JointState` topic and write in another `JointState` topic.
+It can be used in the configurations (aka metacontroller) managed by the `cnr_controller_manager`.
 
 The repository contains the implementation of a hardware interface derived from **cnr_hardware_interface**.
 The package is developed by the Institute of Industrial Technologies and Automation, of the National Research Council of Italy (CNR-ITIA).
 
 ## Functionalities and code organization
 
-The package **cnr_topic_hardware_interface** is made the following classes:
-
-1. **TopicRobotHW** implements some additional features wrt to **BasicRobotHW**:
+The package **cnr_topic_hardware_interface** is mainly made by the class **TopicRobotHW** that implements some additional features wrt to **cnr_hardware_interface::RobotHW**:
 
 > _checkForConflict_ policy is different from ROS-Control standard. Each controller can use more than a hardware_interface for a single joint (for example: position, velocity, effort).  One controller can control more than one joint.  A joint can be used only by a controller.
-
-1. The hardware interface is instantiated on **itia::control::TopicHwIfaceNodelet**, a nodelet that can be (un)loaded by **cnr_controller_manager**. It uses the same functionalities on **itia::control::BasicHwIfaceNodelet**.
 
 ## Required parameters
 
@@ -22,7 +18,7 @@ Topic hardware interface requires the following parameters:
 
 ```yaml
 hardware_interface_name:
-  type: "itia/control/TopicHwIfaceNodelet"
+  type: "cnr/control/TopicRobotHW"
   joint_names:
   - "joint_1"
   - "joint_2"

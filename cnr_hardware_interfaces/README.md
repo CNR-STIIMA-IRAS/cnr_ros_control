@@ -38,3 +38,14 @@ The package `cnr_topics_hardware_interface` [(readme)](cnr_topics_hardware_inter
 ## CNR Fake Hardware Interface [(readme)](cnr_topic_hardware_interface/README.md)
 
 The package `cnr_fake_hardware_interface` [(readme)](cnr_fake_hardware_interface/README.md) implements a fake `RobotHW` that receives the joint position commands, and it copies the information on the feedback fields. It is useful for debugging and simulation.
+
+## Developer Contact
+
+**Authors:**
+
+- Manuel Beschi (<mailto:manuel.beschi@stiima.cnr.it>)
+- Nicola Pedrocchi (<mailto:nicola.pedrocchi@stiima.cnr.it>)  
+
+_Software License Agreement (BSD License)_
+_Copyright (c) 2017, National Research Council of Italy, Institute of Industrial Technologies and Automation_
+_All rights reserved._
