@@ -4,10 +4,10 @@
 
 ## Continuous Integration ##
 
-| service   | Master                                                                                                                                                                             |
-|:----------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
-| Travis    | [![Build Status](https://travis-ci.com/CNR-STIIMA-IRAS/cnr_ros_control.svg?branch=master)](https://travis-ci.com/CNR-STIIMA-IRAS/cnr_ros_control)                                  |
-| Codecov   | [![codecov](https://codecov.io/gh/CNR-STIIMA-IRAS/cnr_ros_control/branch/master/graph/badge.svg)](https://codecov.io/gh/CNR-STIIMA-IRAS/cnr_ros_control)                           |
+| service   | Master                                                                                                                                                                                                                                                                             |
+|:----------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
+| Travis    | [![Build Status](https://travis-ci.com/CNR-STIIMA-IRAS/cnr_ros_control.svg?branch=master)](https://travis-ci.com/CNR-STIIMA-IRAS/cnr_ros_control)                                                                                                                                  |
+| Codecov   | [![codecov](https://codecov.io/gh/CNR-STIIMA-IRAS/cnr_ros_control/branch/master/graph/badge.svg)](https://codecov.io/gh/CNR-STIIMA-IRAS/cnr_ros_control)                                                                                                                           |
 | Codacy    | [![Codacy Badge](https://api.codacy.com/project/badge/Grade/fd683d54c39443df9c685fb189300695)](https://app.codacy.com/gh/CNR-STIIMA-IRAS/cnr_ros_control?utm_source=github.com&utm_medium=referral&utm_content=CNR-STIIMA-IRAS/cnr_ros_control&utm_campaign=Badge_Grade_Dashboard) |
 
 ## Design ##
@@ -92,6 +92,7 @@ _All rights reserved._
 
 ## Acknowledge ##
 
-| ![EC-H2020](.media/Sharework_logo_color_250px.png) | [ShareWork webpage](https://sharework-project.eu/)|
+![EC-H2020](.media/Sharework_logo_color_250px.png) [ShareWork webpage](https://sharework-project.eu/)
 
+|-------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | ![EC-H2020](.media/flag_yellow_low-300x201.jpg) | This project has received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No. 820807. This website reflects only the author’s view and the European Commission is not responsible for any use that may be made of the information it contains.|
