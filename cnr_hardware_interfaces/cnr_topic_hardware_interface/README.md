@@ -10,7 +10,12 @@ The package is developed by the Institute of Industrial Technologies and Automat
 
 The package **cnr_topic_hardware_interface** is mainly made by the class **TopicRobotHW** that implements some additional features wrt to **cnr_hardware_interface::RobotHW**:
 
-> _checkForConflict_ policy is different from ROS-Control standard. Each controller can use more than a hardware_interface for a single joint (for example: position, velocity, effort).  One controller can control more than one joint.  A joint can be used only by a controller.
+> _checkForConflict_ policy is different from ROS-Control standard:
+>
+> 1. Each controller can use more than a hardware_interface for a single joint (for example: position, velocity, effort).  
+> 2. One controller can control more than one joint.  
+> 3. A joint can be used only by a controller.
+> 
 
 ## Required parameters
 
