@@ -2,13 +2,7 @@
 
 <a href="http://www.stiima.cnr.it"><img src=".media/logo-stiima-stiima-cnr-HI.png" width="250"></a>
 
-## Continuous Integration ##
-
-| service   | Master                                                                                                                                                                                                                                                                             |
-|:----------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
-| Travis    | [![Build Status](https://travis-ci.com/CNR-STIIMA-IRAS/cnr_ros_control.svg?branch=master)](https://travis-ci.com/CNR-STIIMA-IRAS/cnr_ros_control)                                                                                                                                  |
-| Codecov   | [![codecov](https://codecov.io/gh/CNR-STIIMA-IRAS/cnr_ros_control/branch/master/graph/badge.svg)](https://codecov.io/gh/CNR-STIIMA-IRAS/cnr_ros_control)                                                                                                                           |
-| Codacy    | [![Codacy Badge](https://api.codacy.com/project/badge/Grade/fd683d54c39443df9c685fb189300695)](https://app.codacy.com/gh/CNR-STIIMA-IRAS/cnr_ros_control?utm_source=github.com&utm_medium=referral&utm_content=CNR-STIIMA-IRAS/cnr_ros_control&utm_campaign=Badge_Grade_Dashboard) |
+[![Build Status](https://travis-ci.com/CNR-STIIMA-IRAS/cnr_ros_control.svg?branch=master)](https://travis-ci.com/CNR-STIIMA-IRAS/cnr_ros_control) [![codecov](https://codecov.io/gh/CNR-STIIMA-IRAS/cnr_ros_control/branch/master/graph/badge.svg)](https://codecov.io/gh/CNR-STIIMA-IRAS/cnr_ros_control) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/fd683d54c39443df9c685fb189300695)](https://app.codacy.com/gh/CNR-STIIMA-IRAS/cnr_ros_control?utm_source=github.com&utm_medium=referral&utm_content=CNR-STIIMA-IRAS/cnr_ros_control&utm_campaign=Badge_Grade_Dashboard)
 
 ## Design ##
 
