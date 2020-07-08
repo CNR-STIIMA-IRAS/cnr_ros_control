@@ -15,7 +15,7 @@ The package **cnr_topic_hardware_interface** is mainly made by the class **Topic
 > 1. Each controller can use more than a hardware_interface for a single joint (for example: position, velocity, effort).  
 > 2. One controller can control more than one joint.  
 > 3. A joint can be used only by a controller.
-> 
+>
 
 ## Required parameters
 
@@ -41,8 +41,8 @@ hardware_interface_name:
 
 **Authors:**
 
-- Manuel Beschi (<mailto:manuel.beschi@stiima.cnr.it>)
-- Nicola Pedrocchi (<mailto:nicola.pedrocchi@stiima.cnr.it>)  
+* Manuel Beschi (<mailto:manuel.beschi@stiima.cnr.it>)
+* Nicola Pedrocchi (<mailto:nicola.pedrocchi@stiima.cnr.it>)  
 
 _Software License Agreement (BSD License)_
 _Copyright (c) 2017, National Research Council of Italy, Institute of Industrial Technologies and Automation_
