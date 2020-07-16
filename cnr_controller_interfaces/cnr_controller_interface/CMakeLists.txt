@@ -11,12 +11,6 @@ find_package(catkin REQUIRED COMPONENTS
   controller_interface diagnostic_msgs cnr_logger rosconsole
 )
 
-catkin_package(
-  INCLUDE_DIRS include
-  LIBRARIES ${PROJECT_NAME}
-  CATKIN_DEPENDS controller_interface cnr_logger
-)
-
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
@@ -31,6 +25,12 @@ install(DIRECTORY include/${PROJECT_NAME}/
   FILES_MATCHING PATTERN "*.h"
   PATTERN ".svn" EXCLUDE
   PATTERN ".git" EXCLUDE
+)
+
+catkin_package(
+  INCLUDE_DIRS include
+  LIBRARIES ${PROJECT_NAME}
+  CATKIN_DEPENDS controller_interface cnr_logger
 )
 
 #############
