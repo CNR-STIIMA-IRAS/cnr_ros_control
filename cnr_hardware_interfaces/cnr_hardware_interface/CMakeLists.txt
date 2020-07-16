@@ -23,17 +23,15 @@ find_package(catkin REQUIRED COMPONENTS
   roslint
 )
 
-
 if(CATKIN_ENABLE_TESTING AND ENABLE_COVERAGE_TESTING)
   find_package(code_coverage REQUIRED)
   # Add compiler flags for coverage instrumentation before defining any targets
   APPEND_COVERAGE_COMPILER_FLAGS()
 endif()
 
-
 catkin_package(
- INCLUDE_DIRS include
- LIBRARIES cnr_hardware_interface
+ INCLUDE_DIRS   include
+ LIBRARIES      cnr_hardware_interface
  CATKIN_DEPENDS cnr_controller_manager_interface 
                 cnr_controller_interface 
                 controller_manager 
@@ -45,18 +43,12 @@ catkin_package(
                 configuration_msgs
                 realtime_utilities
                 pluginlib
- DEPENDS 
 )
 
-include_directories(include include/internal ${catkin_INCLUDE_DIRS} )
-add_library(${PROJECT_NAME}
-  src/${PROJECT_NAME}/cnr_robot_hw.cpp
-)
-
-add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
+include_directories  (include include/internal ${catkin_INCLUDE_DIRS} )
+add_library          (${PROJECT_NAME} src/${PROJECT_NAME}/cnr_robot_hw.cpp )
+add_dependencies     (${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
 set(ROSLINT_CPP_OPTS "--filter=-runtime/references,-runtime/int,-build/header_guard --linelength=150")
 roslint_cpp(src/${PROJECT_NAME}/cnr_robot_hw.cpp include/${PROJECT_NAME}/cnr_robot_hw.h)
@@ -66,10 +58,10 @@ roslint_cpp(src/${PROJECT_NAME}/cnr_robot_hw.cpp include/${PROJECT_NAME}/cnr_rob
 #############
 
 ## Mark cpp header files for installation
-install(DIRECTORY include/${PROJECT_NAME}/
-   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-   FILES_MATCHING PATTERN "*.h"
-   PATTERN ".git" EXCLUDE
+install( DIRECTORY      include/${PROJECT_NAME}/
+         DESTINATION    ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+         FILES_MATCHING PATTERN "*.h"
+         PATTERN ".git" EXCLUDE
  )
 
 install(TARGETS ${PROJECT_NAME}
@@ -77,6 +69,10 @@ install(TARGETS ${PROJECT_NAME}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
+
+#############
+## Testing ##
+#############
 
 ## Add gtest based cpp test target and link libraries
 if(CATKIN_ENABLE_TESTING)
