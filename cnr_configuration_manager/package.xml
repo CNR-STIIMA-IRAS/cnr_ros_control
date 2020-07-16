@@ -31,10 +31,7 @@
   <depend>subscription_notifier</depend>
   <depend>cnr_logger</depend>
 
-  <!-- The export tag contains other, unspecified, tags -->
-  <!--export>
-    <nodelet plugin="${prefix}/plugin.xml" />
-  </export-->
-
+  <build_depend>code_coverage</build_depend>
+  <build_depend>rostest</build_depend>
 
 </package>

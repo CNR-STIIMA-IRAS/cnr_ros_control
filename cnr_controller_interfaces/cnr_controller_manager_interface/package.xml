@@ -37,6 +37,10 @@
   <exec_depend>controller_manager</exec_depend>
 
 
+  <build_depend>code_coverage</build_depend>
+  <build_depend>rostest</build_depend>
+  <test_depend>rostest</test_depend>
+
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <!-- Other tools can request additional information be placed here -->

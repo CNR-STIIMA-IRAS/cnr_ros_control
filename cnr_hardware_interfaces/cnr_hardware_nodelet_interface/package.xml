@@ -53,7 +53,9 @@
   <exec_depend>realtime_utilities</exec_depend>
   <exec_depend>cnr_hardware_interface</exec_depend>
 
-  <!-- The export tag contains other, unspecified, tags -->
+  <build_depend>code_coverage</build_depend>
+  <build_depend>rostest</build_depend>
+
   <export>
     <nodelet plugin="${prefix}/plugin.xml" />
   </export>

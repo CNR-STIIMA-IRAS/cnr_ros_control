@@ -26,6 +26,8 @@
   <exec_depend>cnr_hardware_interface</exec_depend>
   <exec_depend>cnr_hardware_nodelet_interface</exec_depend>
 
+  <build_depend>code_coverage</build_depend>
+  <build_depend>rostest</build_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

@@ -1,0 +1,22 @@
+repositories:
+    code_coverage:
+        type: git
+        url: https://github.com/mikeferguson/code_coverage.git
+        version: master
+    cnr_logger:
+        type: git
+        url: https://github.com/CNR-STIIMA-IRAS/cnr_logger.git
+        version: master
+        version: master
+    realtime_utilities:
+        type: git
+        url:  https://github.com/CNR-STIIMA-IRAS/realtime_utilities.git
+        version: master
+    name_sorting:
+        type: git
+        url:  https://github.com/CNR-STIIMA-IRAS/name_sorting
+        version: master
+    subscription_notifier:
+        type: git
+        url:  https://github.com/CNR-STIIMA-IRAS/subscription_notifier
+        version: master
