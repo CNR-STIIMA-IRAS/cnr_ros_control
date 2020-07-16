@@ -19,7 +19,7 @@ endif()
 
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES cnr_controller_manager_interface
+  LIBRARIES ${PROJECT_NAME}
   CATKIN_DEPENDS cnr_controller_interface controller_manager
 #  DEPENDS system_lib
 )
@@ -38,6 +38,19 @@ add_library(${PROJECT_NAME}
    src/${PROJECT_NAME}/cnr_controller_manager_interface.cpp
 )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
+
+## Mark cpp header files for installation
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.h"
+  PATTERN ".git" EXCLUDE
+)
+
+install(TARGETS ${PROJECT_NAME}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Add gtest based cpp test target and link libraries
 if(CATKIN_ENABLE_TESTING)
