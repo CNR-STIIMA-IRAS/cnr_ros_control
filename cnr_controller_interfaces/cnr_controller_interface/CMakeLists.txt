@@ -17,6 +17,11 @@ if(CATKIN_ENABLE_TESTING AND ENABLE_COVERAGE_TESTING)
   APPEND_COVERAGE_COMPILER_FLAGS()
 endif()
 
+catkin_package(
+  INCLUDE_DIRS include
+  LIBRARIES ${PROJECT_NAME}
+  CATKIN_DEPENDS controller_interface cnr_logger
+)
 
 include_directories(
   include
@@ -34,11 +39,6 @@ install(DIRECTORY include/${PROJECT_NAME}/
   PATTERN ".git" EXCLUDE
 )
 
-catkin_package(
-  INCLUDE_DIRS include
-  LIBRARIES ${PROJECT_NAME}
-  CATKIN_DEPENDS controller_interface cnr_logger
-)
 
 #############
 ## Testing ##
