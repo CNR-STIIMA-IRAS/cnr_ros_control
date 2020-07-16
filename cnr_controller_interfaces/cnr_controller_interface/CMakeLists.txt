@@ -32,8 +32,12 @@ add_library(${PROJECT_NAME} src/cnr_controller_interface/cnr_controller_interfac
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
 
+#############
+## Install ##
+#############
+
 ## Mark cpp header files for installation
- install(DIRECTORY include/${PROJECT_NAME}/
+install(DIRECTORY include/${PROJECT_NAME}/
    DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
    FILES_MATCHING PATTERN "*.h"
    PATTERN ".git" EXCLUDE
@@ -65,3 +69,4 @@ if(CATKIN_ENABLE_TESTING)
     )
   endif()
 endif()
+

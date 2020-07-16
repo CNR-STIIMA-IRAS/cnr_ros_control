@@ -38,7 +38,9 @@ endif()
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES cnr_topics_hardware_interface
-  CATKIN_DEPENDS control_msgs cnr_hardware_nodelet_interface cnr_controller_interface controller_manager diagnostic_msgs geometry_msgs hardware_interface  subscription_notifier nodelet roscpp sensor_msgs cnr_hardware_interface  name_sorting
+  CATKIN_DEPENDS control_msgs cnr_hardware_nodelet_interface cnr_controller_interface controller_manager
+                  diagnostic_msgs geometry_msgs hardware_interface  subscription_notifier nodelet roscpp sensor_msgs
+                  cnr_hardware_interface  name_sorting
   DEPENDS 
 )
 
@@ -46,6 +48,27 @@ include_directories  ( include         ${catkin_INCLUDE_DIRS} )
 add_library          ( ${PROJECT_NAME} src/${PROJECT_NAME}/cnr_topics_robot_hw.cpp )
 add_dependencies     ( ${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
 target_link_libraries( ${PROJECT_NAME} ${catkin_LIBRARIES} )
+
+#############
+## Install ##
+#############
+
+## Mark cpp header files for installation
+install(DIRECTORY include/${PROJECT_NAME}/
+   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+   FILES_MATCHING PATTERN "*.h"
+   PATTERN ".git" EXCLUDE
+ )
+
+install(TARGETS ${PROJECT_NAME}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+#############
+## Testing ##
+#############
 
 ## Add gtest based cpp test target and link libraries
 if(CATKIN_ENABLE_TESTING)

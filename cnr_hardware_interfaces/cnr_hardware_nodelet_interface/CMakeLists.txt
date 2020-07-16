@@ -40,6 +40,26 @@ add_library(${PROJECT_NAME}
    src/${PROJECT_NAME}/cnr_robot_hw_nodelet.cpp
 )
 
+#############
+## Install ##
+#############
+
+## Mark cpp header files for installation
+install(DIRECTORY include/${PROJECT_NAME}/
+   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+   FILES_MATCHING PATTERN "*.h"
+   PATTERN ".git" EXCLUDE
+ )
+
+install(TARGETS ${PROJECT_NAME}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+#############
+## Testing ##
+#############
 
 ## Add gtest based cpp test target and link libraries
 if(CATKIN_ENABLE_TESTING)

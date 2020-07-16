@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.1)
 
 project(cnr_configuration_manager)
 
-
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -114,3 +113,20 @@ if(CATKIN_ENABLE_TESTING)
     )
   endif()
 endif()
+
+
+#############
+## Install ##
+#############
+
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.h"
+  PATTERN ".git" EXCLUDE
+)
+
+install(TARGETS ${PROJECT_NAME}_node configuration_user_interface joy_teach_pendant dispatcher
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
