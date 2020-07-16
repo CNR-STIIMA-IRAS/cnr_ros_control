@@ -216,10 +216,7 @@ protected:
   virtual bool exitAborting();
 
   bool dump_state(const std::string& status);
-
   bool dump_state();
-
-
 
 protected:
 

@@ -32,40 +32,6 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
-/*
- *  Software License Agreement (New BSD License)
- *
- *  Copyright 2020 National Council of Research of Italy (CNR)
- *
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *   * Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above
- *     copyright notice, this list of conditions and the following
- *     disclaimer in the documentation and/or other materials provided
- *     with the distribution.
- *   * Neither the name of the copyright holder(s) nor the names of its
- *     contributors may be used to endorse or promote products derived
- *     from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- *  POSSIBILITY OF SUCH DAMAGE.
- */
 #include <pluginlib/class_list_macros.h>
 
 #include <cnr_hardware_interface/cnr_robot_hw.h>
@@ -241,7 +207,8 @@ bool FakeRobotHW::doWrite(const ros::Time& time, const ros::Duration& period)
   CNR_RETURN_TRUE_THROTTLE(*m_logger, 5.0);
 }
 
-bool FakeRobotHW::doPrepareSwitch(const std::list< hardware_interface::ControllerInfo >& start_list, const std::list< hardware_interface::ControllerInfo >& stop_list)
+bool FakeRobotHW::doPrepareSwitch(const std::list< hardware_interface::ControllerInfo >& start_list,
+                                  const std::list< hardware_interface::ControllerInfo >& stop_list)
 {
   CNR_TRACE_START(*m_logger);
   bool p_jh_active, v_jh_active, e_jh_active;
@@ -309,7 +276,7 @@ bool FakeRobotHW::doPrepareSwitch(const std::list< hardware_interface::Controlle
 bool FakeRobotHW::doCheckForConflict(const std::list< hardware_interface::ControllerInfo >& info)
 {
   CNR_TRACE_START(*m_logger);
-  // Each controller can use more than a hardware_interface for a single joint (for example: position, velocity, effort).
+  // Each controller can use more than one hardware_interface for a single joint (e.g.: position, velocity, effort).
   // One controller can control more than one joint.
   // A joint can be used only by a controller.
 
@@ -336,7 +303,8 @@ bool FakeRobotHW::doCheckForConflict(const std::list< hardware_interface::Contro
               diag.name = m_robothw_nh.getNamespace();
               diag.hardware_id = m_robothw_nh.getNamespace();
               diag.level = diagnostic_msgs::DiagnosticStatus::ERROR;
-              diag.message = "Hardware interface " + m_robothw_nh.getNamespace() + " run time: Joint " + name + " is already used by another controller";
+              diag.message = "Hardware interface " + m_robothw_nh.getNamespace() + " run time: Joint "
+                           + name + " is already used by another controller";
 
               std::lock_guard<std::mutex> lock(m_mutex);
               m_diagnostic.status.push_back(diag);

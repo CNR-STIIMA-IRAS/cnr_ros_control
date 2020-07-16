@@ -38,6 +38,16 @@
 #include <cnr_logger/cnr_logger.h>
 #include <gtest/gtest.h>
 
+std::shared_ptr<cnr_logger::TraceLogger> logger;
+
+// Declare a test
+TEST(TestSuite, fullConstructor)
+{
+  EXPECT_NO_FATAL_FAILURE(logger.reset(new cnr_logger::TraceLogger("log1", "/file_and_screen_different_appenders")));
+  EXPECT_FALSE(logger->init("/file_and_screen_different_appenders", false, false));  // Already initialized
+  EXPECT_NO_FATAL_FAILURE(logger.reset());
+}
+
 
 // Run all the tests that were declared with TEST()
 int main(int argc, char **argv)
