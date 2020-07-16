@@ -41,7 +41,7 @@
 #include <cnr_logger/cnr_logger.h>
 
 #include <cnr_controller_manager_interface/cnr_controller_manager_interface.h>
-#include <cnr_configuration_manager/cnr_hardware_nodelet_interface.h>
+#include <cnr_configuration_manager/cnr_configuration_loader.h>
 
 namespace cnr_configuration_manager
 {

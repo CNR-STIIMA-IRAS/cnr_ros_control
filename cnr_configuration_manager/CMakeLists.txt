@@ -57,7 +57,7 @@ include_directories(
  )
 
 add_executable(${PROJECT_NAME}_node
-  src/${PROJECT_NAME}/cnr_hardware_nodelet_interface.cpp
+  src/${PROJECT_NAME}/cnr_configuration_loader.cpp
   src/configuration_manager_node.cpp src/${PROJECT_NAME}/signal_handler.cpp)
 add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME}_node

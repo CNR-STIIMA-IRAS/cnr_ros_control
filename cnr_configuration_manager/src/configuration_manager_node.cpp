@@ -57,7 +57,7 @@
 #include <cnr_configuration_manager/signal_handler.h>
 #include <cnr_configuration_manager/internal/cnr_configuration_manager_utils.h>
 #include <cnr_configuration_manager/internal/cnr_configuration_manager_xmlrpc.h>
-#include <cnr_configuration_manager/cnr_hardware_nodelet_interface.h>
+#include <cnr_configuration_manager/cnr_configuration_loader.h>
 
 
 namespace cnr_configuration_manager
