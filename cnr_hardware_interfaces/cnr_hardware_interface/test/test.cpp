@@ -43,7 +43,7 @@ std::shared_ptr<cnr_hardware_interface::RobotHW> robot;
 std::shared_ptr<cnr_logger::TraceLogger>           logger;
 
 // Declare a test
-TEST(TestSuite, fullConstructor)
+TEST(TestSuite, robotHwFullConstructor)
 {
 
   EXPECT_NO_FATAL_FAILURE(logger.reset(new cnr_logger::TraceLogger("log1", "/file_and_screen_different_appenders")));
@@ -56,7 +56,7 @@ TEST(TestSuite, fullConstructor)
 }
 
 // Init
-TEST(TestSuite, fullConstructor)
+TEST(TestSuite, robotHwFullInit)
 {
 
   EXPECT_NO_FATAL_FAILURE(logger.reset(new cnr_logger::TraceLogger("log1", "/file_and_screen_different_appenders")));
