@@ -36,8 +36,43 @@
 #include <iostream>
 #include <ros/ros.h>
 #include <cnr_logger/cnr_logger.h>
+#include <cnr_hardware_interface/cnr_robot_hw.h>
 #include <gtest/gtest.h>
 
+std::shared_ptr<cnr_hardware_interface::RobotHW> robot;
+std::shared_ptr<cnr_logger::TraceLogger>           logger;
+
+// Declare a test
+TEST(TestSuite, fullConstructor)
+{
+
+  EXPECT_NO_FATAL_FAILURE(logger.reset(new cnr_logger::TraceLogger("log1", "/file_and_screen_different_appenders")));
+  EXPECT_FALSE(logger->init("/file_and_screen_different_appenders", false, false));  // Already initialized
+
+  EXPECT_NO_FATAL_FAILURE(robot.reset(new cnr_hardware_interface::RobotHW( )));
+
+  EXPECT_NO_FATAL_FAILURE(robot.reset());
+  EXPECT_NO_FATAL_FAILURE(logger.reset());
+}
+
+// Init
+TEST(TestSuite, fullConstructor)
+{
+
+  EXPECT_NO_FATAL_FAILURE(logger.reset(new cnr_logger::TraceLogger("log1", "/file_and_screen_different_appenders")));
+  EXPECT_FALSE(logger->init("/file_and_screen_different_appenders", false, false));  // Already initialized
+
+  EXPECT_NO_FATAL_FAILURE(robot.reset(new cnr_hardware_interface::RobotHW( )));
+  ros::NodeHandle robot_nh("/robot_hw");
+  ros::NodeHandle root_nh ("/");
+  ros::NodeHandle does_not_exist_nh ("/");
+  EXPECT_TRUE(  robot->init(root_nh, robot_nh));
+  EXPECT_FALSE( robot->init(root_nh, does_not_exist_nh));  // default vaules depiste none parameters
+  EXPECT_FALSE( robot->init(does_not_exist_nh, robot_nh));  // default vaules depiste none parameters
+
+  EXPECT_NO_FATAL_FAILURE(robot.reset());
+  EXPECT_NO_FATAL_FAILURE(logger.reset());
+}
 
 // Run all the tests that were declared with TEST()
 int main(int argc, char **argv)
