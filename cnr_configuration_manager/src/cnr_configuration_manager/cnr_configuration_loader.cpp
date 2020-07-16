@@ -59,8 +59,8 @@ ros::NodeHandle& ConfigurationLoader::getNamespace()
 }
 
 bool ConfigurationLoader::getHwParam(ros::NodeHandle &nh,
-                                         const std::string& hw_name,
-                                         nodelet::NodeletLoadRequest& request)
+                                     const std::string& hw_name,
+                                     nodelet::NodeletLoadRequest& request)
 {
 
   XmlRpc::XmlRpcValue hardware_interface;
