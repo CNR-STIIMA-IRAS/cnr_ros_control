@@ -60,20 +60,13 @@ include_directories(
  ${UUID_INCLUDE_DIRS}
  )
 
-add_executable(${PROJECT_NAME}_node
-  src/${PROJECT_NAME}/cnr_configuration_loader.cpp
-  src/configuration_manager_node.cpp src/${PROJECT_NAME}/signal_handler.cpp)
-add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(${PROJECT_NAME}_node
-  ${catkin_LIBRARIES}
-)
+add_library(${PROJECT_NAME} src/${PROJECT_NAME}/cnr_configuration_loader.cpp
+                            src/${PROJECT_NAME}/cnr_configuration_manager.cpp
+                            src/${PROJECT_NAME}/signal_handler.cpp )
 
-#add_executable(configuration_nodelet_manager src/configuration_nodelet_manager.cpp)
-#add_dependencies(configuration_nodelet_manager ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-#target_link_libraries(configuration_nodelet_manager ${UUID_LIBRARIES} ${catkin_LIBRARIES} ${BOOST_LIBRARIES} )
-
-
-
+add_executable       (${PROJECT_NAME}_node src/configuration_manager_node.cpp )
+add_dependencies     (${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(${PROJECT_NAME}_node ${PROJECT_NAME} ${catkin_LIBRARIES} )
 
 add_executable(configuration_user_interface src/ui_configuration_manager.cpp)
 add_dependencies(configuration_user_interface ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
@@ -93,6 +86,23 @@ target_link_libraries(dispatcher
   ${catkin_LIBRARIES}
 )
 
+
+
+#############
+## Install ##
+#############
+
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.h"
+  PATTERN ".git" EXCLUDE
+)
+
+install(TARGETS ${PROJECT_NAME}_node configuration_user_interface joy_teach_pendant dispatcher
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 #############
 ## Testing ##
@@ -115,18 +125,3 @@ if(CATKIN_ENABLE_TESTING)
 endif()
 
 
-#############
-## Install ##
-#############
-
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h"
-  PATTERN ".git" EXCLUDE
-)
-
-install(TARGETS ${PROJECT_NAME}_node configuration_user_interface joy_teach_pendant dispatcher
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
