@@ -1,4 +1,3 @@
-
 cmake_minimum_required(VERSION 3.1)
 
 project(cnr_controller_interface)
@@ -8,18 +7,9 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-
 find_package(catkin REQUIRED COMPONENTS
   controller_interface diagnostic_msgs cnr_logger rosconsole
 )
-
-
-if(CATKIN_ENABLE_TESTING AND ENABLE_COVERAGE_TESTING)
-  find_package(code_coverage REQUIRED)
-  # Add compiler flags for coverage instrumentation before defining any targets
-  APPEND_COVERAGE_COMPILER_FLAGS()
-endif()
-
 
 catkin_package(
   INCLUDE_DIRS include
@@ -46,6 +36,13 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #############
 ## Testing ##
 #############
+
+if(CATKIN_ENABLE_TESTING AND ENABLE_COVERAGE_TESTING)
+  find_package(code_coverage REQUIRED)
+  # Add compiler flags for coverage instrumentation before defining any targets
+  APPEND_COVERAGE_COMPILER_FLAGS()
+endif()
+
 
 ## Add gtest based cpp test target and link libraries
 if(CATKIN_ENABLE_TESTING)
