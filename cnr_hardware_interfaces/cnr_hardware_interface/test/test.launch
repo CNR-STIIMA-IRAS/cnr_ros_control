@@ -26,7 +26,7 @@
 </group>
 
 
-<test test-name="cnr_controller_interface_test" pkg="cnr_controller_interface" type="cnr_controller_interface_test">
+<test test-name="cnr_hardware_interface_test" pkg="cnr_hardware_interface" type="cnr_hardware_interface_test">
   <!--rosparam command="load" file="$(find my_fancy_package)/test/$(arg case).yaml" /-->
 </test>
 
