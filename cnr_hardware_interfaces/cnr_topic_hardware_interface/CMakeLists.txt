@@ -24,6 +24,13 @@ find_package(catkin REQUIRED COMPONENTS
   cnr_hardware_interface
   name_sorting
 )
+
+if(CATKIN_ENABLE_TESTING AND ENABLE_COVERAGE_TESTING)
+  find_package(code_coverage REQUIRED)
+  # Add compiler flags for coverage instrumentation before defining any targets
+  APPEND_COVERAGE_COMPILER_FLAGS()
+endif()
+
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES cnr_topic_hardware_interface
@@ -44,14 +51,6 @@ add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EX
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
  )
-
-
-
-if(CATKIN_ENABLE_TESTING AND ENABLE_COVERAGE_TESTING)
-  find_package(code_coverage REQUIRED)
-  # Add compiler flags for coverage instrumentation before defining any targets
-  APPEND_COVERAGE_COMPILER_FLAGS()
-endif()
 
 ## Add gtest based cpp test target and link libraries
 if(CATKIN_ENABLE_TESTING)

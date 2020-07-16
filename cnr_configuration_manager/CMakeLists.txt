@@ -38,6 +38,11 @@ find_package(Boost REQUIRED)
 ## Find UUID libraries
 find_package(UUID REQUIRED)
 
+if(CATKIN_ENABLE_TESTING AND ENABLE_COVERAGE_TESTING)
+  find_package(code_coverage REQUIRED)
+  # Add compiler flags for coverage instrumentation before defining any targets
+  APPEND_COVERAGE_COMPILER_FLAGS()
+endif()
 
 
 catkin_package(
@@ -95,14 +100,6 @@ target_link_libraries(dispatcher
 #############
 
 ## Add gtest based cpp test target and link libraries
-
-
-if(CATKIN_ENABLE_TESTING AND ENABLE_COVERAGE_TESTING)
-  find_package(code_coverage REQUIRED)
-  # Add compiler flags for coverage instrumentation before defining any targets
-  APPEND_COVERAGE_COMPILER_FLAGS()
-endif()
-
 if(CATKIN_ENABLE_TESTING)
   find_package(roscpp REQUIRED)
   find_package(rostest REQUIRED)

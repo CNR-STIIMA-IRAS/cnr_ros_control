@@ -11,6 +11,13 @@ find_package(catkin REQUIRED COMPONENTS
   controller_interface diagnostic_msgs cnr_logger rosconsole
 )
 
+if(CATKIN_ENABLE_TESTING AND ENABLE_COVERAGE_TESTING)
+  find_package(code_coverage REQUIRED)
+  # Add compiler flags for coverage instrumentation before defining any targets
+  APPEND_COVERAGE_COMPILER_FLAGS()
+endif()
+
+
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
@@ -36,12 +43,6 @@ catkin_package(
 #############
 ## Testing ##
 #############
-
-if(CATKIN_ENABLE_TESTING AND ENABLE_COVERAGE_TESTING)
-  find_package(code_coverage REQUIRED)
-  # Add compiler flags for coverage instrumentation before defining any targets
-  APPEND_COVERAGE_COMPILER_FLAGS()
-endif()
 
 
 ## Add gtest based cpp test target and link libraries

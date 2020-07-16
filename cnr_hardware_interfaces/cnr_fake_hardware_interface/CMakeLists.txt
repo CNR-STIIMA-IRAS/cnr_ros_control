@@ -15,6 +15,12 @@ find_package(catkin REQUIRED COMPONENTS
   roslint 
 )
 
+if(CATKIN_ENABLE_TESTING AND ENABLE_COVERAGE_TESTING)
+  find_package(code_coverage REQUIRED)
+  # Add compiler flags for coverage instrumentation before defining any targets
+  APPEND_COVERAGE_COMPILER_FLAGS()
+endif()
+
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES cnr_fake_hardware_interface
@@ -37,14 +43,6 @@ target_link_libraries(${PROJECT_NAME}
 
 roslint_cpp()
 set(ROSLINT_CPP_OPTS "--filter=-runtime/references,-runtime/int --line-length=150")
-
-
-
-if(CATKIN_ENABLE_TESTING AND ENABLE_COVERAGE_TESTING)
-  find_package(code_coverage REQUIRED)
-  # Add compiler flags for coverage instrumentation before defining any targets
-  APPEND_COVERAGE_COMPILER_FLAGS()
-endif()
 
 ## Add gtest based cpp test target and link libraries
 if(CATKIN_ENABLE_TESTING)
