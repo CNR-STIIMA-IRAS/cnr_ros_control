@@ -147,9 +147,9 @@ bool RobotHW::checkForConflict(const std::list< hardware_interface::ControllerIn
   CNR_TRACE_START(*m_logger);
   if (::hardware_interface::RobotHW::checkForConflict(info))
   {
-    CNR_RETURN_FALSE(*m_logger, "Base Check failed");
+    CNR_RETURN_TRUE(*m_logger, "Base Check failed");
   }
-  if (enterCheckForConflict(info)  && doCheckForConflict(info) && exitCheckForConflict())
+  if (enterCheckForConflict(info) || doCheckForConflict(info) || exitCheckForConflict())
   {
     CNR_RETURN_TRUE(*m_logger);
   }
@@ -251,7 +251,7 @@ bool RobotHW::enterPrepareSwitch(const std::list< hardware_interface::Controller
     if (m_active_controllers.end() == stopped_controller)
     {
       add_diagnostic_message("ERROR", "controller '" + ctrl.name + "' is not active, so I cannot stop it",
-      { {"Transition", "switching"} }, true);  //NOLINT
+                              { {"Transition", "switching"} }, true);  //NOLINT
       dump_state(cnr_hardware_interface::CTRL_ERROR);
       CNR_RETURN_FALSE(*m_logger);
     }
@@ -284,12 +284,6 @@ bool RobotHW::exitPrepareSwitch()
 
 bool RobotHW::enterCheckForConflict(const std::list< hardware_interface::ControllerInfo >& info) const
 {
-  if (!hardware_interface::RobotHW::checkForConflict(info))
-  {
-    CNR_FATAL(*m_logger, "Base Class RobotHw failed in the conflict checking!");
-    return true;
-  }
-
   // Each controller can use more than a hardware_interface for a single joint (for example: position, velocity, effort)
   // One controller can control more than one joint.
   // A joint can be used only by a controller.
@@ -432,8 +426,10 @@ bool RobotHW::dump_state() const
 
 bool RobotHW::dump_state(const cnr_hardware_interface::StatusHw& status) const
 {
-  if (m_status_history.back() != cnr_hardware_interface::to_string(m_status))
+  if ((m_status_history.size() == 0) || (m_status_history.back() != cnr_hardware_interface::to_string(m_status)))
+  {
     m_status_history.push_back(cnr_hardware_interface::to_string(m_status));
+  }
   m_status = status;
   return dump_state();
 }

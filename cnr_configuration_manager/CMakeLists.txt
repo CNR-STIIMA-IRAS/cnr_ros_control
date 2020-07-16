@@ -43,7 +43,9 @@ find_package(UUID REQUIRED)
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES cnr_configuration_manager
-  CATKIN_DEPENDS cnr_controller_manager_interface  cnr_controller_interface cnr_hardware_nodelet_interface cnr_hardware_interface cnr_logger configuration_msgs actionlib control_msgs controller_manager hardware_interface nodelet configuration_msgs subscription_notifier pluginlib rosconsole roscpp
+  CATKIN_DEPENDS  cnr_controller_manager_interface  cnr_controller_interface cnr_hardware_nodelet_interface 
+                  cnr_hardware_interface cnr_logger configuration_msgs actionlib control_msgs controller_manager 
+                  hardware_interface nodelet configuration_msgs subscription_notifier pluginlib rosconsole roscpp
   DEPENDS Boost
 )
 
@@ -54,15 +56,9 @@ include_directories(
  ${UUID_INCLUDE_DIRS}
  )
 
-
-#add_library(hardware_nodelet_loader
-#   src/${PROJECT_NAME}/hardware_nodelet_interface.cpp
-#   src/${PROJECT_NAME}/cnr_robot_hw_nodelet.cpp
-#)
-
-
-
-add_executable(${PROJECT_NAME}_node src/configuration_manager_node.cpp src/${PROJECT_NAME}/signal_handler.cpp)
+add_executable(${PROJECT_NAME}_node
+  src/${PROJECT_NAME}/cnr_hardware_nodelet_interface.cpp
+  src/configuration_manager_node.cpp src/${PROJECT_NAME}/signal_handler.cpp)
 add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES}

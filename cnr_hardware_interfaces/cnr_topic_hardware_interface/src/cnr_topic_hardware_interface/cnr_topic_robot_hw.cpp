@@ -39,8 +39,6 @@
 
 PLUGINLIB_EXPORT_CLASS(cnr_hardware_interface::TopicRobotHW, cnr_hardware_interface::RobotHW)
 
-
-
 namespace cnr_hardware_interface
 {
 
@@ -351,6 +349,4 @@ bool TopicRobotHW::doShutdown()
   return true;
 }
 
-
-}
-
+}  // namespace cnr_hardware_interface

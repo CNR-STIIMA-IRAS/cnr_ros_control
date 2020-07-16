@@ -1,48 +1,40 @@
-# Configuration (aka metacontroller) manager developed by CNR-ITIA (www.itia.cnr.it)
+# Configuration (aka metacontroller) manager
 
-The repository contains the implementation of a controller manager which load and unload multiple hardware interfaces and the related controllers.
-The package is developed by the Institute of Industrial Technologies and Automation, of the National Research Council of Italy (CNR-ITIA).
+The repository contains the implementation of a controller manager which load and unload multiple hardware interfaces
+and the related controllers.
+
+The package is developed by the Institute of Intelligent Industrial Technologies and Systems for Advanced Manufacturing,
+of the National Research Council of Italy (CNR-ITIA).
 
 ## Design
 
-The package **cnr_configuration_manager** is made the following classes:
+The package **cnr_configuration_manager** provides one node, the `configuration_manager_node` and a few utilities, 
+listed below.
 
-1) **ConfigurationManager** in the core of the package. It provides the services (defined in **configuration_msgs** package) to start/stop/list configuration.
+The `configuration_manager_node` is designed to dynamically load and unload a set of different `hardware_interface`,
+each packed in `nodelet` ([here])(../cnr_hardware_interfaces/README.md), and to load/start/stop/unload a set of
+`ros_controllers`.
 
-The following node are provided:
+This set is called `configuration` and the configuration definition has to be uploaded inside the `rosparam` server
+though a proper `yaml`.
 
-1) **cnr_configuration_manager** instantiates the **ConfigurationManager** class in a node.
-
-## Service availables
-
-```shell
-"/configuration_manager/start_configuration" [type: configuration_msgs::StartConfiguration] start configuration:
-
->_start_configuration_: name of the desired configuration
->_strictness_: level can be equal to:
-> > 1: same behavior of ros control package (if the client ask to run an already running controller it will be leaved running)
-> > 2: same behavior of ros control package
-> > 0: like 1 but if the client ask to run an already running controller it will be restarted as well as its hardware interface
-
-- "/configuration_manager/stop_configuration" [type: configuration_msgs::StopConfiguration] stop running configuration:
-
->_strictness_: level can be equal to:
-> > 1: same behavior of ros control package (if the client ask to run an already running controller it will be leaved running)
-> > 2: same behavior of ros control package
-> > 0: like 1 but if the client ask to run an already running controller it will be restarted as well as its hardware interface
-
-"/configuration_manager/list_configurations" [type: configuration_msgs::ListControllers] provides the list of available configurations and their status (running / loaded)
-```
+Then, the `configuration_manager_node` provides a set of services to load and unload properly the configuration
 
 ## Configurations
 
 Configurations (aka metacontrollers) are a set of controllers running on a set of hardware interface.
 
-A common issue of ROS control architecture is the absence of toolchain functionality. For instance, a cascade control architecture has to be implemented in a single controller since primary controller cannot consider the secondary control as its own hardware interface.
-Moreover, it manages in a effective way the controllers lifecycle but it does not manage the hardware interface lifecycle.
+A common issue of ROS control architecture is the absence of toolchain functionality.
+For instance, a cascade control architecture has to be implemented in a single controller since primary
+controller cannot consider the secondary control as its own hardware interface. Moreover, 
+it manages in a effective way the controllers lifecycle but it does not manage the hardware interface lifecycle.
 
-To overcome these issues, itia hardware interfaces are developed as nodelets (see cnr_hardware_interface packages for details) which can be dynamically loaded/unloaded. Moreover, cnr_topic_hardware_interface can be used in higher layers of complex control architectures. When it publishes/subscribes topics from the other hardware interface (or the controllers loaded on them) the messages are shared by means of nodelet fashion (shared memory instead of tcp communications) making the communications faster and more reliable.
-ROS bonds ensure that the system will be stopped if one hardware interface fails.
+To overcome these issues, the `RobotHW` are packed in `nodelets` 
+[see cnr_hardware_interface](../cnr_hardware_interfaces/README.md)  for details) which can be dynamically loaded/unloaded.
+Moreover, cnr_topic_hardware_interface can be used in higher layers of complex control architectures.
+When it publishes/subscribes topics from the other hardware interface (or the controllers loaded on them)
+the messages are shared by means of nodelet fashion (shared memory instead of tcp communications) making 
+the communications faster and more reliable.
 
 Configurations are read from the ROS parameter **control_configurations** which has the following structure:
 
@@ -58,15 +50,57 @@ control_configurations:
         controller        : "controller_2"
       - description: "a brief description of the component"
         hardware_interface: "hardware_interface_2"
-        controller        : "controller_3" #it is strongly recommended (but not mandatory) to use different names also for controllers loaded in different hardware interfaces
+        controller        : "controller_3" #it is recommended (but not mandatory) to use different 
+                                           # names also for controllers loaded in different hardware interfaces
   - name: "configuration2"
     components:
       - description: "a brief description of the component"
         hardware_interface: "motor_velocity_hi"
         controller        : "linkpos_to_vel_jnt1_1"
-      - description: "a brief description of the component" #different configurations can use the same hardware interfaces or the same controllers
+      - description: "a brief description of the component" # different configurations can use the same hardware
+                                                            # interfaces or the same controllers
         hardware_interface: "hardware_interface_1"
         controller        : "controller_2"
+```
+
+## Service availables
+
+```shell
+/configuration_manager/start_configuration [type: configuration_msgs::StartConfiguration] 
+"start_configuration: '' ,
+strictness: "
+```
+
+where
+
+```shell
+start_configuration:  is the label of the configuration to be started. The label is the 'name' field of the
+                      control_configurations parameter
+
+strictness: is an integer:
+  1: same behavior of `ros_control` if the client assk to run an already running controller it will be leaved running
+  2: same behavior of `ros_control`
+  0: like 1, but if the client ask to run an already running controller it will be restarted as well as its 
+     hardware interface
+```
+
+```shell
+/configuration_manager/stop_configuration [type: configuration_msgs::StopConfiguration] "stricness: [integer]":
+```
+
+where
+
+```shell
+strictness: is an integer:
+ 1: same behavior of `ros_control` if the client assk to run an already running controller it will be leaved running
+ 2: same behavior of `ros_control` 
+ 0: like 1, but if the client ask to run an already running controller it will be restarted as well as its hardware interface
+```
+
+and finally,
+
+```shell
+"/configuration_manager/list_configurations" [type: configuration_msgs::ListControllers] provides the list of available configurations and their status (running / loaded)
 ```
 
 ## Example of use

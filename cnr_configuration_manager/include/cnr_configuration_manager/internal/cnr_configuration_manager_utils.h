@@ -32,42 +32,8 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
-/*
- *  Software License Agreement (New BSD License)
- *
- *  Copyright 2020 National Council of Research of Italy (CNR)
- *
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *   * Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above
- *     copyright notice, this list of conditions and the following
- *     disclaimer in the documentation and/or other materials provided
- *     with the distribution.
- *   * Neither the name of the copyright holder(s) nor the names of its
- *     contributors may be used to endorse or promote products derived
- *     from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- *  POSSIBILITY OF SUCH DAMAGE.
- */
-#ifndef __ITIA_CONFIGURATION_MANAGER__UTILS__
-#define __ITIA_CONFIGURATION_MANAGER__UTILS__
+#ifndef CNR_CONFIGURATION_MANAGER_CNR_CONFIGURATION_MANAGER_UTILS_H
+#define CNR_CONFIGURATION_MANAGER_CNR_CONFIGURATION_MANAGER_UTILS_H
 
 #include <ros/ros.h>
 
@@ -101,15 +67,15 @@ struct ComponentData
   bool        hidden;
 };
 
+
 typedef std::map<std::string, std::vector<std::string> > ComponentMap;
+
 
 struct ConfigurationStruct
 {
   ComponentData   data;
   ComponentMap    components;
 };
-
-
 
 
 struct RetrieveKey
@@ -243,34 +209,6 @@ void concat(ComponentMap& var, const std::pair< std::string, std::string >& add)
 }
 
 inline
-std::string to_string(const ConfigurationStruct& what, const std::string& key_header = "Robot Hw", const std::string value_header = "")
-{
-  std::string ret;
-  for (auto w = what.components.begin(); w != what.components.end(); ++w)
-  {
-    size_t i = std::distance(std::begin(what.components), w);
-    ret += "- " + std::to_string(i) + " - " + key_header + ": " + w->first + "\n";
-    for (size_t j = 0; j < w->second.size(); j++)
-    {
-      ret += "    - " + std::to_string(j) + " - " + value_header + ":" + w->second.at(j) + "\n";
-    }
-  }
-  return ret;
-}
-
-inline
-std::string to_string(const std::vector<std::string>& what, const std::string value_header = "")
-{
-  std::string ret = (value_header.size() > 0) ? value_header + ": <" : "<";
-  for (size_t j = 0; j < what.size(); j++)
-  {
-    ret += what.at(j) + (j < j < what.size() - 1 ? ", " : "");
-  }
-  ret += ">";
-  return ret;
-}
-
-inline
 std::vector<std::string> getHardwareInterfacesNames(const ConfigurationStruct& m)
 {
   std::vector<std::string> ret(m.components.size());
@@ -285,9 +223,6 @@ std::vector<std::string> getNames(const std::vector< controller_manager_msgs::Co
   for (auto & ctrl : controllers) ret.push_back(ctrl.name);
   return ret;
 }
-
-
-
 
 inline bool cast(const configuration_msgs::ConfigurationComponent& in, ::cnr_configuration_manager::ConfigurationStruct& out)
 {
@@ -348,7 +283,77 @@ bool extract_hardware_interfaces_names(const std::string& configuration_to_activ
   return true;
 }
 
-
-
+/**
+ * print utilities 
+ */
+inline 
+std::string to_string( const std::vector<std::string>& what, const std::string& prefix = "<", const std::string& separator = ",", const std::string& suffix = ">" )
+{
+  std::string ret = prefix;
+  for (size_t j = 0; j < what.size(); j++)
+  {
+    ret += what.at(j) + (j < what.size() - 1 ? separator : "");
+  }
+  return ret + suffix;
 }
-#endif
+
+inline 
+std::string to_string( const ComponentData& in )
+{
+  return in.name + "[" + in.type + "](" + in.state +")";
+}
+
+inline 
+std::string to_string( const ComponentMap& in, const std::string& prefix = "<", const std::string& separator = ",", const std::string& suffix = ">", bool nl = true )
+{
+  std::string ret = prefix + (nl ? "\n" : "");
+  for(auto const & v : in ) ret += v.first + ":" + to_string(v.second, prefix, separator, suffix ) + (nl ? "\n" : "");
+  return ret + suffix + (nl ? "\n" : "");
+}
+
+inline
+std::string to_string( const ConfigurationStruct& what, const std::string& header = "Configuration:\n" )
+{
+  std::string ret = header;
+  ret += "Data: " + to_string(what.data) + "\n";
+  ret += "Components:\n" + to_string( what.components, "[",",","]",true)  +"\n";
+  return ret;
+}
+
+inline 
+std::string to_string(const std::map<std::string,ConfigurationStruct>& in )
+{
+  std::string ret;
+  for(auto const & v : in ) ret += to_string( v.second, "Confiuration '" + v.first +"':\n");
+  return ret;
+}
+
+
+//============ UTILITIES
+template<class MSG>
+bool callRequest(ros::ServiceClient& clnt, MSG& msg, std::string& error, const ros::Duration&  watchdog = ros::Duration(0.0))
+{
+  if (watchdog.toSec() > 0)
+  {
+    if (!clnt.waitForExistence(watchdog))
+    {
+      error = "The service '" + clnt.getService() + "' does not exist. Abort." ;
+      return false;
+    }
+  }
+  if (!clnt.call(msg))
+  {
+    error = "The service '" + clnt.getService() + "' is broken. Abort.";
+    return false;
+  }
+  return true;
+}
+
+
+
+
+
+
+}  // namespace cnr_configuration_manager
+
+#endif  //   CNR_CONFIGURATION_MANAGER_CNR_CONFIGURATION_MANAGER_UTILS_H

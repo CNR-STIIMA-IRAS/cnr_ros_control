@@ -67,7 +67,6 @@ public:
   virtual bool doWrite(const ros::Time& time, const ros::Duration& period);
   virtual bool doPrepareSwitch(const std::list< hardware_interface::ControllerInfo >& start_list, const std::list< hardware_interface::ControllerInfo >& stop_list);
 
-
 protected:
   virtual void jointStateCallback(const sensor_msgs::JointStateConstPtr& msg);
 

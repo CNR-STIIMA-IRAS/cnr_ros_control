@@ -50,7 +50,6 @@
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <nodelet plugin="${prefix}/plugin.xml" />
-    <cnr_hardware_nodelet_interface plugin="${prefix}/plugin.xml" />
     <cnr_hardware_interface plugin="${prefix}/plugin.xml" />
   </export>
 </package>

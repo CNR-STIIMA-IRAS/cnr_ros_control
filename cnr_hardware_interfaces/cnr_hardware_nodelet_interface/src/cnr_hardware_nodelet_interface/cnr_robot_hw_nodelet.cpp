@@ -232,7 +232,7 @@ bool RobotHwNodelet::exitOnInit()
              + "'and of the hardware interface label from configuration manager '" + m_hw_namespace + "'. Is it right?");
   }
 
-  m_cm.reset(new controller_manager::ControllerManager(m_hw.get(), m_hw_nh));
+  m_cm.reset(new cnr_controller_manager_interface::ControllerManager( m_logger, m_hw_name, m_hw.get(), m_hw_nh));
 
   m_update_thread_state = ON_INIT;
   ros::Time start       = ros::Time::now();
@@ -281,9 +281,9 @@ bool RobotHwNodelet::exitOnInit()
   CNR_RETURN_TRUE(*m_logger);
 }
 
+
 void RobotHwNodelet::diagnostics(diagnostic_updater::DiagnosticStatusWrapper &stat)
 {
-
   stat.hardware_id = m_hw_name;
   stat.level       = diagnostic_msgs::DiagnosticStatus::OK;
   stat.name        = m_hw_name;
@@ -293,8 +293,8 @@ void RobotHwNodelet::diagnostics(diagnostic_updater::DiagnosticStatusWrapper &st
     diagnostic_msgs::KeyValue k;
     k.key = ts.first + " [s]";
     k.value = to_string(ts.second->getMean())
-              + std::string(" [ ") + to_string(ts.second->getMin()) + " - " + to_string(ts.second->getMax()) + std::string(" ] ")
-              + std::string("Missed: ")  + to_string(ts.second->getMissedCycles());
+            + std::string(" [ ") + to_string(ts.second->getMin()) + " - " + to_string(ts.second->getMax()) + std::string(" ] ")
+            + std::string("Missed: ") + to_string(ts.second->getMissedCycles());
     stat.add(k.key, k.value);
   }
 }
@@ -336,7 +336,6 @@ void RobotHwNodelet::diagnosticsThread()
   m_diagnostics_thread_state = EXPIRED;
   CNR_WARN(*m_logger, "Diagnositcs Thread Expired");
   return;
-
 }
 
 

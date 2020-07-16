@@ -129,8 +129,6 @@ bool  Controller< T >::init(T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& co
     CNR_RETURN_TRUE(*m_logger);
   }
 
-  m_diagnostics_pub = m_controller_nh.advertise<diagnostic_msgs::DiagnosticArray>("/diagnostics", 1);
-
   CNR_RETURN_BOOL(*m_logger, dump_state()) ;
 }
 
@@ -265,12 +263,13 @@ bool Controller< T >::enterStopping()
 template< class T >
 bool Controller< T >::exitStopping()
 {
+  CNR_TRACE_START(*m_logger);
   bool ret = shutdown("STOPPED");
   if (ret)
   {
     m_controller_nh_callback_queue.disable();
   }
-  return ret;
+  CNR_RETURN_BOOL(*m_logger, ret);
 }
 
 template< class T >
@@ -320,11 +319,6 @@ bool Controller< T >::dump_state(const std::string& status)
     }
   }
 
-  if (m_diagnostic.status.size() > 0)
-  {
-    m_diagnostics_pub.publish(m_diagnostic);
-    m_diagnostic.status.clear();
-  }
   return true;
 }
 
@@ -351,37 +345,62 @@ void Controller< T >::add_diagnostic_message(const std::string& msg, const std::
   if (level == "OK")
   {
     diag.level = diagnostic_msgs::DiagnosticStatus::OK;
-    CNR_INFO_COND(*m_logger, verbose, "[" << m_hw_name << " ] " << msg);
+    CNR_INFO_COND(*m_logger, verbose, "[" << m_hw_name << "] " << msg);
   }
   if (level == "WARN")
   {
     diag.level = diagnostic_msgs::DiagnosticStatus::WARN;
-    CNR_WARN_COND(*m_logger, verbose, "[" << m_hw_name << " ] " << msg);
+    CNR_WARN_COND(*m_logger, verbose, "[" << m_hw_name << "] " << msg);
   }
   if (level == "ERROR")
   {
     diag.level = diagnostic_msgs::DiagnosticStatus::ERROR;
-    CNR_ERROR_COND(*m_logger, verbose, "[" << m_hw_name << " ] " << msg);
+    CNR_ERROR_COND(*m_logger, verbose, "[" << m_hw_name << "] " << msg);
   }
   if (level == "STALE")
   {
     diag.level = diagnostic_msgs::DiagnosticStatus::STALE;
-    CNR_INFO_COND(*m_logger, verbose, "[" << m_hw_name << " ] " << msg);
+    CNR_INFO_COND(*m_logger, verbose, "[" << m_hw_name << "] " << msg);
   }
 
   m_diagnostic.status.push_back(diag);
 }
 
+/*
+template< class T >
+void Controller< T >::diagnostics(diagnostic_updater::DiagnosticStatusWrapper &stat)
+{
+  stat.hardware_id = m_ctrl_name;
+  stat.name        = m_ctrl_name;
 
+  std::lock_guard<std::mutex> lock(m_mutex);
+  if (m_diagnostic.status.size())
+  {
+    for (const auto & s : m_diagnostic.status)
+    {
+      stat.summary(s.level, s.message);
+      for (const auto & kv : s.values)
+      {
+        stat.add(kv.key, kv.value);
+      }
+    }
+    m_diagnostic.status.clear();
+  }
+  else
+  {
+    stat.summary(diagnostic_msgs::DiagnosticStatus::OK, "None Error in the queue");
+  }
+}
+*/
 
-template<class T> template<class M>
+template<typename T> template<typename M>
 void Controller< T >::add_publisher(const std::string& id, const std::string &topic, uint32_t queue_size, bool latch)
 {
   m_pub[id].pub   = m_controller_nh.advertise< M >(topic, queue_size, latch);
   m_pub[id].start = nullptr;
 }
 
-template<class T> template<class M>
+template<typename T> template<typename M>
 bool Controller< T >::publish(const std::string& id, const M &message)
 {
   m_pub[id].pub.publish(message);
@@ -401,14 +420,14 @@ bool Controller< T >::publish(const std::string& id, const M &message)
   return true;
 }
 
-template< class T> template<class M, class K >
+template< typename T> template<typename M, typename K >
 void Controller< T >::add_subscriber(const std::string& id, const std::string &topic, uint32_t queue_size, void(K::*fp)(M), K *obj, const ros::TransportHints &transport_hints)
 {
   m_sub[id].sub = m_controller_nh.subscribe<M, K>(topic, queue_size, fp, obj, transport_hints);
   m_sub[id].start = nullptr;
 }
 
-template< class T >
+template< typename T >
 bool Controller< T >::tick(const std::string& id)
 {
   auto n = std::chrono::high_resolution_clock::now();

@@ -5,7 +5,7 @@
 ## The design of the framework ##
 
 The repository contains the implementation of an exstension of the [ros_control](http://wiki.ros.org/ros_control "ros_control") framework
-developed by the Institute of Intelligent Industrial Technologies and Systems for Advanced Manufacturing [(STIIMA)](http://www.stiima.cnr.it), 
+developed by the Institute of Intelligent Industrial Technologies and Systems for Advanced Manufacturing [(STIIMA)](http://www.stiima.cnr.it),
 of the National Research Council of Italy [(CNR)](www.cnr.it).
 
 The extension is based on one package and two meta-packages.
@@ -47,7 +47,7 @@ The package provides a .rosinstall file with the dependencies, and the depndenci
 \$ cd ~/catkin_ws/src
 \$ git clone https://github.com/CNR-STIIMA-IRAS/cnr_ros_control
 \$ wstool init
-\$ wstool merge cnr_ros_control/dependencies.rosinstall 
+\$ wstool merge cnr_ros_control/dependencies.rosinstall
 \$ wstool up -v
 \$ cd ~/catkin_ws
 \$ rosdep install -y --from-paths src --ignore-src --rosdistro $ROS_DISTRO
@@ -59,9 +59,9 @@ The package provides a .rosinstall file with the dependencies, and the depndenci
 
 **Authors:**
 
-* Manuel Beschi (<mailto::manuel.beschi@stiima.cnr.it>)  
-* Nicola Pedrocchi (<mailto::nicola.pedrocchi@stiima.cnr.it>)  
-* Stefano Ghidini (<mailto::stefano.ghidini@stiima.cnr.it>)  
+* Manuel Beschi (<mailto::manuel.beschi@stiima.cnr.it>)
+* Nicola Pedrocchi (<mailto::nicola.pedrocchi@stiima.cnr.it>)
+* Stefano Ghidini (<mailto::stefano.ghidini@stiima.cnr.it>)
 
 _Software License Agreement (BSD License)_
 _Copyright (c) 2020, National Research Council of Italy, Institute of Intelligent Industrial Technologies and Systems for Advanced Manufacturing_

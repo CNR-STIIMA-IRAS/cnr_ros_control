@@ -32,9 +32,9 @@
   <depend>cnr_logger</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
-  <export>
+  <!--export>
     <nodelet plugin="${prefix}/plugin.xml" />
-  </export>
+  </export-->
 
 
 </package>

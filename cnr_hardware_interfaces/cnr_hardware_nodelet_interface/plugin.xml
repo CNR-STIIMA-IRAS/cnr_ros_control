@@ -1,0 +1,9 @@
+
+<library path="lib/libcnr_hardware_nodelet_interface">
+  <class name="cnr/control/RobotHwNodelet" type="cnr_hardware_nodelet_interface::RobotHwNodelet" base_class_type="nodelet::Nodelet">
+    <description>
+      hardware_nodelet_interface::RobotHwNodelet
+    </description>
+  </class>
+</library>
+

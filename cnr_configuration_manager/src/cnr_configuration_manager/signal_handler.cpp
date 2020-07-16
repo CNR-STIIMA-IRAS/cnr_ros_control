@@ -120,7 +120,6 @@ void SignalHandler::exitSignalHandler(int _ignored)
 */
 void SignalHandler::setupSignalHandlers()
 {
-  std::cout << "****************** assign signal handler ********************" << std::endl;
   if (signal((int) SIGINT, SignalHandler::exitSignalHandler) == SIG_ERR)
   {
     throw SignalException("!!!!! Error setting up signal handlers !!!!!");

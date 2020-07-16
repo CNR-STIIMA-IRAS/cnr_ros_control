@@ -31,7 +31,6 @@ include_directories(
 
 ## Declare a C++ library
 add_library(${PROJECT_NAME}
-   src/${PROJECT_NAME}/cnr_hardware_nodelet_interface.cpp
    src/${PROJECT_NAME}/cnr_robot_hw_nodelet.cpp
 )
 

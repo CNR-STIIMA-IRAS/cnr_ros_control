@@ -60,7 +60,7 @@ public:
 
   virtual bool doPrepareSwitch(const std::list< hardware_interface::ControllerInfo >& start, 
                                const std::list< hardware_interface::ControllerInfo >& stop);
-  virtual bool doCheckForConflict(const std::list<hardware_interface::ControllerInfo>& info) ;
+  virtual bool doCheckForConflict(const std::list<hardware_interface::ControllerInfo>& info);
 
 protected:
   sensor_msgs::JointState* m_msg;
