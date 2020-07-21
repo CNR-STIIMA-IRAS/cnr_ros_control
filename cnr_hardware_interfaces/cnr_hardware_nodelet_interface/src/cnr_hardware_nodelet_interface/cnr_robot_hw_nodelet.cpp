@@ -34,6 +34,7 @@
  */
 
 #include <sstream>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <pluginlib/class_list_macros.h>
 #include <diagnostic_msgs/DiagnosticArray.h>
 
@@ -86,7 +87,7 @@ RobotHwNodelet::~RobotHwNodelet()
         if (last_status != "UNLOADED")
         {
           CNR_INFO(*m_logger, "Last Status Tracked: " << last_status);
-          if (!m_cm->unloadController(ctrl))
+          if (!m_cmp->unloadController(ctrl, ros::Duration(1.0)))
           {
             CNR_INFO(*m_logger, "Error in unloading the controller " << ctrl);
           }
@@ -229,10 +230,10 @@ bool RobotHwNodelet::exitOnInit()
   if (m_hw->getRobotHwNamespace() != m_hw_namespace)
   {
     CNR_WARN(*m_logger, "Mismatch between the namespace of the RobotHw '" + m_hw->getRobotHwNamespace()
-             + "'and of the hardware interface label from configuration manager '" + m_hw_namespace + "'. Is it right?");
+             + "'and of the hardware label from configuration manager '" + m_hw_namespace + "'. Is it right?");
   }
 
-  m_cm.reset(new cnr_controller_manager_interface::ControllerManager( m_logger, m_hw_name, m_hw.get(), m_hw_nh));
+  m_cmp.reset(new cnr_controller_manager_interface::ControllerManagerProxy( m_logger, m_hw_name, m_hw.get(), m_hw_nh));
 
   m_update_thread_state = ON_INIT;
   ros::Time start       = ros::Time::now();
@@ -282,19 +283,20 @@ bool RobotHwNodelet::exitOnInit()
 }
 
 
-void RobotHwNodelet::diagnostics(diagnostic_updater::DiagnosticStatusWrapper &stat)
+void RobotHwNodelet::diagnosticsPerformance(diagnostic_updater::DiagnosticStatusWrapper &stat)
 {
+  boost::posix_time::ptime my_posix_time = ros::Time::now().toBoost();
   stat.hardware_id = m_hw_name;
   stat.level       = diagnostic_msgs::DiagnosticStatus::OK;
-  stat.name        = m_hw_name;
-  stat.message     = "RobotHW Cycle Time Statistics";
+  stat.name        = "RobotHwNodelet";
+  stat.message     = "Cycle Time Statistics [" + boost::posix_time::to_iso_string(my_posix_time) + "]";
   for (auto const & ts : m_time_span_tracker)
   {
     diagnostic_msgs::KeyValue k;
     k.key = ts.first + " [s]";
-    k.value = to_string(ts.second->getMean())
-            + std::string(" [ ") + to_string(ts.second->getMin()) + " - " + to_string(ts.second->getMax()) + std::string(" ] ")
-            + std::string("Missed: ") + to_string(ts.second->getMissedCycles());
+    k.value = to_string(ts.second->getMean()) + " "
+            + std::string("[ ")+to_string(ts.second->getMin())+" - "+to_string(ts.second->getMax()) + std::string(" ]")
+            + std::string(" Missed: ") + to_string(ts.second->getMissedCycles());
     stat.add(k.key, k.value);
   }
 }
@@ -305,8 +307,17 @@ void RobotHwNodelet::diagnosticsThread()
   diagnostic_updater::Updater   updater(m_hw_nh, ros::NodeHandle("~"), "/" + m_hw_name);
 
   updater.setHardwareID(m_hw_name);
-  updater.add(m_hw_name + " Status Updater", m_hw.get(), &cnr_hardware_interface::RobotHW::diagnostics);
-  updater.add(m_hw_name + " Statistics Updater", this, &RobotHwNodelet::diagnostics);
+  std::string id = "RobotHW |";
+  updater.add(id + "Info"      , m_hw.get(), &cnr_hardware_interface::RobotHW::diagnosticsInfo);
+  updater.add(id + "Warning"   , m_hw.get(), &cnr_hardware_interface::RobotHW::diagnosticsWarn);
+  updater.add(id + "Error"     , m_hw.get(), &cnr_hardware_interface::RobotHW::diagnosticsError);
+  updater.add(id + "Statistics", this      , &RobotHwNodelet::diagnosticsPerformance);
+
+  id = "Ctrl |";
+  updater.add(id + "Info"      , m_cmp.get(), &cnr_controller_manager_interface::ControllerManagerProxy::diagnosticsInfo);
+  updater.add(id + "Warning"   , m_cmp.get(), &cnr_controller_manager_interface::ControllerManagerProxy::diagnosticsWarn);
+  updater.add(id + "Error"     , m_cmp.get(), &cnr_controller_manager_interface::ControllerManagerProxy::diagnosticsError);
+  updater.add(id + "Statistics", m_cmp.get(), &cnr_controller_manager_interface::ControllerManagerProxy::diagnosticsPerformance);
 
   ros::WallDuration wd(updater.getPeriod());
   try
@@ -370,7 +381,7 @@ void RobotHwNodelet::controlUpdateThread()
     try
     {
       m_time_span_tracker.at("update")->tick();
-      m_cm->update(ros::Time::now(), m_period);
+      m_cmp->update(ros::Time::now(), m_period);
       m_time_span_tracker.at("update")->tock();
     }
     catch (std::exception& e)

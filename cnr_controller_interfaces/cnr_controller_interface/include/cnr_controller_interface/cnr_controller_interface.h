@@ -32,40 +32,6 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
-/**
-  *  Software License Agreement (New BSD License)
-  *
-  *  Copyright 2020 National Council of Research of Italy (CNR)
-  *
-  *  All rights reserved.
-  *
-  *  Redistribution and use in source and binary forms, with or without
-  *  modification, are permitted provided that the following conditions
-  *  are met:
-  *
-  *   * Redistributions of source code must retain the above copyright
-  *     notice, this list of conditions and the following disclaimer.
-  *   * Redistributions in binary form must reproduce the above
-  *     copyright notice, this list of conditions and the following
-  *     disclaimer in the documentation and/or other materials provided
-  *     with the distribution.
-  *   * Neither the name of the copyright holder(s) nor the names of its
-  *     contributors may be used to endorse or promote products derived
-  *     from this software without specific prior written permission.
-  *
-  *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-  *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-  *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-  *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-  *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-  *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-  *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-  *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-  *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-  *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-  *  POSSIBILITY OF SUCH DAMAGE.
-  */
 
 #ifndef CNR_CONTROLLER_INTERFACE_CNR_CONTROLLER_INTERFACE_H
 #define CNR_CONTROLLER_INTERFACE_CNR_CONTROLLER_INTERFACE_H
@@ -73,15 +39,18 @@
 #include <ctime>
 #include <chrono>
 #include <algorithm>
+#include <mutex>
 
 #include <ros/ros.h>
 #include <ros/callback_queue.h>
 #include <controller_interface/controller.h>
 #include <controller_manager_msgs/ControllerState.h>
 #include <diagnostic_msgs/DiagnosticArray.h>
-
+#include <diagnostic_updater/DiagnosticStatusWrapper.h>
 #include <cnr_logger/cnr_logger.h>
 #include <cnr_controller_interface/internal/utils.h>
+#include <realtime_utilities/circular_buffer.h>
+
 
 namespace cnr_controller_interface
 {
@@ -89,13 +58,55 @@ namespace cnr_controller_interface
 //============ FUNCTIONS TO DEFINE THE PARAMETERS WHERE THE CTRL STATUS IS LOADED
 std::vector<std::string> get_names(const std::vector< controller_manager_msgs::ControllerState >& controllers);
 std::string              ctrl_list_param(const std::string& hw_name);
-std::string              last_status_param(const std::string& hw_name, const std::string& ctrl_name);
-std::string              status_param(const std::string& hw_name, const std::string& ctrl_name);
-bool                     get_state(const std::string& hw_name, const std::string& ctrl_name, 
-                                   std::string& status, std::string& error, const ros::Duration& watchdog = ros::Duration(0.0));
+std::string              last_status_param(const std::string& hw_name,
+                                           const std::string& ctrl_name);
+std::string              status_param(const std::string& hw_name,
+                                      const std::string& ctrl_name);
+bool                     get_state(const std::string& hw_name,
+                                   const std::string& ctrl_name,
+                                   std::string& status,
+                                   std::string& error,
+                                   const ros::Duration& watchdog = ros::Duration(0.0));
+
+class ControllerDiagnostic
+{
+public:
+
+  /**
+   * @brief add_diagnostic_message
+   * @param msg
+   * @param name
+   * @param level
+   * @param verbose
+   */
+  virtual void add_diagnostic_message(const std::string& msg,
+                                      const std::string& name,
+                                      const std::string& level,
+                                      const bool&        verbose) {}
+
+  virtual void diagnostics     (diagnostic_updater::DiagnosticStatusWrapper &stat, int level);
+  virtual void diagnosticsInfo (diagnostic_updater::DiagnosticStatusWrapper &stat)           ;
+  virtual void diagnosticsWarn (diagnostic_updater::DiagnosticStatusWrapper &stat)           ;
+  virtual void diagnosticsError(diagnostic_updater::DiagnosticStatusWrapper &stat)           ;
+  virtual void diagnosticsPerformance(diagnostic_updater::DiagnosticStatusWrapper &stat)     ;
+
+protected:
+
+  std::string                                           m_hw_name;
+  std::string                                           m_ctrl_name;
+  mutable std::mutex                                    m_mutex;
+  mutable diagnostic_msgs::DiagnosticArray              m_diagnostic;
+  std::shared_ptr<cnr_logger::TraceLogger>              m_logger;
+  std::vector<std::string>                              m_status_history;
+  std::shared_ptr<realtime_utilities::TimeSpanTracker>  m_time_span_tracker;
+  double                                                m_sampling_period;
+  double                                                m_watchdog;
+
+
+};
 
 template< class T >
-class Controller: public ::controller_interface::Controller< T >
+class Controller: public ::controller_interface::Controller< T >, public ControllerDiagnostic
 {
 public:
 
@@ -112,6 +123,7 @@ public:
   void waiting(const ros::Time& time)                                        final;
   void aborting(const ros::Time& time)                                       final;
 
+public:
   virtual bool doInit()
   {
     return true;
@@ -136,7 +148,6 @@ public:
   {
     return true;
   }
-
   std::string getRootNamespace()
   {
     return m_root_nh.getNamespace();
@@ -145,7 +156,6 @@ public:
   {
     return m_controller_nh.getNamespace();
   }
-
   ros::NodeHandle& getRootNh()
   {
     return m_root_nh;
@@ -155,42 +165,58 @@ public:
     return m_controller_nh;
   }
 
-  void add_diagnostic_message(const std::string& msg, const std::string& name, const std::string& level, const bool verbose);
-  //void diagnostics(diagnostic_updater::DiagnosticStatusWrapper &stat);
-
-  bool shutdown(const std::string& state_final)
-  {
-    CNR_TRACE_START(*m_logger);
-    //m_controller_nh_callback_queue.callAvailable(ros::WallDuration(5.0));
-    for (auto & t : m_sub)
-    {
-      t.second.sub.shutdown();
-    }
-    for (auto & t : m_pub)
-    {
-      t.second.pub.shutdown();
-    }
-    if(state_final=="")
-    {
-      return dump_state();
-    }
-    bool ret = dump_state(state_final);
-    CNR_RETURN_BOOL(*m_logger, ret);
-  }
+  /**
+   * @brief shutdown
+   * @param state_final
+   * @return
+   */
+  bool shutdown(const std::string& state_final);
   
-  template<typename M>
-  void add_publisher(const std::string& id, const std::string &topic, uint32_t queue_size, bool latch = false);
+  /**
+   * @brief add_publisher
+   * @param id
+   * @param topic
+   * @param queue_size
+   * @param latch
+   */
+  template<typename M> void add_publisher(const std::string& id,
+                                          const std::string &topic,
+                                          uint32_t queue_size,
+                                          bool latch = false);
 
+  /**
+   * @brief publish
+   * @param id
+   * @param message
+   * @return
+   */
   template<typename M>
   bool publish(const std::string& id, const M &message);
 
+  /**
+   * @brief add_subscriber
+   * @param id
+   * @param topic
+   * @param queue_size
+   * @param obj
+   * @param transport_hints
+   */
   template<typename M, typename K>
-  void add_subscriber(const std::string& id, const std::string &topic, uint32_t queue_size, void(K::*fp)(M), K *obj, const ros::TransportHints &transport_hints = ros::TransportHints());
+  void add_subscriber(const std::string& id,
+                      const std::string &topic,
+                      uint32_t queue_size,
+                      void(K::*fp)(M), K *obj,
+                      const ros::TransportHints &transport_hints = ros::TransportHints());
 
   bool tick(const std::string& id);
 
-  ros::Subscriber& getSubscriber(const std::string& id);
-  ros::Publisher&  getPublisher(const std::string& id);
+  std::shared_ptr<ros::Subscriber>&  getSubscriber(const std::string& id);
+  std::shared_ptr<ros::Publisher>& getPublisher(const std::string& id);
+
+  void add_diagnostic_message(const std::string& msg,
+                              const std::string& name,
+                              const std::string& level,
+                              const bool&        verbose) override;
 
 protected:
 
@@ -219,17 +245,8 @@ protected:
   bool dump_state();
 
 protected:
-
   T*                                       m_hw;
-  std::string                              m_hw_name;
-  std::string                              m_ctrl_name;
-  std::shared_ptr<cnr_logger::TraceLogger> m_logger;
-  mutable diagnostic_msgs::DiagnosticArray m_diagnostic;
-  
-  std::vector<std::string>                 m_status_history;
 
-  double                                   m_watchdog;
-  double                                   m_sampling_period;
 
 private:
   ros::NodeHandle                          m_root_nh;
@@ -238,7 +255,7 @@ private:
 
   struct Publisher
   {
-    ros::Publisher pub;
+    std::shared_ptr<ros::Publisher>                 pub;
     std::chrono::high_resolution_clock::time_point* start = nullptr;
     std::chrono::high_resolution_clock::time_point  last;
     std::chrono::duration<double>                   time_span;
@@ -246,16 +263,17 @@ private:
 
   struct Subscriber
   {
-    ros::Subscriber sub;
+    std::shared_ptr<ros::Subscriber>                sub;
     std::chrono::high_resolution_clock::time_point* start = nullptr;
     std::chrono::high_resolution_clock::time_point  last;
     std::chrono::duration<double>                   time_span;
   };
 
-  std::map< std::string, Publisher  > m_pub;
-  std::map<std::string,  Subscriber > m_sub;
+  std::map<std::string, Publisher  > m_pub;
+  std::map<std::string, Subscriber > m_sub;
 
-  bool callAvailable(const double watchdog);
+  bool callAvailable( );
+
 
 };
 

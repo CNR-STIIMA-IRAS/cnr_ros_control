@@ -75,23 +75,27 @@ protected:
 
   std::thread m_diagnostics_thread, m_update_thread;
 
-  bool                                                                    m_stop_update_thread;
-  bool                                                                    m_stop_diagnostic_thread;
-  ros::NodeHandle                                                         m_nh;
-  ros::NodeHandle                                                         m_hw_nh;
-  boost::shared_ptr< cnr_hardware_interface::RobotHW >                    m_hw;
-  std::string                                                             m_hw_namespace;
-  std::string                                                             m_hw_name;
-  std::shared_ptr<cnr_controller_manager_interface::ControllerManager>    m_cm;
-  ros::Duration                                                           m_period;
+  bool                                                                      m_stop_update_thread;
+  bool                                                                      m_stop_diagnostic_thread;
+  ros::NodeHandle                                                           m_nh;
+  ros::NodeHandle                                                           m_hw_nh;
+  boost::shared_ptr< cnr_hardware_interface::RobotHW >                      m_hw;
+  std::string                                                               m_hw_namespace;
+  std::string                                                               m_hw_name;
+  std::shared_ptr<cnr_controller_manager_interface::ControllerManagerProxy> m_cmp;
+  ros::Duration                                                             m_period;
 
-  std::map<std::string, realtime_utilities::TimeSpanTracker* >            m_time_span_tracker;
-  diagnostic_updater::Updater                                             m_updater;
-  std::shared_ptr<cnr_logger::TraceLogger>                                m_logger;
+  std::map<std::string, realtime_utilities::TimeSpanTracker* >              m_time_span_tracker;
+  diagnostic_updater::Updater                                               m_updater;
+  std::shared_ptr<cnr_logger::TraceLogger>                                  m_logger;
 
-  void diagnostics(diagnostic_updater::DiagnosticStatusWrapper &stat);
+  void diagnosticsPerformance(diagnostic_updater::DiagnosticStatusWrapper &stat);
 
   std::shared_ptr< pluginlib::ClassLoader< cnr_hardware_interface::RobotHW > > m_robot_hw_plugin_loader;
+
+
+
+
 
 };
 

@@ -63,7 +63,11 @@ std::string status_param(const std::string& hw_name, const std::string& ctrl_nam
 {
   return "/" + hw_name + "/status/controllers/" + ctrl_name + "/status";
 }
-bool get_state(const std::string& hw_name, const std::string& ctrl_name, std::string& status, std::string& error, const ros::Duration& watchdog)
+bool get_state(const std::string& hw_name,
+               const std::string& ctrl_name,
+               std::string& status,
+               std::string& error,
+               const ros::Duration& watchdog)
 {
   ros::Time st = ros::Time::now();
   const std::string p = last_status_param(hw_name, ctrl_name);

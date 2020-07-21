@@ -35,14 +35,144 @@
 #ifndef CNR_CONTROLLER_INFERFACE_CNR_CONTROLLER_INFERFACE_IMPL_H
 #define CNR_CONTROLLER_INFERFACE_CNR_CONTROLLER_INFERFACE_IMPL_H
 
+#include <mutex>
 #include <ros/ros.h>
 #include <ros/console.h>
 #include <ros/time.h>
 #include <cnr_controller_interface/cnr_controller_interface.h>
-
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 namespace cnr_controller_interface
 {
+
+template <typename T>
+std::string to_string_fix(const T a_value, const int n = 5)
+{
+  std::ostringstream out;
+  out.precision(n);
+  out << std::fixed << a_value;
+  return out.str();
+}
+
+
+void ControllerDiagnostic::diagnostics(diagnostic_updater::DiagnosticStatusWrapper &stat, int level)
+{
+  std::lock_guard<std::mutex> lock(m_mutex);
+  boost::posix_time::ptime my_posix_time = ros::Time::now().toBoost();
+
+  stat.hardware_id = m_hw_name;
+  stat.name        = "Ctrl ["
+                   + ( level == (int)diagnostic_msgs::DiagnosticStatus::OK  ? std::string("Info")
+                     : level == (int)diagnostic_msgs::DiagnosticStatus::WARN ? std::string("Warn")
+                     : std::string("Error") )
+                   +"]";
+
+  bool something_to_add = false;
+  for (  const diagnostic_msgs::DiagnosticStatus & s : m_diagnostic.status )
+  {
+    something_to_add |= static_cast<int>( s.level ) == level;
+  }
+  if ( something_to_add )
+  {
+    stat.level       = level == (int)diagnostic_msgs::DiagnosticStatus::OK ? diagnostic_msgs::DiagnosticStatus::OK
+                     : level == (int)diagnostic_msgs::DiagnosticStatus::WARN ? diagnostic_msgs::DiagnosticStatus::WARN
+                     : level == (int)diagnostic_msgs::DiagnosticStatus::ERROR ? diagnostic_msgs::DiagnosticStatus::ERROR
+                     : diagnostic_msgs::DiagnosticStatus::STALE;
+
+    stat.summary(stat.level, "Log of the status at ["
+         + boost::posix_time::to_iso_string(my_posix_time) + "]");
+
+    for ( const diagnostic_msgs::DiagnosticStatus & s : m_diagnostic.status )
+    {
+      diagnostic_msgs::KeyValue k;
+      k.key = s.name;
+      k.value = s.message;
+      stat.add(k.key, k.value);
+    }
+    m_diagnostic.status.erase(
+        std::remove_if(
+            m_diagnostic.status.begin(),
+            m_diagnostic.status.end(),
+            [&](diagnostic_msgs::DiagnosticStatus const & p) { return p.level == level; }
+        ),
+        m_diagnostic.status.end()
+    );
+  }
+  else
+  {
+    stat.summary(diagnostic_msgs::DiagnosticStatus::OK, "None Error in the queue ["
+         + boost::posix_time::to_iso_string(my_posix_time) + "]");
+  }
+}
+
+void ControllerDiagnostic::diagnosticsInfo(diagnostic_updater::DiagnosticStatusWrapper &stat)
+{
+  ControllerDiagnostic::diagnostics(stat,diagnostic_msgs::DiagnosticStatus::OK);
+}
+
+void ControllerDiagnostic::diagnosticsWarn(diagnostic_updater::DiagnosticStatusWrapper &stat)
+{
+  ControllerDiagnostic::diagnostics(stat,diagnostic_msgs::DiagnosticStatus::WARN);
+}
+
+void ControllerDiagnostic::diagnosticsError(diagnostic_updater::DiagnosticStatusWrapper &stat)
+{
+  ControllerDiagnostic::diagnostics(stat,diagnostic_msgs::DiagnosticStatus::ERROR);
+}
+
+void ControllerDiagnostic::diagnosticsPerformance(diagnostic_updater::DiagnosticStatusWrapper &stat)
+{
+
+  boost::posix_time::ptime my_posix_time = ros::Time::now().toBoost();
+  std::lock_guard<std::mutex> lock(m_mutex);
+  stat.hardware_id = m_hw_name;
+  stat.level       = diagnostic_msgs::DiagnosticStatus::OK;
+  stat.name        = "Ctrl";
+  stat.message     = "Cycle Time Statistics [" + boost::posix_time::to_iso_string(my_posix_time) + "]";
+  diagnostic_msgs::KeyValue k;
+  k.key = m_ctrl_name + " Update [s]";
+  k.value = to_string_fix(m_time_span_tracker->getMean())
+          + std::string(" [ ") + to_string_fix(m_time_span_tracker->getMin()) + " - "
+          + to_string_fix(m_time_span_tracker->getMax()) + std::string(" ] ")
+          + std::string("Missed: ") + std::to_string(m_time_span_tracker->getMissedCycles());
+  stat.add(k.key, k.value);
+}
+
+
+template<typename T>
+void Controller< T >::add_diagnostic_message(const std::string& msg, const std::string& name,
+                                             const std::string& level, const bool& verbose)
+{
+  diagnostic_msgs::DiagnosticStatus diag;
+  diag.name       = name;
+  diag.hardware_id = m_hw_name;
+  diag.message    = " [ " + m_hw_name + " ] " + msg;
+
+  if (level == "OK")
+  {
+    diag.level = diagnostic_msgs::DiagnosticStatus::OK;
+    CNR_INFO_COND(*m_logger, verbose, "[" << m_hw_name << "] " << msg);
+  }
+  if (level == "WARN")
+  {
+    diag.level = diagnostic_msgs::DiagnosticStatus::WARN;
+    CNR_WARN_COND(*m_logger, verbose, "[" << m_hw_name << "] " << msg);
+  }
+  if (level == "ERROR")
+  {
+    diag.level = diagnostic_msgs::DiagnosticStatus::ERROR;
+    CNR_ERROR_COND(*m_logger, verbose, "[" << m_hw_name << "] " << msg);
+  }
+  if (level == "STALE")
+  {
+    diag.level = diagnostic_msgs::DiagnosticStatus::STALE;
+    CNR_INFO_COND(*m_logger, verbose, "[" << m_hw_name << "] " << msg);
+  }
+
+  std::lock_guard<std::mutex> lock(m_mutex);
+  m_diagnostic.status.push_back(diag);
+}
+
 
 template< class T >
 Controller< T >::~Controller()
@@ -111,7 +241,8 @@ bool  Controller< T >::init(T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& co
         {
           m_watchdog = maximum_missing_cycles * m_sampling_period;
           CNR_WARN(*m_logger, "Neither 'watchdog' and 'maximum_missing_cycles' are in the param server"
-                   << "the watchdog is super-imposed to " << std::to_string(maximum_missing_cycles) << " times the sampling period, and it results in " << m_watchdog);
+                   << " the watchdog is super-imposed to " << std::to_string(maximum_missing_cycles)
+                   << " times the sampling period, and it results in " << m_watchdog);
         }
         else
         {
@@ -119,15 +250,23 @@ bool  Controller< T >::init(T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& co
         }
       }
     }
+    else
+    {
+      m_watchdog = maximum_missing_cycles * m_sampling_period;
+    }
   }
+
   CNR_DEBUG(*m_logger, "Watchdog: " << m_watchdog);
   m_controller_nh.setCallbackQueue(&m_controller_nh_callback_queue);
   m_status_history.clear();
+
+  m_time_span_tracker.reset( new realtime_utilities::TimeSpanTracker(int(10.0/m_sampling_period), m_sampling_period));
 
   if (enterInit() && doInit() && exitInit())
   {
     CNR_RETURN_TRUE(*m_logger);
   }
+
 
   CNR_RETURN_BOOL(*m_logger, dump_state()) ;
 }
@@ -152,7 +291,20 @@ template< class T >
 void Controller< T >::update(const ros::Time& time, const ros::Duration& period)
 {
   CNR_TRACE_START_THROTTLE(*m_logger, 10.0);
-  if (enterUpdate() && doUpdate(time, period) && exitUpdate())
+  bool ok = enterUpdate();
+
+  if(ok)
+  {
+    m_time_span_tracker->tick();
+    ok = doUpdate(time, period);
+    m_time_span_tracker->tock();
+    if( ok )
+    {
+      ok = exitUpdate();
+    }
+  }
+
+  if(ok)
   {
     CNR_RETURN_OK_THROTTLE(*m_logger, void(), 10.0);
   }
@@ -229,7 +381,7 @@ template< class T >
 bool Controller< T >::exitStarting()
 {
   CNR_TRACE_START(*m_logger);
-  if (!callAvailable(m_watchdog))
+  if (!callAvailable( ))
   {
     CNR_WARN(*m_logger, "The callback is still not available...");
   }
@@ -240,7 +392,7 @@ template< class T >
 bool Controller< T >::enterUpdate()
 {
   CNR_TRACE_START_THROTTLE(*m_logger, 10.0);
-  if (!callAvailable(m_watchdog))
+  if (!callAvailable( ))
   {
     dump_state("CALLBACK_TIMEOUT_ERROR");
     CNR_RETURN_FALSE_THROTTLE(*m_logger, 5.0);
@@ -275,30 +427,34 @@ bool Controller< T >::exitStopping()
 template< class T >
 bool Controller< T >::enterWaiting()
 {
-  return dump_state();
+  CNR_TRACE_START(*m_logger);
+  CNR_RETURN_BOOL(*m_logger, dump_state());
 }
 
 template< class T >
 bool Controller< T >::exitWaiting()
 {
-  return shutdown("");
+  CNR_TRACE_START(*m_logger);
+  CNR_RETURN_BOOL(*m_logger, dump_state());
 }
 
 template< class T >
 bool Controller< T >::enterAborting()
 {
-  return dump_state();
+  CNR_TRACE_START(*m_logger);
+  CNR_RETURN_BOOL(*m_logger, dump_state());
 }
 
 template< class T >
 bool Controller< T >::exitAborting()
 {
+  CNR_TRACE_START(*m_logger);
   bool ret = shutdown( "" );
   if(ret)
   {
     m_controller_nh_callback_queue.disable();
   }
-  return ret;
+  CNR_RETURN_BOOL(*m_logger, ret);
 }
 
 template< class T >
@@ -334,132 +490,125 @@ bool Controller< T >::dump_state()
   return dump_state(last_status);
 }
 
+
 template< class T >
-void Controller< T >::add_diagnostic_message(const std::string& msg, const std::string& name, const std::string& level, const bool verbose)
+bool Controller< T >::shutdown(const std::string& state_final)
 {
-  diagnostic_msgs::DiagnosticStatus diag;
-  diag.name       = name;
-  diag.hardware_id = m_hw_name;
-  diag.message    = " [ " + m_hw_name + " ] " + msg;
-
-  if (level == "OK")
+  CNR_TRACE_START(*m_logger);
+  //m_controller_nh_callback_queue.callAvailable(ros::WallDuration(5.0));
+  for (auto & t : m_sub)
   {
-    diag.level = diagnostic_msgs::DiagnosticStatus::OK;
-    CNR_INFO_COND(*m_logger, verbose, "[" << m_hw_name << "] " << msg);
+    t.second.sub->shutdown();
   }
-  if (level == "WARN")
+  for (auto & t : m_pub)
   {
-    diag.level = diagnostic_msgs::DiagnosticStatus::WARN;
-    CNR_WARN_COND(*m_logger, verbose, "[" << m_hw_name << "] " << msg);
+    t.second.pub->shutdown();
   }
-  if (level == "ERROR")
+  if(state_final=="")
   {
-    diag.level = diagnostic_msgs::DiagnosticStatus::ERROR;
-    CNR_ERROR_COND(*m_logger, verbose, "[" << m_hw_name << "] " << msg);
+    return dump_state();
   }
-  if (level == "STALE")
-  {
-    diag.level = diagnostic_msgs::DiagnosticStatus::STALE;
-    CNR_INFO_COND(*m_logger, verbose, "[" << m_hw_name << "] " << msg);
-  }
-
-  m_diagnostic.status.push_back(diag);
+  bool ret = dump_state(state_final);
+  CNR_RETURN_BOOL(*m_logger, ret);
 }
 
-/*
-template< class T >
-void Controller< T >::diagnostics(diagnostic_updater::DiagnosticStatusWrapper &stat)
-{
-  stat.hardware_id = m_ctrl_name;
-  stat.name        = m_ctrl_name;
-
-  std::lock_guard<std::mutex> lock(m_mutex);
-  if (m_diagnostic.status.size())
-  {
-    for (const auto & s : m_diagnostic.status)
-    {
-      stat.summary(s.level, s.message);
-      for (const auto & kv : s.values)
-      {
-        stat.add(kv.key, kv.value);
-      }
-    }
-    m_diagnostic.status.clear();
-  }
-  else
-  {
-    stat.summary(diagnostic_msgs::DiagnosticStatus::OK, "None Error in the queue");
-  }
-}
-*/
 
 template<typename T> template<typename M>
 void Controller< T >::add_publisher(const std::string& id, const std::string &topic, uint32_t queue_size, bool latch)
 {
-  m_pub[id].pub   = m_controller_nh.advertise< M >(topic, queue_size, latch);
-  m_pub[id].start = nullptr;
+  if( m_pub.find(id) == m_pub.end() )
+  {
+    m_pub[id].pub.reset(new ros::Publisher( m_controller_nh.advertise< M >(topic, queue_size, latch) ) );
+    m_pub.at(id).start = nullptr;
+  }
 }
 
 template<typename T> template<typename M>
 bool Controller< T >::publish(const std::string& id, const M &message)
 {
-  m_pub[id].pub.publish(message);
-  auto n = std::chrono::high_resolution_clock::now();
-  if (m_pub[id].start == nullptr)
-  {
-    m_pub[id].start = new std::chrono::high_resolution_clock::time_point();
-    *m_pub[id].start = n;
-    m_pub[id].last   = n;
-  }
-  m_pub[id].time_span = std::chrono::duration_cast<std::chrono::duration<double> >(n -  m_pub[id].last);
-  m_pub[id].last  = n;
-  if (m_pub[id].time_span.count() > m_watchdog)
+  if( m_pub.find(id) == m_pub.end() )
   {
     return false;
   }
+
+  if (!m_pub.at(id).pub)
+  {
+    return false;
+  }
+//  std::cout << this << " ---- " <<  m_pub.at(id).pub << std::endl;
+
+//  if (!(*m_pub.at(id).pub))
+//  {
+//    return false;
+//  }
+
+  m_pub.at(id).pub->publish(message);
+  auto n = std::chrono::high_resolution_clock::now();
+  if (m_pub.at(id).start == nullptr)
+  {
+    m_pub.at(id).start = new std::chrono::high_resolution_clock::time_point();
+    *m_pub.at(id).start = n;
+    m_pub.at(id).last   = n;
+  }
+  m_pub.at(id).time_span = std::chrono::duration_cast<std::chrono::duration<double> >(n -  m_pub.at(id).last);
+  m_pub.at(id).last  = n;
+  if (m_pub.at(id).time_span.count() > m_watchdog)
+  {
+    return false;
+  }
+
   return true;
 }
 
 template< typename T> template<typename M, typename K >
-void Controller< T >::add_subscriber(const std::string& id, const std::string &topic, uint32_t queue_size, void(K::*fp)(M), K *obj, const ros::TransportHints &transport_hints)
+void Controller< T >::add_subscriber(const std::string& id, const std::string &topic, uint32_t queue_size,
+                                     void(K::*fp)(M), K *obj, const ros::TransportHints &transport_hints)
 {
-  m_sub[id].sub = m_controller_nh.subscribe<M, K>(topic, queue_size, fp, obj, transport_hints);
-  m_sub[id].start = nullptr;
+  if( m_pub.find(id) == m_pub.end() )
+  {
+    m_sub[id].sub.reset(
+          new ros::Subscriber( m_controller_nh.subscribe<M, K>(topic, queue_size, fp, obj, transport_hints) ) );
+    m_sub.at(id).start = nullptr;
+  }
 }
 
 template< typename T >
 bool Controller< T >::tick(const std::string& id)
 {
-  auto n = std::chrono::high_resolution_clock::now();
-  if (m_sub[id].start == nullptr)
+  if( m_pub.find(id) == m_pub.end() )
   {
-    m_sub[id].start = new std::chrono::high_resolution_clock::time_point();
-    *m_sub[id].start = n;
-    m_sub[id].last  = n;
+    return false;
   }
-  m_sub[id].time_span = std::chrono::duration_cast< std::chrono::duration<double> >(n -  m_sub[id].last);
-  m_sub[id].last  = n;
 
-  return (m_sub[id].time_span.count() < m_watchdog);
+  auto n = std::chrono::high_resolution_clock::now();
+  if (m_sub.at(id).start == nullptr)
+  {
+    m_sub.at(id).start = new std::chrono::high_resolution_clock::time_point();
+    *m_sub.at(id).start = n;
+    m_sub.at(id).last  = n;
+  }
+  m_sub.at(id).time_span = std::chrono::duration_cast< std::chrono::duration<double> >(n -  m_sub.at(id).last);
+  m_sub.at(id).last  = n;
+
+  return (m_sub.at(id).time_span.count() < m_watchdog);
+
 }
 
 template< class T >
-ros::Subscriber& Controller< T >::getSubscriber(const std::string& id)
+std::shared_ptr<ros::Subscriber>& Controller< T >::getSubscriber(const std::string& id)
 {
   return m_sub.at(id).sub;
 }
 
 template< class T >
-ros::Publisher&  Controller< T >::getPublisher(const std::string& id)
+std::shared_ptr<ros::Publisher>& Controller<T>::getPublisher(const std::string& id)
 {
   return m_pub.at(id).pub;
 }
 
 template< class T >
-bool Controller< T >::callAvailable(const double watchdog)
+bool Controller< T >::callAvailable( )
 {
-  ros::WallTime st = ros::WallTime::now();
-
   m_controller_nh_callback_queue.callAvailable();
 
   if (m_sub.size() > 0)
@@ -468,11 +617,13 @@ bool Controller< T >::callAvailable(const double watchdog)
     {
       if (sub.second.start == nullptr)
       {
-        CNR_ERROR_THROTTLE(*m_logger, 5.0, "The topic '" + sub.second.sub.getTopic() + "' seems not yet published..");
+        CNR_ERROR_THROTTLE(*m_logger, 5.0, "The topic '" + sub.second.sub->getTopic() + "' seems not yet published..");
       }
       if (sub.second.time_span.count() > m_watchdog)
       {
-        CNR_ERROR_THROTTLE(*m_logger, 5.0, "Watchdog on subscribed topic '" + sub.second.sub.getTopic() + "' time span: " + std::to_string(sub.second.time_span.count()) + " watchdog: " + std::to_string(m_watchdog));
+        CNR_ERROR_THROTTLE(*m_logger, 5.0, "Watchdog on subscribed topic '" + sub.second.sub->getTopic() + "' " +
+                                           std::string("time span: ")+std::to_string(sub.second.time_span.count())+
+                                           std::string(" watchdog: ")+std::to_string(m_watchdog));
       }
     }
   }

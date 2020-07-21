@@ -35,6 +35,7 @@
 #ifndef CNR_CONTROLLER_MANAGER_INTERFACE_CNR_CONTROLLER_MANAGER_INTERFACE_H
 #define CNR_CONTROLLER_MANAGER_INTERFACE_CNR_CONTROLLER_MANAGER_INTERFACE_H
 
+#include <mutex>
 #include <ros/ros.h>
 #include <ros/callback_queue.h>
 #include <controller_manager_msgs/ControllerState.h>
@@ -46,15 +47,16 @@
 #include <cnr_logger/cnr_logger.h>
 #include <controller_manager/controller_manager.h>
 #include <cnr_controller_manager_interface/internal/utils.h>
+#include <diagnostic_updater/DiagnosticStatusWrapper.h>
 
 namespace cnr_controller_manager_interface
 {
 
 
 /**
- * @brief The ControllerManagerBase class is an abstract class that make easier the interface with
- * the controller_manager::ControllerManager
- * Two inherited classes are implemented.
+ * @brief The ControllerManagerBase class is a class that make easier the interface with
+ * the controller_manager::ControllerManager (http://wiki.ros.org/ros_control)
+ * Three inherited classes are implemented.
  */
 class ControllerManagerBase
 {
@@ -64,7 +66,6 @@ protected:
   ros::ServiceClient                       list_types_;
   std::shared_ptr<cnr_logger::TraceLogger> logger_;
   std::string                              error_;
-
 
 
 public:
@@ -78,17 +79,14 @@ public:
   std::string listServiceName()     { return list_.getService();       }
   std::string listTypeServiceName() { return list_types_.getService(); }
 
-
-
-
-public:  // PURE VIRTUAL METHODS
+// VIRTUAL METHODS //
   /**
    * @brief loadController
    * @param to_load_name
    * @param watchdog
    * @return
    */
-  virtual bool loadController(const std::string& to_load_name, const ros::Duration& watchdog) { return true; }
+  virtual bool loadController(const std::string& /*to_load_name*/, const ros::Duration& /*watchdog*/) { return true; }
 
   /**
    * @brief switchController
@@ -115,14 +113,15 @@ public:  // PURE VIRTUAL METHODS
                                 const ros::Duration&  watchdog = ros::Duration(0.0)) { return true; }
 
 
-public:
+// CORE METHODS //
   /**
    * @brief loadController
    * @param to_load_names
    * @param watchdog
    * @return
    */
-  bool loadControllers(const std::vector<std::string>& to_load_names, const ros::Duration& watchdog=ros::Duration(0.0));
+  virtual bool loadControllers(const std::vector<std::string>& to_load_names,
+                               const ros::Duration& watchdog=ros::Duration(0.0)) final;
 
   /**
    * @brief switchController
@@ -133,11 +132,13 @@ public:
    * @param watchdog
    * @return
    */
-  bool switchControllers(const int&                                                    strictness                   ,
-                         const std::vector<controller_manager_msgs::ControllerState>*  to_load_and_start_names      ,
-                         const std::vector<controller_manager_msgs::ControllerState>*  to_restart_names             ,
-                         const std::vector<controller_manager_msgs::ControllerState>*  to_stop_unload_names         ,
-                         const ros::Duration&                                          watchdog = ros::Duration(0.0));
+  virtual bool switchControllers(
+                     const int&                                                    strictness                   ,
+                     const std::vector<controller_manager_msgs::ControllerState>*  to_load_and_start_names      ,
+                     const std::vector<controller_manager_msgs::ControllerState>*  to_restart_names             ,
+                     const std::vector<controller_manager_msgs::ControllerState>*  to_stop_unload_names         ,
+                     const ros::Duration&                                          watchdog = ros::Duration(0.0)
+                                ) final;
 
   /**
    * @brief switchController
@@ -146,9 +147,9 @@ public:
    * @param watchdog
    * @return
    */
-  bool switchControllers(const int                              strictness,
-                         const std::vector<std::string> * const next_ctrl,
-                         const ros::Duration&                   watchdog = ros::Duration(0.0));
+  virtual bool switchControllers(const int                              strictness,
+                                 const std::vector<std::string> * const next_ctrl,
+                                 const ros::Duration&                   watchdog = ros::Duration(0.0)) final;
 
   /**
    * @brief unloadController
@@ -156,8 +157,8 @@ public:
    * @param watchdog
    * @return
    */
-  bool unloadControllers(const std::vector<std::string>& to_unload_names,
-                         const ros::Duration& watchdog = ros::Duration(0.0));
+  virtual bool unloadControllers(const std::vector<std::string>& to_unload_names,
+                                 const ros::Duration& watchdog = ros::Duration(0.0)) final;
 
   /**
    * @brief unloadController
@@ -165,8 +166,8 @@ public:
    * @param watchdog
    * @return
    */
-  bool unloadControllers(const std::vector<controller_manager_msgs::ControllerState>& to_unload_names,
-                         const ros::Duration& watchdog = ros::Duration(0.0));
+  virtual bool unloadControllers(const std::vector<controller_manager_msgs::ControllerState>& to_unload_names,
+                                 const ros::Duration& watchdog = ros::Duration(0.0)) final;
 
   /**
    * @brief stopUnloadControllers
@@ -174,15 +175,15 @@ public:
    * @param watchdog
    * @return
    */
-  bool stopUnloadControllers(const std::vector<std::string>&  ctrl_to_stop_unload_names,
-                             const ros::Duration& watchdog = ros::Duration(0.0));
+  virtual bool stopUnloadControllers(const std::vector<std::string>&  ctrl_to_stop_unload_names,
+                                     const ros::Duration& watchdog = ros::Duration(0.0)) final;
 
   /**
    * @brief stopUnloadAllControllers
    * @param watchdog
    * @return
    */
-  bool stopUnloadAllControllers(const ros::Duration& watchdog = ros::Duration(0.0));
+  virtual bool stopUnloadAllControllers(const ros::Duration& watchdog = ros::Duration(0.0)) final;
 
   /**
    * @brief listRequest
@@ -191,9 +192,9 @@ public:
    * @param watchdog
    * @return
    */
-  bool listRequest(controller_manager_msgs::ListControllers& msg,
-                   std::string& error,
-                   const ros::Duration& watchdog = ros::Duration(0.0));
+  virtual bool listRequest(controller_manager_msgs::ListControllers& msg,
+                           std::string& error,
+                           const ros::Duration& watchdog = ros::Duration(0.0)) final;
 
   /**
    * @brief listTypeRequest
@@ -202,9 +203,9 @@ public:
    * @param watchdog
    * @return
    */
-  bool listTypeRequest(controller_manager_msgs::ListControllerTypes& msg,
-                       std::string& error,
-                       const ros::Duration& watchdog = ros::Duration(0.0));
+  virtual bool listTypeRequest(controller_manager_msgs::ListControllerTypes& msg,
+                               std::string& error,
+                               const ros::Duration& watchdog = ros::Duration(0.0)) final;
 
   /**
    * @brief listControllers
@@ -213,9 +214,9 @@ public:
    * @param watchdog
    * @return
    */
-  bool listControllers(std::vector< controller_manager_msgs::ControllerState >&  running,
-                       std::vector< controller_manager_msgs::ControllerState >&  stopped,
-                       const ros::Duration&                                      watchdog = ros::Duration(0.0));
+  virtual bool listControllers(std::vector<controller_manager_msgs::ControllerState>&  running,
+                               std::vector<controller_manager_msgs::ControllerState>&  stopped,
+                               const ros::Duration&  watchdog=ros::Duration(0.0)) final;
 
   /**
    * @brief matchControllers
@@ -223,7 +224,8 @@ public:
    * @param watchdog
    * @return
    */
-  bool matchControllers(const std::vector<std::string>& names, const ros::Duration& watchdog = ros::Duration(0.0));
+  virtual bool matchControllers(const std::vector<std::string>& names,
+                                const ros::Duration& watchdog = ros::Duration(0.0)) final;
   // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 };
 
@@ -253,21 +255,29 @@ private:
                      const ros::Duration&  watchdog = ros::Duration(0.0));
 
 public:
-  ControllerManagerInterface(std::shared_ptr<cnr_logger::TraceLogger> log, const std::string& hw_name);
+  /**
+   * @brief ControllerManagerInterface
+   * @param logger
+   * @param hw_name
+   * @param use_proxy
+   */
+  ControllerManagerInterface(std::shared_ptr<cnr_logger::TraceLogger> logger,
+                             const std::string&                       hw_name,
+                             const bool&                              use_proxy = false );
 
   std::string  loadServiceName()             { return load_.getService();     }
   std::string  unloadServiceName()           { return unload_.getService();   }
   std::string  switchControllerServiceName() { return doswitch_.getService(); }
 
-  bool loadController(const std::string& to_load_name, const ros::Duration& watchdog);
+  bool loadController(const std::string& to_load_name, const ros::Duration& watchdog) final;
 
   bool switchController(const int                       strictness,
                        const std::vector<std::string>*  to_load_and_start_names,
                        const std::vector<std::string>*  to_restart_names,
                        const std::vector<std::string>*  to_stop_unload_names,
-                       const ros::Duration&             watchdog = ros::Duration(0.0));
+                       const ros::Duration&             watchdog = ros::Duration(0.0)) final;
 
-  bool unloadController(const std::string& to_unload_name, const ros::Duration& watchdog = ros::Duration(0.0));
+  bool unloadController(const std::string& to_unload_name, const ros::Duration& watchdog = ros::Duration(0.0)) final;
 };
 
 
@@ -278,7 +288,7 @@ public:
  */
 class ControllerManager : public ControllerManagerBase
 {
-private:
+protected:
   controller_manager::ControllerManager cm_;
 
 public:
@@ -288,15 +298,16 @@ public:
                     const ros::NodeHandle&                    nh=ros::NodeHandle());
 
   bool loadController(const std::string&   to_load_name,
-                      const ros::Duration& watchdog = ros::Duration(0.0));
+                      const ros::Duration& watchdog = ros::Duration(0.0)) final;
 
   bool switchController(const int                        strictness,
                         const std::vector<std::string>*  to_load_and_start_names,
                         const std::vector<std::string>*  to_restart_names,
                         const std::vector<std::string>*  to_stop_unload_names,
-                        const ros::Duration&             watchdog = ros::Duration(0.0));
+                        const ros::Duration&             watchdog = ros::Duration(0.0) ) final;
 
-  bool unloadController(const std::string& to_unload_name, const ros::Duration& watchdog = ros::Duration(0.0));
+  bool unloadController(const std::string& to_unload_name,
+                        const ros::Duration& watchdog = ros::Duration(0.0)) final;
 
   controller_interface::ControllerBase* getControllerByName(const std::string& name)
   {
@@ -309,6 +320,40 @@ public:
   }
 };
 
+/**
+ * @brief The ControllerManagerProxy class
+ */
+class ControllerManagerProxy : public ::cnr_controller_manager_interface::ControllerManager
+{
+public:
+  ControllerManagerProxy(std::shared_ptr<cnr_logger::TraceLogger>  logger,
+                         const std::string&                        hw_name,
+                         hardware_interface::RobotHW*              robot_hw,
+                         const ros::NodeHandle&                    nh=ros::NodeHandle());
+
+  bool loadControllerSrv(controller_manager_msgs::LoadController::Request& req,
+                         controller_manager_msgs::LoadController::Response& res );
+  bool unloadControllerSrv(controller_manager_msgs::UnloadController::Request& req,
+                           controller_manager_msgs::UnloadController::Response& res );
+  bool switchControllerSrv(controller_manager_msgs::SwitchController::Request& req,
+                           controller_manager_msgs::SwitchController::Response& res );
+
+  void diagnosticsInfo(diagnostic_updater::DiagnosticStatusWrapper &stat) ;
+  void diagnosticsWarn(diagnostic_updater::DiagnosticStatusWrapper &stat) ;
+  void diagnosticsError(diagnostic_updater::DiagnosticStatusWrapper &stat)  ;
+  void diagnosticsPerformance(diagnostic_updater::DiagnosticStatusWrapper &stat) ;
+
+
+private:
+  mutable std::mutex mtx_;
+  ros::ServiceServer load_;
+  ros::ServiceServer unload_;
+  ros::ServiceServer doswitch_;
+
+  std::map<std::string, controller_interface::ControllerBase* > controllers_;
+
+
+};
 
 
 

@@ -27,6 +27,9 @@
   <build_export_depend>rosconsole</build_export_depend>
   <exec_depend>rosconsole</exec_depend>
   
+  <build_depend>realtime_utilities</build_depend>
+  <build_export_depend>realtime_utilities</build_export_depend>
+  <exec_depend>realtime_utilities</exec_depend>
 
   <build_depend>code_coverage</build_depend>
   <build_depend>rostest</build_depend>

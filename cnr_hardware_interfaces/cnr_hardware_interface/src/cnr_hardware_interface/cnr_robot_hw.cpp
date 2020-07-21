@@ -38,6 +38,8 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <boost/date_time/posix_time/posix_time.hpp>
+
 #include <ros/ros.h>
 #include <cnr_logger/cnr_logger.h>
 #include <cnr_hardware_interface/cnr_robot_hw.h>
@@ -378,30 +380,68 @@ void RobotHW::add_diagnostic_message(const std::string& level
 }
 
 
-void RobotHW::diagnostics(diagnostic_updater::DiagnosticStatusWrapper &stat)
+void RobotHW::diagnostics(diagnostic_updater::DiagnosticStatusWrapper &stat, int level)
 {
-  stat.hardware_id = m_robot_name;
-  stat.name        = m_robot_name;
+  boost::posix_time::ptime my_posix_time = ros::Time::now().toBoost();
 
   std::lock_guard<std::mutex> lock(m_mutex);
-  if (m_diagnostic.status.size())
+  stat.hardware_id = m_robot_name;
+  stat.name        = "RobotHW ["
+                   + ( level == (int)diagnostic_msgs::DiagnosticStatus::OK  ? std::string("Info")
+                     : level == (int)diagnostic_msgs::DiagnosticStatus::WARN ? std::string("Warn")
+                     : std::string("Error") )
+                   +"]";
+  bool something_to_add = false;
+  for (  const diagnostic_msgs::DiagnosticStatus & s : m_diagnostic.status )
   {
-    for (const auto & s : m_diagnostic.status)
+    something_to_add |= static_cast<int>( s.level ) == level;
+  }
+  if ( something_to_add )
+  {
+    stat.level       = level == (int)diagnostic_msgs::DiagnosticStatus::OK ? diagnostic_msgs::DiagnosticStatus::OK
+                     : level == (int)diagnostic_msgs::DiagnosticStatus::WARN ? diagnostic_msgs::DiagnosticStatus::WARN
+                     : level == (int)diagnostic_msgs::DiagnosticStatus::ERROR ? diagnostic_msgs::DiagnosticStatus::ERROR
+                     : diagnostic_msgs::DiagnosticStatus::STALE;
+    stat.message     = "Log of the status [" + boost::posix_time::to_iso_string(my_posix_time) + "]";
+    for ( const diagnostic_msgs::DiagnosticStatus & s : m_diagnostic.status )
     {
-      stat.summary(s.level, s.message);
-      for (const auto & kv : s.values)
-      {
-        stat.add(kv.key, kv.value);
-      }
+      diagnostic_msgs::KeyValue k;
+      k.key = s.name;
+      k.value = s.message;
+      stat.add(k.key, k.value);
     }
-    m_diagnostic.status.clear();
+    m_diagnostic.status.erase(
+        std::remove_if(
+            m_diagnostic.status.begin(),
+            m_diagnostic.status.end(),
+            [&](diagnostic_msgs::DiagnosticStatus const & p) { return p.level == level; }
+        ),
+        m_diagnostic.status.end()
+    );
   }
   else
   {
-    stat.summary(diagnostic_msgs::DiagnosticStatus::OK, "None Error in the queue");
+    stat.summary(diagnostic_msgs::DiagnosticStatus::OK, "None Error in the queue ["
+                 + boost::posix_time::to_iso_string(my_posix_time) + "]");
   }
+
+
 }
 
+void RobotHW::diagnosticsInfo(diagnostic_updater::DiagnosticStatusWrapper &stat)
+{
+  diagnostics(stat,diagnostic_msgs::DiagnosticStatus::OK);
+}
+
+void RobotHW::diagnosticsWarn(diagnostic_updater::DiagnosticStatusWrapper &stat)
+{
+  diagnostics(stat,diagnostic_msgs::DiagnosticStatus::WARN);
+}
+
+void RobotHW::diagnosticsError(diagnostic_updater::DiagnosticStatusWrapper &stat)
+{
+  diagnostics(stat,diagnostic_msgs::DiagnosticStatus::ERROR);
+}
 
 bool RobotHW::dump_state() const
 {

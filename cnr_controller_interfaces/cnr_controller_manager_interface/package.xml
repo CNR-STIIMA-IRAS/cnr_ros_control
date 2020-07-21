@@ -36,7 +36,6 @@
   <exec_depend>cnr_controller_interface</exec_depend>
   <exec_depend>controller_manager</exec_depend>
 
-
   <build_depend>code_coverage</build_depend>
   <build_depend>rostest</build_depend>
   <test_depend>rostest</test_depend>

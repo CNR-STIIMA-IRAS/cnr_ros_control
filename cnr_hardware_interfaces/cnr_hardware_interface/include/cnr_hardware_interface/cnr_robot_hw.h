@@ -130,8 +130,11 @@ public:
   // =======================================================
 
   // ======================================================= utils
-  void diagnostics(diagnostic_updater::DiagnosticStatusWrapper &stat);
-  
+  void diagnostics     (diagnostic_updater::DiagnosticStatusWrapper &stat, int level);
+  void diagnosticsInfo (diagnostic_updater::DiagnosticStatusWrapper &stat);
+  void diagnosticsWarn (diagnostic_updater::DiagnosticStatusWrapper &stat);
+  void diagnosticsError(diagnostic_updater::DiagnosticStatusWrapper &stat);
+
   const cnr_hardware_interface::StatusHw&  getStatus() const
   {
     return m_status;
@@ -169,7 +172,6 @@ private:
   {
     return false;
   }
-
 
 protected:
   std::string                                      m_robot_name;

@@ -35,6 +35,9 @@
 #ifndef CNR_CONTROLLER_MANAGER_INTERFACE_UTILS_H
 #define CNR_CONTROLLER_MANAGER_INTERFACE_UTILS_H
 
+#include <vector>
+#include <string>
+#include <ros/ros.h>
 
 namespace cnr_controller_manager_interface
 {
@@ -164,8 +167,14 @@ struct RetrieveKey
 };
 
 //============ UTILITIES
+/**
+ *
+ */
 template<class MSG>
-bool callRequest(ros::ServiceClient& clnt, MSG& msg, std::string& error, const ros::Duration&  watchdog = ros::Duration(0.0))
+bool callRequest(ros::ServiceClient& clnt,
+                 MSG& msg,
+                 std::string& error,
+                 const ros::Duration&  watchdog = ros::Duration(0.0))
 {
   if (watchdog.toSec() > 0)
   {
