@@ -33,15 +33,76 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
+//#define USE_TIMER_REALTIME_UTILS
+//#define USE_TIMERFD
+#define USE_WALLRATE
+
 #include <sstream>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <pluginlib/class_list_macros.h>
 #include <diagnostic_msgs/DiagnosticArray.h>
-
+#include <realtime_utilities/realtime_utilities.h>
 #include <cnr_hardware_interface/cnr_robot_hw.h>
 #include <cnr_hardware_nodelet_interface/cnr_robot_hw_nodelet.h>
 
 PLUGINLIB_EXPORT_CLASS(cnr_hardware_nodelet_interface::RobotHwNodelet, nodelet::Nodelet)
+
+
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/time.h>
+#include <sys/timerfd.h>
+
+struct periodic_info {
+  int timer_fd;
+  unsigned long long wakeups_missed;
+};
+
+static int make_periodic(unsigned int period, struct periodic_info *info)
+{
+  int ret;
+  unsigned int ns;
+  unsigned int sec;
+  int fd;
+  struct itimerspec itval;
+
+  /* Create the timer */
+  fd = timerfd_create(CLOCK_MONOTONIC, 0);
+  info->wakeups_missed = 0;
+  info->timer_fd = fd;
+  if (fd == -1)
+    return fd;
+
+  /* Make the timer periodic */
+  sec = period / 1000000;
+  ns = (period - (sec * 1000000)) * 1000;
+  itval.it_interval.tv_sec = sec;
+  itval.it_interval.tv_nsec = ns;
+  itval.it_value.tv_sec = sec;
+  itval.it_value.tv_nsec = ns;
+  ret = timerfd_settime(fd, 0, &itval, NULL);
+  return ret;
+}
+
+static void wait_period(struct periodic_info *info)
+{
+  unsigned long long missed;
+  int ret;
+
+  /* Wait for the next timer event. If we have missed any the
+     number is written to "missed" */
+  ret = read(info->timer_fd, &missed, sizeof(missed));
+  if (ret == -1) {
+    perror("read timer");
+    return;
+  }
+
+  info->wakeups_missed += missed;
+}
 
 namespace cnr_hardware_nodelet_interface
 {
@@ -296,7 +357,8 @@ void RobotHwNodelet::diagnosticsPerformance(diagnostic_updater::DiagnosticStatus
     k.key = ts.first + " [s]";
     k.value = to_string(ts.second->getMean()) + " "
             + std::string("[ ")+to_string(ts.second->getMin())+" - "+to_string(ts.second->getMax()) + std::string(" ]")
-            + std::string(" Missed: ") + to_string(ts.second->getMissedCycles());
+            + std::string(" Missed: ") + to_string(ts.second->getMissedCycles())
+            + std::string("/") + to_string(ts.second->getTotalCycles());
     stat.add(k.key, k.value);
   }
 }
@@ -353,10 +415,36 @@ void RobotHwNodelet::diagnosticsThread()
 void RobotHwNodelet::controlUpdateThread()
 {
   CNR_WARN(*m_logger, "Start update thread (period: " << m_period << ")");
-  ros::WallRate wr(m_period);
+
   m_update_thread_state = RUNNING;
+#if defined(USE_TIMER_REALTIME_UTILS)
+  uint32_t missed_deadlines;
+  realtime_utilities::period_info ptarget;
+  ptarget.period_ns = m_period.toNSec();
+
+  clock_gettime(CLOCK_MONOTONIC, &(ptarget.next_period));
+  ptarget.next_period.tv_nsec  =  ( (ptarget.next_period.tv_nsec / 1000000) + 1 ) * 1000000 + 5e7;  // approx to ms
+  ptarget.next_period.tv_sec  += 0.0;
+#elif defined(USE_TIMERFD)
+  struct periodic_info info;
+  make_periodic( (m_period.toNSec() / 1000 ), &info);
+#elif defined(USE_WALLRATE)
+  ros::WallRate wr( m_period );
+#endif
+
   while (ros::ok())
   {
+#if defined(USE_TIMER_REALTIME_UTILS)
+  realtime_utilities::timer_wait_rest_of_period(&(ptarget.next_period));
+  missed_deadlines = realtime_utilities::timer_inc_period(&ptarget);
+#elif defined(USE_TIMERFD)
+  wait_period(&info);
+#elif defined(USE_WALLRATE)
+  wr.sleep();
+#endif
+
+
+
     m_time_span_tracker.at("cycle")->time_span();
 
     if (m_stop_update_thread)
@@ -406,8 +494,6 @@ void RobotHwNodelet::controlUpdateThread()
     {
       CNR_ERROR_THROTTLE(*m_logger, 5.0, "RobotHw is in error");
     }
-
-    wr.sleep();
   }
 
   m_stop_update_thread = true;

@@ -134,7 +134,9 @@ void ControllerDiagnostic::diagnosticsPerformance(diagnostic_updater::Diagnostic
   k.value = to_string_fix(m_time_span_tracker->getMean())
           + std::string(" [ ") + to_string_fix(m_time_span_tracker->getMin()) + " - "
           + to_string_fix(m_time_span_tracker->getMax()) + std::string(" ] ")
-          + std::string("Missed: ") + std::to_string(m_time_span_tracker->getMissedCycles());
+          + std::string("Missed: ") + std::to_string(m_time_span_tracker->getMissedCycles())
+          + std::string("/") + std::to_string(m_time_span_tracker->getTotalCycles());
+
   stat.add(k.key, k.value);
 }
 

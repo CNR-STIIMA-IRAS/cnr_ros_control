@@ -44,7 +44,7 @@
 #include <pluginlib/class_loader.h>
 #include <diagnostic_updater/diagnostic_updater.h>
 
-#include <realtime_utilities/circular_buffer.h>
+#include <realtime_utilities/time_span_tracker.h>
 #include <cnr_logger/cnr_logger.h>
 #include <cnr_controller_manager_interface/cnr_controller_manager_interface.h>
 #include <cnr_hardware_interface/cnr_robot_hw.h>

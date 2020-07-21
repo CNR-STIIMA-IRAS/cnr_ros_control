@@ -36,9 +36,8 @@ include_directories(
 )
 
 ## Declare a C++ library
-add_library(${PROJECT_NAME}
-   src/${PROJECT_NAME}/cnr_robot_hw_nodelet.cpp
-)
+add_library(${PROJECT_NAME} src/${PROJECT_NAME}/cnr_robot_hw_nodelet.cpp )
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} )
 
 #############
 ## Install ##

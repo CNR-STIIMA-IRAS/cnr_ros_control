@@ -49,7 +49,7 @@
 #include <diagnostic_updater/DiagnosticStatusWrapper.h>
 #include <cnr_logger/cnr_logger.h>
 #include <cnr_controller_interface/internal/utils.h>
-#include <realtime_utilities/circular_buffer.h>
+#include <realtime_utilities/time_span_tracker.h>
 
 
 namespace cnr_controller_interface
