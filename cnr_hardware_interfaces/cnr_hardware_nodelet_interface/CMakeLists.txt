@@ -56,6 +56,10 @@ install(TARGETS ${PROJECT_NAME}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
+install(FILES plugin.xml
+  DESTINATION share/${PROJECT_NAME})
+
+
 #############
 ## Testing ##
 #############

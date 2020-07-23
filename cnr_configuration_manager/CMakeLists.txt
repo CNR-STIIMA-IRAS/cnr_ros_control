@@ -87,7 +87,6 @@ target_link_libraries(dispatcher
 )
 
 
-
 #############
 ## Install ##
 #############
@@ -98,7 +97,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
   PATTERN ".git" EXCLUDE
 )
 
-install(TARGETS ${PROJECT_NAME}_node configuration_user_interface joy_teach_pendant dispatcher
+install(TARGETS ${PROJECT_NAME}_node ${PROJECT_NAME} configuration_user_interface joy_teach_pendant dispatcher
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

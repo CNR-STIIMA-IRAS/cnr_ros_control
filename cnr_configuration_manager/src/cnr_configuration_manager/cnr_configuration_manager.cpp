@@ -379,7 +379,6 @@ bool ConfigurationManager::isOk(bool nodelet_check)
   return true;
 }
 
-
 bool ConfigurationManager::checkRobotHwState(const std::string& hw, cnr_hardware_interface::StatusHw target)
 {
   cnr_hardware_interface::StatusHw hw_status;

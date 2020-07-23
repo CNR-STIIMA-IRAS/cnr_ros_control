@@ -58,6 +58,9 @@ install(TARGETS ${PROJECT_NAME}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
+install(FILES plugin.xml
+  DESTINATION share/${PROJECT_NAME})
+
 roslint_cpp()
 set(ROSLINT_CPP_OPTS "--filter=-runtime/references,-runtime/int --line-length=150")
 

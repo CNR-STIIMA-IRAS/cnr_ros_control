@@ -97,7 +97,6 @@ int main(int argc, char **argv)
 
     CNR_INFO(*logger, "Destroy the Logger.");
     logger.reset();
-
   }
   catch (std::exception& e)
   {

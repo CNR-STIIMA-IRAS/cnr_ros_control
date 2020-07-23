@@ -1,9 +1,0 @@
-
-<library path="lib/libcnr_hardware_interface">
-  <class name="itia/control/BasicHwIfaceNodelet" type="itia::control::BasicHwIfaceNodelet" base_class_type="nodelet::Nodelet">
-    <description>
-      itia::control::BasicHwIfaceNodelet
-    </description>
-  </class>
-</library>
-
