@@ -577,12 +577,13 @@ void Controller< T >::add_subscriber(const std::string& id, const std::string &t
 template< typename T >
 bool Controller< T >::tick(const std::string& id)
 {
-  if( m_pub.find(id) == m_pub.end() )
+  if( m_sub.find(id) == m_sub.end() )
   {
     return false;
   }
 
   auto n = std::chrono::high_resolution_clock::now();
+
   if (m_sub.at(id).start == nullptr)
   {
     m_sub.at(id).start = new std::chrono::high_resolution_clock::time_point();

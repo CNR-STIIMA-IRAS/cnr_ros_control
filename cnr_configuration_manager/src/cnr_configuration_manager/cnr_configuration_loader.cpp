@@ -225,6 +225,9 @@ bool ConfigurationLoader::loadHw(const std::vector<std::string>& hw_to_load_name
                ("[" + hw_to_load_name + "] error_: " + error_);
       CNR_RETURN_FALSE(*logger_);
     }
+    CNR_DEBUG(*logger_, "Namespace: " << getNamespace().getNamespace() << " Hw to load: " << hw_to_load_name
+              << " type (from param): " << type );
+
     if (!nodelet_loader_->load(hw_to_load_name, type, remappings, my_argv))
     {
       error_ = "The NodeleLoader failed when loading '" + hw_to_load_name + "'";

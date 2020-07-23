@@ -106,9 +106,11 @@ public:
     }
 
     XmlRpc::XmlRpcValue value;
-    if (!Controller<T>::getControllerNh().getParam("controlled_joint", value) && !Controller<T>::getControllerNh().getParam("controlled_joints", value))
+    if (!Controller<T>::getControllerNh().getParam("controlled_joint", value)
+    &&  !Controller<T>::getControllerNh().getParam("controlled_joints", value))
     {
-      CNR_RETURN_FALSE(*Controller<T>::m_logger, "The param " + Controller<T>::getControllerNamespace() + "/controlled_joint(s) not defined");
+      CNR_RETURN_FALSE(*Controller<T>::m_logger,
+                       "The param " + Controller<T>::getControllerNamespace() + "/controlled_joint(s) not defined");
     }
 
     if (value.getType() == XmlRpc::XmlRpcValue::TypeArray)
@@ -122,7 +124,8 @@ public:
       }
       else
       {
-        CNR_RETURN_FALSE(*Controller<T>::m_logger, "The param " + Controller<T>::getControllerNamespace() + "/controlled_joint(s) bad formed");
+        CNR_RETURN_FALSE(*Controller<T>::m_logger,
+                         "The param " + Controller<T>::getControllerNamespace() + "/controlled_joint(s) bad formed");
       }
     }
     else if (value.getType() == XmlRpc::XmlRpcValue::TypeString)
@@ -131,7 +134,8 @@ public:
     }
     else
     {
-      CNR_RETURN_FALSE(*Controller<T>::m_logger, "The param " + Controller<T>::getControllerNamespace() + "/controlled_joint(s) bad formed");
+      CNR_RETURN_FALSE(*Controller<T>::m_logger,
+                       "The param " + Controller<T>::getControllerNamespace() + "/controlled_joint(s) bad formed");
     }
 
     m_nAx = m_joint_names.size();
@@ -143,7 +147,9 @@ public:
       }
       catch (...)
       {
-        CNR_RETURN_FALSE(*Controller<T>::m_logger, "Controller '" + Controller<T>::getControllerNamespace() + "' failed in init. The controlled joint named '" + name + "' is not managed by hardware_interface");
+        CNR_RETURN_FALSE(*Controller<T>::m_logger,
+          "Controller '" + Controller<T>::getControllerNamespace() + "' failed in init. " + std::string("")
+          + "The controlled joint named '" + name + "' is not managed by hardware_interface");
       }
     }
 
