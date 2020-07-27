@@ -48,13 +48,13 @@ namespace cnr_configuration_manager
 {
 
 ConfigurationLoader::ConfigurationLoader(std::shared_ptr<cnr_logger::TraceLogger> log,
-                                                 const std::string& root_ns)
-  : root_nh_("/" + root_ns), logger_(log)
+                                                 const ros::NodeHandle& root_nh)
+  : root_nh_(root_nh), logger_(log)
 {
   nodelet_loader_.reset(new nodelet::Loader(false));
 }
 
-ros::NodeHandle& ConfigurationLoader::getNamespace()
+ros::NodeHandle& ConfigurationLoader::getRootNh()
 {
   return root_nh_;
 }
@@ -67,7 +67,7 @@ bool ConfigurationLoader::getHwParam(ros::NodeHandle &nh,
   XmlRpc::XmlRpcValue hardware_interface;
   if (!nh.getParam(hw_name, hardware_interface))
   {
-    error_ = "Param '" + hw_name + "' does not exist";
+    error_ = "Param '" + nh.getNamespace()+ "/" + hw_name + "' does not exist";
     return false;
   }
   if (!hardware_interface.hasMember("nodelet_type"))
@@ -119,15 +119,15 @@ bool ConfigurationLoader::getHwParam(ros::NodeHandle &nh,
 
 
 bool ConfigurationLoader::getHwParam(ros::NodeHandle &nh,
-                                           const std::string& hw_name,
-                                           std::string& type,
-                                           nodelet::M_string& remappings)
+                                     const std::string& hw_name,
+                                     std::string& type,
+                                     nodelet::M_string& remappings)
 {
 
   XmlRpc::XmlRpcValue hardware_interface;
   if (!nh.getParam(hw_name, hardware_interface))
   {
-    error_ = "Param '" + hw_name + "' does not exist";
+    error_ = "Param '" + nh.getNamespace()+ "/" + hw_name + "' does not exist";
     return false;
   }
   if (!hardware_interface.hasMember("nodelet_type"))
@@ -211,6 +211,8 @@ bool ConfigurationLoader::loadHw(const std::vector<std::string>& hw_to_load_name
                                  bool double_check)
 {
 
+  ros::NodeHandle nh("/");
+
   CNR_TRACE_START(*logger_);
   size_t i = 0;
   for (auto const & hw_to_load_name : hw_to_load_names)
@@ -219,13 +221,13 @@ bool ConfigurationLoader::loadHw(const std::vector<std::string>& hw_to_load_name
     nodelet::M_string remappings;
     nodelet::V_string my_argv;
     i++;
-    if (!getHwParam(getNamespace(), hw_to_load_name, type, remappings))
+    if (!getHwParam(nh, hw_to_load_name, type, remappings))
     {
       error_ = ("Loading RobotHW [" + std::to_string(i) + "/" + std::to_string((int)hw_to_load_names.size()) + "]") +
-               ("[" + hw_to_load_name + "] error_: " + error_);
+               ("[" + hw_to_load_name + "] error: " + error_);
       CNR_RETURN_FALSE(*logger_);
     }
-    CNR_DEBUG(*logger_, "Namespace: " << getNamespace().getNamespace() << " Hw to load: " << hw_to_load_name
+    CNR_DEBUG(*logger_, "Namespace: " << nh.getNamespace() << " Hw to load: " << hw_to_load_name
               << " type (from param): " << type );
 
     if (!nodelet_loader_->load(hw_to_load_name, type, remappings, my_argv))
@@ -298,11 +300,11 @@ bool ConfigurationLoader::unloadHw(const std::vector<std::string>& hw_to_unload_
     if (!nodelet_loader_->unload( old ) )
     {
       error_ = "The nodelet loader failed. in unloadinf " + old;
-      set_state(getNamespace(), old, cnr_hardware_interface::SRV_ERROR);
+      set_state(getRootNh(), old, cnr_hardware_interface::SRV_ERROR);
       CNR_RETURN_FALSE(*logger_, error_);
     }
     CNR_DEBUG(*logger_, "set hw nodelet state to UNLOADED");
-    set_state(getNamespace(), old, cnr_hardware_interface::UNLOADED);
+    set_state(getRootNh(), old, cnr_hardware_interface::UNLOADED);
   }
   CNR_RETURN_TRUE(*logger_);
 }

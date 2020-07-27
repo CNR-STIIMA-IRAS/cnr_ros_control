@@ -35,6 +35,10 @@
   <build_depend>rostest</build_depend>
   <test_depend>rostest</test_depend>
 
+  <build_depend>urdf</build_depend>
+  <build_export_depend>urdf</build_export_depend>
+  <exec_depend>urdf</exec_depend>
+
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <!-- Other tools can request additional information be placed here -->

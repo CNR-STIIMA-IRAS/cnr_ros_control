@@ -75,6 +75,7 @@
 
 void ui_thread_fun()
 {
+  ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
   ros::NodeHandle nh;
   ros::AsyncSpinner spin(4);
   spin.start();
@@ -87,6 +88,7 @@ void ui_thread_fun()
   list_config.waitForExistence();
   start_config.waitForExistence();
   stop_config.waitForExistence();
+  ROS_INFO("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
 
   while ((ros::ok()))
   {
@@ -168,10 +170,13 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "configuration_user_interface");
   ros::NodeHandle nh;
 
-  ros::ServiceClient list_config  = nh.serviceClient<configuration_msgs::ListConfigurations>("/configuration_manager/list_configurations");
+  ros::ServiceClient list_config  =
+      nh.serviceClient<configuration_msgs::ListConfigurations>("/configuration_manager/list_configurations");
+
   ROS_INFO("Waiting for configuration_manager wake up...");
   list_config.waitForExistence();
 
+  ROS_INFO("Start thread...");
   std::thread ui_thread(ui_thread_fun);
   while (ros::ok() && list_config.exists() && ui_thread.joinable())
   {

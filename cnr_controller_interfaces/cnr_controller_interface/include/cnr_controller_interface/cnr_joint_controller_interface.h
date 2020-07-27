@@ -39,6 +39,9 @@
 #include <cnr_logger/cnr_logger.h>
 #include <cnr_controller_interface/cnr_controller_interface.h>
 
+#include <urdf_model/model.h>
+#include <urdf_parser/urdf_parser.h>
+
 
 namespace cnr_controller_interface
 {
@@ -139,17 +142,77 @@ public:
     }
 
     m_nAx = m_joint_names.size();
-    for (std::string name : m_joint_names)
+    std::string robot_description;
+    if (!Controller<T>::getControllerNh().getParam("/robot_description", robot_description))
+    {
+      CNR_FATAL(*Controller<T>::m_logger, "Parameter '/robot_description' does not exist");
+      CNR_RETURN_FALSE(*Controller<T>::m_logger);
+    }
+    m_model = urdf::parseURDF(robot_description);
+
+    m_upper_limit.resize(m_nAx);
+    m_lower_limit.resize(m_nAx);
+    m_velocity_limit.resize(m_nAx);
+    m_acceleration_limit.resize(m_nAx);
+
+
+    for (unsigned int iAx = 0; iAx < m_nAx; iAx++)
     {
       try
       {
-        Controller<T>::m_hw->getHandle(name);
+          m_upper_limit.at(iAx) = m_model->getJoint(m_joint_names.at(iAx))->limits->upper;
+          m_lower_limit.at(iAx) = m_model->getJoint(m_joint_names.at(iAx))->limits->lower;
+
+          if ((m_upper_limit.at(iAx) == 0) && (m_lower_limit.at(iAx) == 0))
+          {
+            m_upper_limit.at(iAx) = std::numeric_limits<double>::infinity();
+            m_lower_limit.at(iAx) = -std::numeric_limits<double>::infinity();
+            ROS_INFO("upper and lower limits are both equal to 0, set +/- infinity");
+          }
+
+          bool has_velocity_limits;
+          if (!Controller<T>::getControllerNh().getParam(
+                "/robot_description_planning/joint_limits/" + m_joint_names.at(iAx) + "/has_velocity_limits", has_velocity_limits))
+            has_velocity_limits = false;
+          bool has_acceleration_limits;
+          if (!Controller<T>::getControllerNh().getParam(
+                "/robot_description_planning/joint_limits/" + m_joint_names.at(iAx) + "/has_acceleration_limits", has_acceleration_limits))
+            has_acceleration_limits = false;
+
+          m_velocity_limit.at(iAx) = m_model->getJoint(m_joint_names.at(iAx))->limits->velocity;
+          if (has_velocity_limits)
+          {
+            double vel;
+            if (!Controller<T>::getControllerNh().getParam("/robot_description_planning/joint_limits/" + m_joint_names.at(iAx) + "/max_velocity", vel))
+            {
+              ROS_ERROR_STREAM("/robot_description_planning/joint_limits/" + m_joint_names.at(iAx) + "/max_velocity is not defined");
+              return false;
+            }
+            if (vel < m_velocity_limit.at(iAx))
+              m_velocity_limit.at(iAx) = vel;
+          }
+
+          if (has_acceleration_limits)
+          {
+            double acc;
+            if (!Controller<T>::getControllerNh().getParam("/robot_description_planning/joint_limits/" + m_joint_names.at(iAx) + "/max_acceleration", acc))
+            {
+              ROS_ERROR_STREAM("/robot_description_planning/joint_limits/" + m_joint_names.at(iAx) + "/max_acceleration is not defined");
+              return false;
+            }
+            m_acceleration_limit.at(iAx) = acc;
+          }
+          else
+            m_acceleration_limit.at(iAx) = 10 * m_velocity_limit.at(iAx);
+
+
+        Controller<T>::m_hw->getHandle(m_joint_names.at(iAx));
       }
       catch (...)
       {
         CNR_RETURN_FALSE(*Controller<T>::m_logger,
           "Controller '" + Controller<T>::getControllerNamespace() + "' failed in init. " + std::string("")
-          + "The controlled joint named '" + name + "' is not managed by hardware_interface");
+          + "The controlled joint named '" + m_joint_names.at(iAx) + "' is not managed by hardware_interface");
       }
     }
 
@@ -162,8 +225,14 @@ public:
   }
 protected:
 
-  std::vector<std::string>        m_joint_names;
-  size_t                          m_nAx;
+  urdf::ModelInterfaceSharedPtr m_model;
+  std::vector<std::string> m_joint_names;
+  size_t                   m_nAx;
+
+  std::vector<double>      m_upper_limit;
+  std::vector<double>      m_lower_limit;
+  std::vector<double>      m_velocity_limit;
+  std::vector<double>      m_acceleration_limit;
 
 };
 

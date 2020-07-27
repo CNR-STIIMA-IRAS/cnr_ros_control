@@ -69,7 +69,7 @@ ConfigurationManager::ConfigurationManager(std::shared_ptr<cnr_logger::TraceLogg
 : m_nh(nh)
 , m_active_configuration_name("None")
 , m_logger(logger)
-, m_conf_loader(m_logger, nh.getNamespace())
+, m_conf_loader(m_logger, m_nh)
 {
 
 }

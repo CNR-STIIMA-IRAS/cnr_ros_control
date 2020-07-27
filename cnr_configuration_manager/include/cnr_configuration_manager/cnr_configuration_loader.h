@@ -64,13 +64,13 @@ public:
 
 
   ConfigurationLoader(std::shared_ptr<cnr_logger::TraceLogger> log,
-                          const std::string& root_ns);
+                          const ros::NodeHandle& root_nh);
   ~ConfigurationLoader()
   {
     nodelet_loader_.reset();
   }
 
-  ros::NodeHandle& getNamespace();
+  ros::NodeHandle& getRootNh();
 
   const std::string& error() const
   {

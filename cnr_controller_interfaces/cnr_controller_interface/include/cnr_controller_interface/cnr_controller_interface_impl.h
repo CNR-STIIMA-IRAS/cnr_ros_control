@@ -594,7 +594,6 @@ bool Controller< T >::tick(const std::string& id)
   m_sub.at(id).last  = n;
 
   return (m_sub.at(id).time_span.count() < m_watchdog);
-
 }
 
 template< class T >

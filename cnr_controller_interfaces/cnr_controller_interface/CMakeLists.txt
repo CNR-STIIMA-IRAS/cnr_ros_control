@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(catkin REQUIRED COMPONENTS
-  realtime_utilities controller_interface diagnostic_msgs cnr_logger rosconsole
+  realtime_utilities controller_interface diagnostic_msgs cnr_logger rosconsole urdf
 )
 
 if(CATKIN_ENABLE_TESTING AND ENABLE_COVERAGE_TESTING)
@@ -20,7 +20,7 @@ endif()
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
-  CATKIN_DEPENDS realtime_utilities controller_interface cnr_logger
+  CATKIN_DEPENDS urdf realtime_utilities controller_interface cnr_logger
 )
 
 include_directories(
