@@ -393,13 +393,13 @@ bool Controller< T >::exitStarting()
 template< class T >
 bool Controller< T >::enterUpdate()
 {
-  CNR_TRACE_START_THROTTLE(*m_logger, 10.0);
+  //CNR_TRACE_START_THROTTLE(*m_logger, 10.0);
   if (!callAvailable( ))
   {
     dump_state("CALLBACK_TIMEOUT_ERROR");
     CNR_RETURN_FALSE_THROTTLE(*m_logger, 5.0);
   }
-  CNR_RETURN_BOOL_THROTTLE(*m_logger, 10.0, dump_state())
+  CNR_RETURN_TRUE(*m_logger);
 }
 
 template< class T >

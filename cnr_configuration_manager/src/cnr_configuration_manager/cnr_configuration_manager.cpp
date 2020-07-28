@@ -507,7 +507,7 @@ bool ConfigurationManager::updateConfigurations()
 
   m_configurations.clear();
   m_configurations = configurations;
-  CNR_WARN(*m_logger, "CONFIGURATIONS AS IN ROSPARAM SERVER:\n" << to_string(configurations));
+  CNR_DEBUG(*m_logger, "CONFIGURATIONS AS IN ROSPARAM SERVER:\n" << to_string(configurations));
   CNR_RETURN_BOOL(*m_logger, true);
 }
 

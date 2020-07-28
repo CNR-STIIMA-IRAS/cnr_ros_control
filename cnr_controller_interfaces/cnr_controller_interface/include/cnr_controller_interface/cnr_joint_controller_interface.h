@@ -226,13 +226,13 @@ public:
 protected:
 
   urdf::ModelInterfaceSharedPtr m_model;
-  std::vector<std::string> m_joint_names;
-  size_t                   m_nAx;
+  std::vector<std::string>      m_joint_names;
+  size_t                        m_nAx;
 
-  std::vector<double>      m_upper_limit;
-  std::vector<double>      m_lower_limit;
-  std::vector<double>      m_velocity_limit;
-  std::vector<double>      m_acceleration_limit;
+  std::vector<double>           m_upper_limit;
+  std::vector<double>           m_lower_limit;
+  std::vector<double>           m_velocity_limit;
+  std::vector<double>           m_acceleration_limit;
 
 };
 
