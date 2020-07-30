@@ -32,16 +32,18 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __CNR__JOINT_CONTROLLER_INTERFACE__
-#define __CNR__JOINT_CONTROLLER_INTERFACE__
+#ifndef CNR_CONTROLLER_INTERFACE__JOINT_CONTROLLER_INTERFACE_H
+#define CNR_CONTROLLER_INTERFACE__JOINT_CONTROLLER_INTERFACE_H
 
+#include <eigen3/Eigen/Core>
 #include <ros/ros.h>
 #include <cnr_logger/cnr_logger.h>
 #include <cnr_controller_interface/cnr_controller_interface.h>
 
 #include <urdf_model/model.h>
 #include <urdf_parser/urdf_parser.h>
-
+#include <rosdyn_core/primitives.h>
+#include <cnr_controller_interface/utils/cnr_kinematic_status.h>
 
 namespace cnr_controller_interface
 {
@@ -57,184 +59,69 @@ class JointController: public cnr_controller_interface::Controller< T >
 {
 public:
 
-  ~JointController()
-  {
-    CNR_TRACE_START(*cnr_controller_interface::Controller< T >::m_logger);
-  }
+  ~JointController();
 
-  virtual bool doInit()
-  {
-    return true;
-  }
-  virtual bool doStarting(const ros::Time& /*time*/)
-  {
-    return true;
-  }
-  virtual bool doUpdate(const ros::Time& /*time*/, const ros::Duration& /*period*/)
-  {
-    return true;
-  }
-  virtual bool doStopping(const ros::Time& /*time*/)
-  {
-    return true;
-  }
-  virtual bool doWaiting(const ros::Time& /*time*/)
-  {
-    return true;
-  }
-  virtual bool doAborting(const ros::Time& /*time*/)
-  {
-    return true;
-  }
+  virtual bool doInit();
+  virtual bool doStarting(const ros::Time& /*time*/);
+  virtual bool doUpdate(const ros::Time& /*time*/, const ros::Duration& /*period*/);
+  virtual bool doStopping(const ros::Time& /*time*/);
+  virtual bool doWaiting(const ros::Time& /*time*/);
+  virtual bool doAborting(const ros::Time& /*time*/);
 
-  const std::vector< std::string >&        getJointNames() const
-  {
-    return m_joint_names;
-  }
-  std::shared_ptr<cnr_logger::TraceLogger> logger()
-  {
-    return cnr_controller_interface::Controller< T >::m_logger;
-  }
+  virtual bool enterInit();
+  virtual bool enterStarting();
+  virtual bool enterUpdate();
 
+  const size_t& nAx                         ( ) const { return m_nAx; }
+  const Eigen::VectorXd& q                  ( ) const { return m_state.q; }
+  const Eigen::VectorXd& qd                 ( ) const { return m_state.qd; }
+  const Eigen::VectorXd& qdd                ( ) const { return m_state.qdd; }
+  const Eigen::VectorXd& effort             ( ) const { return m_state.effort; }
+  const Eigen::VectorXd& upperLimit         ( ) const { return m_lower_limit; }
+  const Eigen::VectorXd& lowerLimit         ( ) const { return m_upper_limit; }
+  const Eigen::VectorXd& speedLimit         ( ) const { return m_qd_limit;    }
+  const Eigen::VectorXd& accelerationLimit  ( ) const { return m_qdd_limit;   }
+  const std::vector<std::string>& jointNames( ) const { return m_joint_names; }
+  const double& q                  (size_t iAx) const { return m_state.q(iAx); }
+  const double& qd                 (size_t iAx) const { return m_state.qd(iAx); }
+  const double& qdd                (size_t iAx) const { return m_state.qdd(iAx); }
+  const double& effort             (size_t iAx) const { return m_state.effort(iAx); }
+  const double& upperLimit         (size_t iAx) const { return m_lower_limit(iAx); }
+  const double& lowerLimit         (size_t iAx) const { return m_upper_limit(iAx); }
+  const double& speedLimit         (size_t iAx) const { return m_qd_limit(iAx);    }
+  const double& accelerationLimit  (size_t iAx) const { return m_qdd_limit(iAx);   }
+  const std::string& jointName     (size_t iAx) const { return m_joint_names.at(iAx); }
 
+  const std::string& baseLink    ( ) const { return m_base_link;  }
+  const std::string& baseFrame   ( ) const { return baseLink();   }
+  const std::string& toolLink    ( ) const { return m_tool_link;  }
+  const std::string& toolFrame   ( ) const { return toolLink();   }
+  const Eigen::Affine3d& toolPose( ) const { return m_Tbt;        }
 
-public:
-
-  bool enterInit()
-  {
-    CNR_TRACE_START(*Controller<T>::m_logger);
-    if (!Controller<T>::enterInit())
-    {
-      CNR_RETURN_FALSE(*Controller<T>::m_logger);
-    }
-
-    XmlRpc::XmlRpcValue value;
-    if (!Controller<T>::getControllerNh().getParam("controlled_joint", value)
-    &&  !Controller<T>::getControllerNh().getParam("controlled_joints", value))
-    {
-      CNR_RETURN_FALSE(*Controller<T>::m_logger,
-                       "The param " + Controller<T>::getControllerNamespace() + "/controlled_joint(s) not defined");
-    }
-
-    if (value.getType() == XmlRpc::XmlRpcValue::TypeArray)
-    {
-      if (value[0].getType() == XmlRpc::XmlRpcValue::TypeString)
-      {
-        for (int i = 0; i < value.size(); i++)
-        {
-          m_joint_names.push_back((std::string)(value[i]));
-        }
-      }
-      else
-      {
-        CNR_RETURN_FALSE(*Controller<T>::m_logger,
-                         "The param " + Controller<T>::getControllerNamespace() + "/controlled_joint(s) bad formed");
-      }
-    }
-    else if (value.getType() == XmlRpc::XmlRpcValue::TypeString)
-    {
-      m_joint_names.push_back((std::string)(value));
-    }
-    else
-    {
-      CNR_RETURN_FALSE(*Controller<T>::m_logger,
-                       "The param " + Controller<T>::getControllerNamespace() + "/controlled_joint(s) bad formed");
-    }
-
-    m_nAx = m_joint_names.size();
-    std::string robot_description;
-    if (!Controller<T>::getControllerNh().getParam("/robot_description", robot_description))
-    {
-      CNR_FATAL(*Controller<T>::m_logger, "Parameter '/robot_description' does not exist");
-      CNR_RETURN_FALSE(*Controller<T>::m_logger);
-    }
-    m_model = urdf::parseURDF(robot_description);
-
-    m_upper_limit.resize(m_nAx);
-    m_lower_limit.resize(m_nAx);
-    m_velocity_limit.resize(m_nAx);
-    m_acceleration_limit.resize(m_nAx);
-
-
-    for (unsigned int iAx = 0; iAx < m_nAx; iAx++)
-    {
-      try
-      {
-          m_upper_limit.at(iAx) = m_model->getJoint(m_joint_names.at(iAx))->limits->upper;
-          m_lower_limit.at(iAx) = m_model->getJoint(m_joint_names.at(iAx))->limits->lower;
-
-          if ((m_upper_limit.at(iAx) == 0) && (m_lower_limit.at(iAx) == 0))
-          {
-            m_upper_limit.at(iAx) = std::numeric_limits<double>::infinity();
-            m_lower_limit.at(iAx) = -std::numeric_limits<double>::infinity();
-            ROS_INFO("upper and lower limits are both equal to 0, set +/- infinity");
-          }
-
-          bool has_velocity_limits;
-          if (!Controller<T>::getControllerNh().getParam(
-                "/robot_description_planning/joint_limits/" + m_joint_names.at(iAx) + "/has_velocity_limits", has_velocity_limits))
-            has_velocity_limits = false;
-          bool has_acceleration_limits;
-          if (!Controller<T>::getControllerNh().getParam(
-                "/robot_description_planning/joint_limits/" + m_joint_names.at(iAx) + "/has_acceleration_limits", has_acceleration_limits))
-            has_acceleration_limits = false;
-
-          m_velocity_limit.at(iAx) = m_model->getJoint(m_joint_names.at(iAx))->limits->velocity;
-          if (has_velocity_limits)
-          {
-            double vel;
-            if (!Controller<T>::getControllerNh().getParam("/robot_description_planning/joint_limits/" + m_joint_names.at(iAx) + "/max_velocity", vel))
-            {
-              ROS_ERROR_STREAM("/robot_description_planning/joint_limits/" + m_joint_names.at(iAx) + "/max_velocity is not defined");
-              return false;
-            }
-            if (vel < m_velocity_limit.at(iAx))
-              m_velocity_limit.at(iAx) = vel;
-          }
-
-          if (has_acceleration_limits)
-          {
-            double acc;
-            if (!Controller<T>::getControllerNh().getParam("/robot_description_planning/joint_limits/" + m_joint_names.at(iAx) + "/max_acceleration", acc))
-            {
-              ROS_ERROR_STREAM("/robot_description_planning/joint_limits/" + m_joint_names.at(iAx) + "/max_acceleration is not defined");
-              return false;
-            }
-            m_acceleration_limit.at(iAx) = acc;
-          }
-          else
-            m_acceleration_limit.at(iAx) = 10 * m_velocity_limit.at(iAx);
-
-
-        Controller<T>::m_hw->getHandle(m_joint_names.at(iAx));
-      }
-      catch (...)
-      {
-        CNR_RETURN_FALSE(*Controller<T>::m_logger,
-          "Controller '" + Controller<T>::getControllerNamespace() + "' failed in init. " + std::string("")
-          + "The controlled joint named '" + m_joint_names.at(iAx) + "' is not managed by hardware_interface");
-      }
-    }
-
-    CNR_RETURN_BOOL(*Controller<T>::m_logger, Controller<T>::dump_state());
-  }
-
-  const std::string& getJointName() const
-  {
-    return m_joint_names;
-  }
 protected:
 
-  urdf::ModelInterfaceSharedPtr m_model;
+  urdf::ModelInterfaceSharedPtr                   m_model;
+  std::string                                     m_base_link;
+  std::string                                     m_tool_link;
+  rosdyn::ChainPtr                                m_chain;
+  Eigen::Affine3d                                 m_Tbt;
+  Eigen::Matrix<double, 6, 1>                     m_twist;
+  Eigen::Matrix6Xd                                m_J;
+
+private:
   std::vector<std::string>      m_joint_names;
   size_t                        m_nAx;
-
-  std::vector<double>           m_upper_limit;
-  std::vector<double>           m_lower_limit;
-  std::vector<double>           m_velocity_limit;
-  std::vector<double>           m_acceleration_limit;
-
+  KinematicStatus               m_state;
+  Eigen::VectorXd               m_upper_limit;
+  Eigen::VectorXd               m_lower_limit;
+  Eigen::VectorXd               m_qd_limit;
+  Eigen::VectorXd               m_qdd_limit;
 };
 
 } // cnr_controller_interface
+
+#include <cnr_controller_interface/cnr_joint_controller_interface_impl.h>
+
 #endif
+
+

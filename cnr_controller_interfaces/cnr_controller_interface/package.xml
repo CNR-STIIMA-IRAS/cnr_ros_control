@@ -39,6 +39,10 @@
   <build_export_depend>urdf</build_export_depend>
   <exec_depend>urdf</exec_depend>
 
+  <build_depend>rosdyn_core</build_depend>
+  <build_export_depend>rosdyn_core</build_export_depend>
+  <exec_depend>rosdyn_core</exec_depend>
+
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <!-- Other tools can request additional information be placed here -->

@@ -68,6 +68,7 @@ bool                     get_state(const std::string& hw_name,
                                    std::string& error,
                                    const ros::Duration& watchdog = ros::Duration(0.0));
 
+
 class ControllerDiagnostic
 {
 public:
@@ -122,6 +123,8 @@ public:
   void stopping(const ros::Time& time)                                       final;
   void waiting(const ros::Time& time)                                        final;
   void aborting(const ros::Time& time)                                       final;
+
+  std::shared_ptr<cnr_logger::TraceLogger> logger() { return m_logger; }
 
 public:
   virtual bool doInit()
@@ -273,7 +276,6 @@ private:
   std::map<std::string, Subscriber > m_sub;
 
   bool callAvailable( );
-
 
 };
 

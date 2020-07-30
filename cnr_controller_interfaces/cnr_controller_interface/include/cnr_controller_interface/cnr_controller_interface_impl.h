@@ -55,92 +55,6 @@ std::string to_string_fix(const T a_value, const int n = 5)
 }
 
 
-void ControllerDiagnostic::diagnostics(diagnostic_updater::DiagnosticStatusWrapper &stat, int level)
-{
-  std::lock_guard<std::mutex> lock(m_mutex);
-  boost::posix_time::ptime my_posix_time = ros::Time::now().toBoost();
-
-  stat.hardware_id = m_hw_name;
-  stat.name        = "Ctrl ["
-                   + ( level == (int)diagnostic_msgs::DiagnosticStatus::OK  ? std::string("Info")
-                     : level == (int)diagnostic_msgs::DiagnosticStatus::WARN ? std::string("Warn")
-                     : std::string("Error") )
-                   +"]";
-
-  bool something_to_add = false;
-  for (  const diagnostic_msgs::DiagnosticStatus & s : m_diagnostic.status )
-  {
-    something_to_add |= static_cast<int>( s.level ) == level;
-  }
-  if ( something_to_add )
-  {
-    stat.level       = level == (int)diagnostic_msgs::DiagnosticStatus::OK ? diagnostic_msgs::DiagnosticStatus::OK
-                     : level == (int)diagnostic_msgs::DiagnosticStatus::WARN ? diagnostic_msgs::DiagnosticStatus::WARN
-                     : level == (int)diagnostic_msgs::DiagnosticStatus::ERROR ? diagnostic_msgs::DiagnosticStatus::ERROR
-                     : diagnostic_msgs::DiagnosticStatus::STALE;
-
-    stat.summary(stat.level, "Log of the status at ["
-         + boost::posix_time::to_iso_string(my_posix_time) + "]");
-
-    for ( const diagnostic_msgs::DiagnosticStatus & s : m_diagnostic.status )
-    {
-      diagnostic_msgs::KeyValue k;
-      k.key = s.name;
-      k.value = s.message;
-      stat.add(k.key, k.value);
-    }
-    m_diagnostic.status.erase(
-        std::remove_if(
-            m_diagnostic.status.begin(),
-            m_diagnostic.status.end(),
-            [&](diagnostic_msgs::DiagnosticStatus const & p) { return p.level == level; }
-        ),
-        m_diagnostic.status.end()
-    );
-  }
-  else
-  {
-    stat.summary(diagnostic_msgs::DiagnosticStatus::OK, "None Error in the queue ["
-         + boost::posix_time::to_iso_string(my_posix_time) + "]");
-  }
-}
-
-void ControllerDiagnostic::diagnosticsInfo(diagnostic_updater::DiagnosticStatusWrapper &stat)
-{
-  ControllerDiagnostic::diagnostics(stat,diagnostic_msgs::DiagnosticStatus::OK);
-}
-
-void ControllerDiagnostic::diagnosticsWarn(diagnostic_updater::DiagnosticStatusWrapper &stat)
-{
-  ControllerDiagnostic::diagnostics(stat,diagnostic_msgs::DiagnosticStatus::WARN);
-}
-
-void ControllerDiagnostic::diagnosticsError(diagnostic_updater::DiagnosticStatusWrapper &stat)
-{
-  ControllerDiagnostic::diagnostics(stat,diagnostic_msgs::DiagnosticStatus::ERROR);
-}
-
-void ControllerDiagnostic::diagnosticsPerformance(diagnostic_updater::DiagnosticStatusWrapper &stat)
-{
-
-  boost::posix_time::ptime my_posix_time = ros::Time::now().toBoost();
-  std::lock_guard<std::mutex> lock(m_mutex);
-  stat.hardware_id = m_hw_name;
-  stat.level       = diagnostic_msgs::DiagnosticStatus::OK;
-  stat.name        = "Ctrl";
-  stat.message     = "Cycle Time Statistics [" + boost::posix_time::to_iso_string(my_posix_time) + "]";
-  diagnostic_msgs::KeyValue k;
-  k.key = m_ctrl_name + " Update [s]";
-  k.value = to_string_fix(m_time_span_tracker->getMean())
-          + std::string(" [ ") + to_string_fix(m_time_span_tracker->getMin()) + " - "
-          + to_string_fix(m_time_span_tracker->getMax()) + std::string(" ] ")
-          + std::string("Missed: ") + std::to_string(m_time_span_tracker->getMissedCycles())
-          + std::string("/") + std::to_string(m_time_span_tracker->getTotalCycles());
-
-  stat.add(k.key, k.value);
-}
-
-
 template<typename T>
 void Controller< T >::add_diagnostic_message(const std::string& msg, const std::string& name,
                                              const std::string& level, const bool& verbose)
@@ -257,8 +171,8 @@ bool  Controller< T >::init(T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& co
       m_watchdog = maximum_missing_cycles * m_sampling_period;
     }
   }
-
   CNR_DEBUG(*m_logger, "Watchdog: " << m_watchdog);
+
   m_controller_nh.setCallbackQueue(&m_controller_nh_callback_queue);
   m_status_history.clear();
 
