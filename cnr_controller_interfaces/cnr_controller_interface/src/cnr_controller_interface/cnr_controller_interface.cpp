@@ -32,6 +32,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include <cnr_controller_interface/cnr_controller_interface.h>
 
 namespace cnr_controller_interface

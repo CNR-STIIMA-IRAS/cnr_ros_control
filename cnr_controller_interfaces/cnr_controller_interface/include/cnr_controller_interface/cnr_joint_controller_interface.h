@@ -40,13 +40,13 @@
 #include <cnr_logger/cnr_logger.h>
 #include <cnr_controller_interface/cnr_controller_interface.h>
 
-#include <urdf_model/model.h>
-#include <urdf_parser/urdf_parser.h>
-#include <rosdyn_core/primitives.h>
-#include <cnr_controller_interface/utils/cnr_kinematic_status.h>
+
+#include <cnr_controller_interface/utils/cnr_kinematic_utils.h>
 
 namespace cnr_controller_interface
 {
+
+
 
 /**
  *
@@ -72,50 +72,54 @@ public:
   virtual bool enterStarting();
   virtual bool enterUpdate();
 
-  const size_t& nAx                         ( ) const { return m_nAx; }
-  const Eigen::VectorXd& q                  ( ) const { return m_state.q; }
-  const Eigen::VectorXd& qd                 ( ) const { return m_state.qd; }
-  const Eigen::VectorXd& qdd                ( ) const { return m_state.qdd; }
-  const Eigen::VectorXd& effort             ( ) const { return m_state.effort; }
-  const Eigen::VectorXd& upperLimit         ( ) const { return m_lower_limit; }
-  const Eigen::VectorXd& lowerLimit         ( ) const { return m_upper_limit; }
-  const Eigen::VectorXd& speedLimit         ( ) const { return m_qd_limit;    }
-  const Eigen::VectorXd& accelerationLimit  ( ) const { return m_qdd_limit;   }
-  const std::vector<std::string>& jointNames( ) const { return m_joint_names; }
-  const double& q                  (size_t iAx) const { return m_state.q(iAx); }
-  const double& qd                 (size_t iAx) const { return m_state.qd(iAx); }
-  const double& qdd                (size_t iAx) const { return m_state.qdd(iAx); }
-  const double& effort             (size_t iAx) const { return m_state.effort(iAx); }
-  const double& upperLimit         (size_t iAx) const { return m_lower_limit(iAx); }
-  const double& lowerLimit         (size_t iAx) const { return m_upper_limit(iAx); }
-  const double& speedLimit         (size_t iAx) const { return m_qd_limit(iAx);    }
-  const double& accelerationLimit  (size_t iAx) const { return m_qdd_limit(iAx);   }
-  const std::string& jointName     (size_t iAx) const { return m_joint_names.at(iAx); }
+  const size_t& nAx                         ( ) const { return m_kin->nAx(); }
+  const Eigen::VectorXd& q                  ( ) const { return m_state->q; }
+  const Eigen::VectorXd& qd                 ( ) const { return m_state->qd; }
+  const Eigen::VectorXd& qdd                ( ) const { return m_state->qdd; }
+  const Eigen::VectorXd& effort             ( ) const { return m_state->effort; }
+  const Eigen::VectorXd& upperLimit         ( ) const { return m_kin->upperLimit       (); }
+  const Eigen::VectorXd& lowerLimit         ( ) const { return m_kin->lowerLimit       (); }
+  const Eigen::VectorXd& speedLimit         ( ) const { return m_kin->speedLimit       (); }
+  const Eigen::VectorXd& accelerationLimit  ( ) const { return m_kin->accelerationLimit(); }
+  const std::vector<std::string>& jointNames( ) const { return m_kin->jointNames       (); }
+  const std::vector<std::string>& linkNames ( ) const { return m_kin->linkNames        (); }
+  const double& q                  (size_t iAx) const { return m_state->q(iAx); }
+  const double& qd                 (size_t iAx) const { return m_state->qd(iAx); }
+  const double& qdd                (size_t iAx) const { return m_state->qdd(iAx); }
+  const double& effort             (size_t iAx) const { return m_state->effort(iAx); }
+  const double& upperLimit         (size_t iAx) const { return m_kin->upperLimit       (iAx);}
+  const double& lowerLimit         (size_t iAx) const { return m_kin->lowerLimit       (iAx);}
+  const double& speedLimit         (size_t iAx) const { return m_kin->speedLimit       (iAx);}
+  const double& accelerationLimit  (size_t iAx) const { return m_kin->accelerationLimit(iAx);}
+  const std::string& jointName     (size_t iAx) const { return m_kin->jointName        (iAx);}
 
-  const std::string& baseLink    ( ) const { return m_base_link;  }
-  const std::string& baseFrame   ( ) const { return baseLink();   }
-  const std::string& toolLink    ( ) const { return m_tool_link;  }
-  const std::string& toolFrame   ( ) const { return toolLink();   }
-  const Eigen::Affine3d& toolPose( ) const { return m_Tbt;        }
+  const std::string& baseLink    ( ) const { return m_kin->baseLink(); }
+  const std::string& baseFrame   ( ) const { return baseLink();       }
+  const std::string& toolLink    ( ) const { return m_kin->toolLink(); }
+  const std::string& toolFrame   ( ) const { return toolLink();       }
+  const Eigen::Affine3d& toolPose( ) const { return m_kin->toolPose(); }
 
 protected:
 
-  urdf::ModelInterfaceSharedPtr                   m_model;
-  std::string                                     m_base_link;
-  std::string                                     m_tool_link;
-  rosdyn::ChainPtr                                m_chain;
-  Eigen::Affine3d                                 m_Tbt;
-  Eigen::Matrix<double, 6, 1>                     m_twist;
-  Eigen::Matrix6Xd                                m_J;
+  KinematicsStructPtr m_kin;
+  KinematicStatusPtr  m_state;
 
-private:
-  std::vector<std::string>      m_joint_names;
-  size_t                        m_nAx;
-  KinematicStatus               m_state;
-  Eigen::VectorXd               m_upper_limit;
-  Eigen::VectorXd               m_lower_limit;
-  Eigen::VectorXd               m_qd_limit;
-  Eigen::VectorXd               m_qdd_limit;
+//  urdf::ModelInterfaceSharedPtr                   m_model;
+//  std::string                                     m_base_link;
+//  std::string                                     m_tool_link;
+//  rosdyn::ChainPtr                                m_chain;
+//  Eigen::Affine3d                                 m_Tbt;
+//  Eigen::Matrix<double, 6, 1>                     m_twist;
+//  Eigen::Matrix6Xd                                m_J;
+
+//private:
+//  std::vector<std::string>      m_joint_names;
+//  size_t                        m_nAx;
+
+//  Eigen::VectorXd               m_upper_limit;
+//  Eigen::VectorXd               m_lower_limit;
+//  Eigen::VectorXd               m_qd_limit;
+//  Eigen::VectorXd               m_qdd_limit;
 };
 
 } // cnr_controller_interface

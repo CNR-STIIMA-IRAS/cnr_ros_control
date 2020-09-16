@@ -68,6 +68,17 @@ bool                     get_state(const std::string& hw_name,
                                    std::string& error,
                                    const ros::Duration& watchdog = ros::Duration(0.0));
 
+template<typename T>
+boost::shared_ptr<T> to_boost_shared_ptr(std::shared_ptr<T>& ptr)
+{
+    return boost::shared_ptr<T>(ptr.get(), [ptr](T*) mutable {ptr.reset();});
+}
+
+template<typename T>
+std::shared_ptr<T> to_std_shared_ptr(boost::shared_ptr<T>& ptr)
+{
+    return std::shared_ptr<T>(ptr.get(), [ptr](T*) mutable {ptr.reset();});
+}
 
 class ControllerDiagnostic
 {
@@ -204,17 +215,15 @@ public:
    * @param obj
    * @param transport_hints
    */
-  template<typename M, typename K>
+  template<typename M>
   void add_subscriber(const std::string& id,
                       const std::string &topic,
                       uint32_t queue_size,
-                      void(K::*fp)(M), K *obj,
-                      const ros::TransportHints &transport_hints = ros::TransportHints());
+                      boost::function<void(const boost::shared_ptr<M const>& msg)> callback,
+                      bool enable_watchdog = true);
 
-  bool tick(const std::string& id);
-
-  std::shared_ptr<ros::Subscriber>&  getSubscriber(const std::string& id);
-  std::shared_ptr<ros::Publisher>& getPublisher(const std::string& id);
+  std::shared_ptr<ros::Subscriber>& getSubscriber(const std::string& id);
+  std::shared_ptr<ros::Publisher>&  getPublisher(const std::string& id);
 
   void add_diagnostic_message(const std::string& msg,
                               const std::string& name,
@@ -248,13 +257,13 @@ protected:
   bool dump_state();
 
 protected:
-  T*                                       m_hw;
-
+  T*            m_hw;
+  ros::Duration m_dt;
 
 private:
-  ros::NodeHandle                          m_root_nh;
-  ros::NodeHandle                          m_controller_nh;
-  ros::CallbackQueue                       m_controller_nh_callback_queue;
+  ros::NodeHandle     m_root_nh;
+  ros::NodeHandle     m_controller_nh;
+  ros::CallbackQueue  m_controller_nh_callback_queue;
 
   struct Publisher
   {
@@ -266,14 +275,22 @@ private:
 
   struct Subscriber
   {
-    std::shared_ptr<ros::Subscriber>                sub;
-    std::chrono::high_resolution_clock::time_point* start = nullptr;
-    std::chrono::high_resolution_clock::time_point  last;
-    std::chrono::duration<double>                   time_span;
+    std::shared_ptr<ros::Subscriber>&       sub;
+    const std::shared_ptr<ros::WallTime>&   msg_received_time;
+
+    Subscriber() = delete;
+    virtual ~Subscriber() = default;
+    Subscriber(const Subscriber&) = default;
+    Subscriber& operator=(const Subscriber&) = default;
+    Subscriber(Subscriber&&) = default;
+    Subscriber& operator=(Subscriber&&) = default;
+
+    Subscriber(std::shared_ptr<ros::Subscriber>& s, const std::shared_ptr<ros::WallTime>& time)
+      : sub(s), msg_received_time(time) {}
   };
 
-  std::map<std::string, Publisher  > m_pub;
-  std::map<std::string, Subscriber > m_sub;
+  std::map<std::string, Publisher > m_pub;
+  std::map<std::string, ::cnr_controller_interface::Controller<T>::Subscriber> m_sub;
 
   bool callAvailable( );
 

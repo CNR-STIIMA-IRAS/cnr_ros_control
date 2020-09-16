@@ -416,7 +416,7 @@ bool ControllerManagerInterface::loadController(const std::string& to_load_name,
     {
       return false;
     }
-    error_ += "Available " + std::to_string((int)(ctrl_types.response.types.size())) +  "# classes: ";
+    error_ += "Available " + std::to_string((int)(ctrl_types.response.types.size())) +  "# classes:\n";
     for (auto const & t : ctrl_types.response.types)
     {
       error_ += "-" + t + "\n" ;
@@ -583,7 +583,7 @@ bool ControllerManager::loadController(const std::string& ctrl_to_load_name, con
     {
       return false;
     }
-    error_ += "Available " + std::to_string((int)(ctrl_types.response.types.size())) +  "# classes: ";
+    error_ += "Available " + std::to_string((int)(ctrl_types.response.types.size())) +  "# classes:\n";
     for (auto const & t : ctrl_types.response.types)
     {
       error_ += "-" + t + "\n" ;

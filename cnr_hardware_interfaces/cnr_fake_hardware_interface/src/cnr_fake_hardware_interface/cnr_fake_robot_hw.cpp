@@ -43,7 +43,6 @@ PLUGINLIB_EXPORT_CLASS(cnr_hardware_interface::FakeRobotHW, cnr_hardware_interfa
 namespace cnr_hardware_interface
 {
 
-
 void setParam(FakeRobotHW* hw, const std::string& ns)
 {
   hw->m_robothw_nh.setParam("status/" + ns + "/feedback/name", hw->m_resource_names);
@@ -59,12 +58,8 @@ void setParam(FakeRobotHW* hw, const std::string& ns)
 FakeRobotHW::FakeRobotHW()
   : m_msg(nullptr)
 {
-
   m_set_status_param = boost::bind(setParam, this, _1);
-
 }
-
-
 
 FakeRobotHW::~FakeRobotHW()
 {
@@ -171,11 +166,9 @@ bool FakeRobotHW::doInit()
   CNR_RETURN_TRUE(*m_logger);
 }
 
-
 bool FakeRobotHW::doWrite(const ros::Time& time, const ros::Duration& period)
 {
   CNR_TRACE_START_THROTTLE(*m_logger, 5.0);
-  //CNR_INFO_THROTTLE( *m_logger, 0.5 , "[   CMD] " << cnr_controller_interface::to_string( m_cmd_pos) );
   if (m_p_jh_active)
   {
     m_pos = m_cmd_pos;
@@ -197,7 +190,7 @@ bool FakeRobotHW::doWrite(const ros::Time& time, const ros::Duration& period)
 
   if (m_e_jh_active)
   {
-    m_eff   = m_cmd_eff;
+    m_eff = m_cmd_eff;
   }
   else
   {
@@ -271,7 +264,6 @@ bool FakeRobotHW::doPrepareSwitch(const std::list< hardware_interface::Controlle
   CNR_RETURN_TRUE(*m_logger, "Active hardware interfaces: " + cnr_controller_interface::to_string(resources));
 
 }
-
 
 bool FakeRobotHW::doCheckForConflict(const std::list< hardware_interface::ControllerInfo >& info)
 {

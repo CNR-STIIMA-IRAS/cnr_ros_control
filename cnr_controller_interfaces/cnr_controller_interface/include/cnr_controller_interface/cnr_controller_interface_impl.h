@@ -32,6 +32,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
+
 #ifndef CNR_CONTROLLER_INFERFACE_CNR_CONTROLLER_INFERFACE_IMPL_H
 #define CNR_CONTROLLER_INFERFACE_CNR_CONTROLLER_INFERFACE_IMPL_H
 
@@ -39,6 +40,7 @@
 #include <ros/ros.h>
 #include <ros/console.h>
 #include <ros/time.h>
+#include <subscription_notifier/subscription_notifier.h>
 #include <cnr_controller_interface/cnr_controller_interface.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
@@ -211,6 +213,7 @@ void Controller< T >::update(const ros::Time& time, const ros::Duration& period)
 
   if(ok)
   {
+    m_dt = period.toSec() > 1e-4 ? period : ros::Duration(1e-4);
     m_time_span_tracker->tick();
     ok = doUpdate(time, period);
     m_time_span_tracker->tock();
@@ -276,6 +279,7 @@ template< class T >
 bool Controller< T >::enterInit()
 {
   CNR_TRACE_START(*m_logger);
+  m_dt = ros::Duration(0);
   CNR_RETURN_BOOL(*m_logger, dump_state());
 }
 
@@ -437,6 +441,10 @@ void Controller< T >::add_publisher(const std::string& id, const std::string &to
     m_pub[id].pub.reset(new ros::Publisher( m_controller_nh.advertise< M >(topic, queue_size, latch) ) );
     m_pub.at(id).start = nullptr;
   }
+  else
+  {
+    CNR_ERROR(*m_logger, "The id '" + id + "' has been already used. The publisher has not been added");
+  }
 }
 
 template<typename T> template<typename M>
@@ -476,38 +484,26 @@ bool Controller< T >::publish(const std::string& id, const M &message)
   return true;
 }
 
-template< typename T> template<typename M, typename K >
-void Controller< T >::add_subscriber(const std::string& id, const std::string &topic, uint32_t queue_size,
-                                     void(K::*fp)(M), K *obj, const ros::TransportHints &transport_hints)
+template<typename T> template<typename M>
+void Controller< T >::add_subscriber(const std::string& id,
+                                     const std::string &topic,
+                                     uint32_t queue_size,
+                                     boost::function<void(const boost::shared_ptr<M const>& msg)> callback,
+                                     bool enable_watchdog)
 {
   if( m_pub.find(id) == m_pub.end() )
   {
-    m_sub[id].sub.reset(
-          new ros::Subscriber( m_controller_nh.subscribe<M, K>(topic, queue_size, fp, obj, transport_hints) ) );
-    m_sub.at(id).start = nullptr;
-  }
-}
+    std::shared_ptr<ros_helper::SubscriptionNotifier<M> > sub(
+          new ros_helper::SubscriptionNotifier<M>(m_controller_nh, topic,queue_size, callback) );
 
-template< typename T >
-bool Controller< T >::tick(const std::string& id)
-{
-  if( m_sub.find(id) == m_sub.end() )
+    m_sub.emplace(std::piecewise_construct,
+        std::forward_as_tuple( id ), std::forward_as_tuple( sub->getSubscriber(), sub->getMsgReceivedTime()));
+
+  }
+  else
   {
-    return false;
+    CNR_ERROR(*m_logger, "The id '" + id + "' has been already used. The subscriber has not been added");
   }
-
-  auto n = std::chrono::high_resolution_clock::now();
-
-  if (m_sub.at(id).start == nullptr)
-  {
-    m_sub.at(id).start = new std::chrono::high_resolution_clock::time_point();
-    *m_sub.at(id).start = n;
-    m_sub.at(id).last  = n;
-  }
-  m_sub.at(id).time_span = std::chrono::duration_cast< std::chrono::duration<double> >(n -  m_sub.at(id).last);
-  m_sub.at(id).last  = n;
-
-  return (m_sub.at(id).time_span.count() < m_watchdog);
 }
 
 template< class T >
@@ -531,21 +527,28 @@ bool Controller< T >::callAvailable( )
   {
     for (const auto & sub : m_sub)
     {
-      if (sub.second.start == nullptr)
+      if (sub.second.msg_received_time == nullptr)
       {
         CNR_ERROR_THROTTLE(*m_logger, 5.0, "The topic '" + sub.second.sub->getTopic() + "' seems not yet published..");
       }
-      if (sub.second.time_span.count() > m_watchdog)
+      else
       {
-        CNR_ERROR_THROTTLE(*m_logger, 5.0, "Watchdog on subscribed topic '" + sub.second.sub->getTopic() + "' " +
-                                           std::string("time span: ")+std::to_string(sub.second.time_span.count())+
-                                           std::string(" watchdog: ")+std::to_string(m_watchdog));
+        ros::WallTime now = ros::WallTime::now();
+        ros::WallDuration time_span = (now - *sub.second.msg_received_time);
+        if (time_span.toSec() > m_watchdog)
+        {
+          CNR_ERROR_THROTTLE(*m_logger, 5.0, "Watchdog on subscribed topic '" + sub.second.sub->getTopic() + "' " +
+                                             std::string("time span: ")+std::to_string(time_span.toSec())+
+                                             std::string(" watchdog: ")+std::to_string(m_watchdog));
+        }
       }
     }
   }
   return true;
 }
 
+
 }  // namespace cnr_controller_interface 
 
 #endif  // CNR_CONTROLLER_INFERFACE_CNR_CONTROLLER_INFERFACE_IMPL_H
+
