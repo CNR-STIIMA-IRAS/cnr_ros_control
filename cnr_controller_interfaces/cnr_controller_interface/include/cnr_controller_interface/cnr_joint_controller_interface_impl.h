@@ -37,6 +37,8 @@
 
 #include <ros/ros.h>
 #include <cnr_logger/cnr_logger.h>
+#include <cnr_controller_interface/utils/cnr_kinematics_utils.h>
+#include <cnr_controller_interface/utils/cnr_handles_utils.h>
 #include <cnr_controller_interface/cnr_joint_controller_interface.h>
 #include <rosdyn_core/primitives.h>
 #include <urdf_model/model.h>
@@ -127,7 +129,7 @@ bool JointController<T>::enterStarting()
   {
     CNR_RETURN_FALSE(*Controller<T>::m_logger);
   }
-  extract< T >( Controller<T>::m_hw, m_state);
+  get_from_hw< T >( Controller<T>::m_hw, m_state);
   m_state->qd.setZero();
   m_state->qdd.setZero();
   m_state->effort.setZero();
@@ -145,7 +147,7 @@ bool JointController<T>::enterUpdate()
   {
     CNR_RETURN_FALSE(*Controller<T>::m_logger);
   }
-  extract< T >( Controller<T>::m_hw, m_state);
+  get_from_hw< T >( Controller<T>::m_hw, m_state);
   m_kin->updateTransformation(*m_state);
 
   CNR_RETURN_TRUE_THROTTLE(*Controller<T>::m_logger, 20.0);

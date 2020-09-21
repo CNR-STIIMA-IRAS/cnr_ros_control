@@ -40,7 +40,7 @@
 #include <ros/ros.h>
 #include <std_msgs/Int64.h>
 #include <cnr_logger/cnr_logger.h>
-#include <cnr_controller_interface/utils/cnr_kinematic_utils.h>
+#include <cnr_controller_interface/utils/cnr_kinematics_utils.h>
 #include <cnr_controller_interface/cnr_joint_controller_interface.h>
 
 #include <urdf_model/model.h>

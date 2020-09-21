@@ -83,7 +83,7 @@ private:
 
 inline std::ostream& operator<<(std::ostream& os, const AnalogStateHandle& rhs)
 {
-  os << rhs.getName() << ', state: ' << rhs.getValue();
+  os << rhs.getName() << ", state: " << rhs.getValue();
   return os;
 }
 

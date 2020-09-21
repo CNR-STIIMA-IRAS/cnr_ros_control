@@ -41,7 +41,7 @@
 #include <cnr_controller_interface/cnr_controller_interface.h>
 
 
-#include <cnr_controller_interface/utils/cnr_kinematic_utils.h>
+#include <cnr_controller_interface/utils/cnr_kinematics_utils.h>
 
 namespace cnr_controller_interface
 {

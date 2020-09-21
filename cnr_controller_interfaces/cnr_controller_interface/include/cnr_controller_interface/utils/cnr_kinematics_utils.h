@@ -54,35 +54,6 @@ typedef std::shared_ptr<KinematicStatus> KinematicStatusPtr;
 typedef const std::shared_ptr<KinematicStatus const> KinematicStatusConstPtr;
 
 
-//template<class T>
-//bool extract(const T* hw, KinematicStatus& st)
-//{
-//  return false;
-//}
-
-
-//template<class T>
-//bool extract(const KinematicStatus& cmd, T* hw)
-//{
-//  return false;
-//}
-
-
-//template<class T>
-//bool extract(const T* hw, KinematicStatusPtr st)
-//{
-//  return false;
-//}
-
-
-//template<class T>
-//bool extract(const KinematicStatusPtr cmd, T* hw)
-//{
-//  return false;
-//}
-
-
-
 class KinematicsStruct
 {
 

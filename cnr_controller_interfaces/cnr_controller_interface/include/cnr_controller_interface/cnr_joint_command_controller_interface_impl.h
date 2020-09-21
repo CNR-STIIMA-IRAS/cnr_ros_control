@@ -38,6 +38,7 @@
 #include <std_msgs/Int64.h>
 #include <ros/ros.h>
 #include <cnr_logger/cnr_logger.h>
+#include <cnr_controller_interface/utils/cnr_kinematics_utils.h>
 #include <cnr_controller_interface/utils/cnr_handles_utils.h>
 #include <cnr_controller_interface/cnr_joint_command_controller_interface.h>
 
@@ -289,7 +290,7 @@ bool JointCommandController<T>::exitUpdate()
   report<< "qd trg: " << TP(m_target.qd.transpose()) << "\n";
   report<< "ef trg: " << TP(m_target.effort.transpose()) << "\n";
 
-  if(!extract< T >(m_target, this->m_hw))
+  if(!set_to_hw<T>(m_target, this->m_hw))
   {
     CNR_RETURN_FALSE(*(this->m_logger), "Error in download the data to the HW.");
   }
@@ -322,7 +323,7 @@ bool JointCommandController<T>::exitStopping()
     m_target.q(iAx) = this->m_state->q(iAx);
   }
   m_target.qd.setZero();
-  extract< T >(m_target, this->m_hw);
+  set_to_hw< T >(m_target, this->m_hw);
 
   if (!JointController<T>::exitUpdate())
   {
