@@ -34,6 +34,7 @@
  */
 #include <pluginlib/class_list_macros.h>
 
+#include <cnr_controller_interface/internal/utils.h>
 #include <cnr_hardware_interface/cnr_robot_hw.h>
 #include <cnr_fake_hardware_interface/cnr_fake_robot_hw.h>
 

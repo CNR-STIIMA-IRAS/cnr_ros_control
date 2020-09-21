@@ -42,6 +42,7 @@
 #include <pluginlib/class_list_macros.h>
 #include <diagnostic_msgs/DiagnosticArray.h>
 #include <realtime_utilities/realtime_utilities.h>
+#include <cnr_controller_interface/cnr_controller_interface.h>
 #include <cnr_hardware_interface/cnr_robot_hw.h>
 #include <cnr_hardware_nodelet_interface/cnr_robot_hw_nodelet.h>
 

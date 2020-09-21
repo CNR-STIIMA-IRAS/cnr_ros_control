@@ -103,8 +103,8 @@ bool JointController<T>::enterInit()
   m_kin->init(Controller<T>::m_logger, Controller<T>::getRootNh(), Controller<T>::getControllerNh());
 
   m_state.reset(new KinematicStatus());
-  m_state->resize(m_kin->nAx());
- for (unsigned int iAx = 0; iAx < nAx(); iAx++)
+  m_state->resize(m_kin->jointNames());
+  for (unsigned int iAx = 0; iAx < m_kin->nAx(); iAx++)
   {
     try
     {
@@ -116,6 +116,9 @@ bool JointController<T>::enterInit()
         "Controller '" + Controller<T>::getControllerNamespace() + "' failed in init. " + std::string("")
         + "The controlled joint named '" + m_kin->jointName(iAx) + "' is not managed by hardware_interface");
     }
+    CNR_DEBUG(*Controller<T>::m_logger,
+      "Controller '" + Controller<T>::getControllerNamespace() + std::string("'")
+      + "The controlled joint named '" + m_kin->jointName(iAx) + "' is managed by hardware_interface");
   }
 
   CNR_RETURN_BOOL(*Controller<T>::m_logger, Controller<T>::dump_state());
@@ -129,7 +132,7 @@ bool JointController<T>::enterStarting()
   {
     CNR_RETURN_FALSE(*Controller<T>::m_logger);
   }
-  get_from_hw< T >( Controller<T>::m_hw, m_state);
+  get_from_hw( Controller<T>::m_hw, m_state);
   m_state->qd.setZero();
   m_state->qdd.setZero();
   m_state->effort.setZero();
@@ -147,7 +150,7 @@ bool JointController<T>::enterUpdate()
   {
     CNR_RETURN_FALSE(*Controller<T>::m_logger);
   }
-  get_from_hw< T >( Controller<T>::m_hw, m_state);
+  get_from_hw( Controller<T>::m_hw, m_state);
   m_kin->updateTransformation(*m_state);
 
   CNR_RETURN_TRUE_THROTTLE(*Controller<T>::m_logger, 20.0);

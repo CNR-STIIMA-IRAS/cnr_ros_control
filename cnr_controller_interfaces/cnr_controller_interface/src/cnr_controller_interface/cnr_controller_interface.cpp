@@ -39,43 +39,60 @@
 namespace cnr_controller_interface
 {
 
+KinematicStatus* getPtr( KinematicStatusPtr& in)
+{
+  return in.get();
+}
+
+KinematicStatus* getPtr( KinematicStatus& in)
+{
+  return &in;
+}
+
+#define RETURN_FALSE(X)\
+  return false;
+//  std::cout<< "Intput Mismatch" << std::endl;\
+//  std::cout<< "hw names: " << names.size() << "/" << getPtr(X)->q.rows() << std::endl;\
+//  std::cout<< "q: " << getPtr(X)->q.transpose() << std::endl;
+
+
 
 /**
  * JointStateInterface
  */
-template<>
-bool get_from_hw(hardware_interface::JointStateInterface* in, cnr_controller_interface::KinematicStatus& out)
+
+bool get_from_hw(hardware_interface::JointStateInterface* hi, cnr_controller_interface::KinematicStatus& ks)
 {
-  std::vector<std::string> names = in->getNames();
-  if( names.size() == out.q.rows() )
+  std::vector<std::string> names = hi->getNames();
+  for(size_t iAx=0; iAx< getPtr(ks)->joint_names.size(); iAx++ )
   {
-    for (size_t iAx = 0; iAx<names.size(); iAx++)
-    {
-      out.q(iAx) = in->getHandle(in->getNames().at(iAx)).getPosition();
-      out.qd(iAx) = in->getHandle(in->getNames().at(iAx)).getVelocity();
-      out.qdd(iAx) = 0.0;
-      out.effort(iAx) = in->getHandle(in->getNames().at(iAx)).getEffort();
-    }
-    return true;
+    auto it = std::find(names.begin(), names.end(), getPtr(ks)->joint_names.at(iAx));
+    if( it == names.end() )
+      RETURN_FALSE(ks);
+
+    ks.q(iAx) = hi->getHandle(getPtr(ks)->joint_names.at(iAx)).getPosition();
+    ks.qd(iAx) = hi->getHandle(getPtr(ks)->joint_names.at(iAx)).getVelocity();
+    ks.qdd(iAx) = 0.0;
+    ks.effort(iAx) = hi->getHandle(getPtr(ks)->joint_names.at(iAx)).getEffort();
   }
-  return false;
+  return true;
 }
-template<>
-bool get_from_hw(hardware_interface::JointStateInterface* in, KinematicStatusPtr& out)
+
+bool get_from_hw(hardware_interface::JointStateInterface* hi, KinematicStatusPtr& ks)
 {
-  std::vector<std::string> names = in->getNames();
-  if( names.size() == out->q.rows() )
+  std::vector<std::string> names = hi->getNames();
+  for(size_t iAx=0; iAx< getPtr(ks)->joint_names.size(); iAx++ )
   {
-    for (size_t iAx = 0; iAx<names.size(); iAx++)
-    {
-      out->q(iAx) = in->getHandle(in->getNames().at(iAx)).getPosition();
-      out->qd(iAx) = in->getHandle(in->getNames().at(iAx)).getVelocity();
-      out->qdd(iAx) = 0.0;
-      out->effort(iAx) = in->getHandle(in->getNames().at(iAx)).getEffort();
-    }
-    return true;
+    auto it = std::find(names.begin(), names.end(), getPtr(ks)->joint_names.at(iAx));
+    if( it == names.end() )
+      RETURN_FALSE(ks);
+
+    ks->q(iAx) = hi->getHandle(getPtr(ks)->joint_names.at(iAx)).getPosition();
+    ks->qd(iAx) = hi->getHandle(getPtr(ks)->joint_names.at(iAx)).getVelocity();
+    ks->qdd(iAx) = 0.0;
+    ks->effort(iAx) = hi->getHandle(getPtr(ks)->joint_names.at(iAx)).getEffort();
   }
-  return false;
+  return true;
 }
 
 
@@ -85,147 +102,145 @@ bool get_from_hw(hardware_interface::JointStateInterface* in, KinematicStatusPtr
 /**
  * hardware_interface::VelEffJointInterface
  */
-template<>
-bool get_from_hw(hardware_interface::VelEffJointInterface* in, cnr_controller_interface::KinematicStatus& out)
-{
-  std::vector<std::string> names = in->getNames();
-  if( names.size() == out.q.rows() )
-  {
-    for (size_t iAx = 0; iAx<names.size(); iAx++)
-    {
-      out.q(iAx) = in->getHandle(in->getNames().at(iAx)).getPosition();
-      out.qd(iAx) = in->getHandle(in->getNames().at(iAx)).getVelocity();
-      out.qdd(iAx) = 0.0;
-      out.effort(iAx) = in->getHandle(in->getNames().at(iAx)).getEffort();
-    }
-    return true;
-  }
-  return false;
-}
 
-template<>
-bool get_from_hw(hardware_interface::VelEffJointInterface* in, cnr_controller_interface::KinematicStatusPtr& out)
+bool get_from_hw(hardware_interface::VelEffJointInterface* hi, cnr_controller_interface::KinematicStatus& ks)
 {
-  std::vector<std::string> names = in->getNames();
-  if( names.size() == out->q.rows() )
+  std::vector<std::string> names = hi->getNames();
+  for(size_t iAx=0; iAx< getPtr(ks)->joint_names.size(); iAx++ )
   {
-    for (size_t iAx = 0; iAx<names.size(); iAx++)
-    {
-      out->q(iAx) = in->getHandle(in->getNames().at(iAx)).getPosition();
-      out->qd(iAx) = in->getHandle(in->getNames().at(iAx)).getVelocity();
-      out->qdd(iAx) = 0.0;
-      out->effort(iAx) = in->getHandle(in->getNames().at(iAx)).getEffort();
-    }
-    return true;
+    auto it = std::find(names.begin(), names.end(), getPtr(ks)->joint_names.at(iAx));
+    if( it == names.end() )
+      RETURN_FALSE(ks);
+    ks.q(iAx) = hi->getHandle(getPtr(ks)->joint_names.at(iAx)).getPosition();
+    ks.qd(iAx) = hi->getHandle(getPtr(ks)->joint_names.at(iAx)).getVelocity();
+    ks.qdd(iAx) = 0.0;
+    ks.effort(iAx) = hi->getHandle(getPtr(ks)->joint_names.at(iAx)).getEffort();
   }
-  return false;
+  return true;
 }
 
 
-template<>
-bool set_to_hw(cnr_controller_interface::KinematicStatus& in, hardware_interface::VelEffJointInterface* out)
+bool get_from_hw(hardware_interface::VelEffJointInterface* hi, cnr_controller_interface::KinematicStatusPtr& ks)
 {
-  std::vector<std::string> names = out->getNames();
-  if( names.size() == in.q.rows() )
+  std::vector<std::string> names = hi->getNames();
+  for(size_t iAx=0; iAx< getPtr(ks)->joint_names.size(); iAx++ )
   {
-    for (size_t iAx = 0; iAx<names.size(); iAx++)
-    {
-      out->getHandle(out->getNames().at(iAx)).setCommandVelocity(in.qd(iAx) );
-      out->getHandle(out->getNames().at(iAx)).setCommandEffort(in.effort(iAx) );
-    }
-    return true;
+    auto it = std::find(names.begin(), names.end(), getPtr(ks)->joint_names.at(iAx));
+    if( it == names.end() )
+      RETURN_FALSE(ks);
+
+    ks->q(iAx) = hi->getHandle(getPtr(ks)->joint_names.at(iAx)).getPosition();
+    ks->qd(iAx) = hi->getHandle(getPtr(ks)->joint_names.at(iAx)).getVelocity();
+    ks->qdd(iAx) = 0.0;
+    ks->effort(iAx) = hi->getHandle(getPtr(ks)->joint_names.at(iAx)).getEffort();
   }
-  return false;
+  return true;
 }
 
-template<>
-bool set_to_hw(cnr_controller_interface::KinematicStatusPtr& in, hardware_interface::VelEffJointInterface* out)
+
+
+bool set_to_hw(cnr_controller_interface::KinematicStatus& ks, hardware_interface::VelEffJointInterface* hi)
 {
-  std::vector<std::string> names = out->getNames();
-  if( names.size() == in->q.rows() )
+  std::vector<std::string> names = hi->getNames();
+  for(size_t iAx=0; iAx<getPtr(ks)->joint_names.size(); iAx++ )
   {
-    for (size_t iAx = 0; iAx<names.size(); iAx++)
-    {
-      out->getHandle(out->getNames().at(iAx)).setCommandVelocity(in->qd(iAx) );
-      out->getHandle(out->getNames().at(iAx)).setCommandEffort(in->effort(iAx) );
-    }
-    return true;
+    auto it = std::find(names.begin(), names.end(),getPtr(ks)->joint_names.at(iAx));
+    if( it == names.end() )
+      RETURN_FALSE(ks);
+
+    hi->getHandle(getPtr(ks)->joint_names.at(iAx)).setCommandVelocity(ks.qd(iAx) );
+    hi->getHandle(getPtr(ks)->joint_names.at(iAx)).setCommandEffort(ks.effort(iAx) );
   }
-  return false;
+  return true;
+}
+
+
+bool set_to_hw(cnr_controller_interface::KinematicStatusPtr& ks, hardware_interface::VelEffJointInterface* hi)
+{
+  std::vector<std::string> names = hi->getNames();
+  for(size_t iAx=0; iAx< getPtr(ks)->joint_names.size(); iAx++ )
+  {
+    auto it = std::find(names.begin(), names.end(), getPtr(ks)->joint_names.at(iAx));
+    if( it == names.end() )
+      RETURN_FALSE(ks);
+
+    hi->getHandle(getPtr(ks)->joint_names.at(iAx)).setCommandVelocity(ks->qd(iAx) );
+    hi->getHandle(getPtr(ks)->joint_names.at(iAx)).setCommandEffort(ks->effort(iAx) );
+  }
+  return true;
 }
 
 
 /**
  * PosVelEffJointInterface
  */
-template<>
-bool get_from_hw(hardware_interface::PosVelEffJointInterface* in, cnr_controller_interface::KinematicStatus& out)
+
+bool get_from_hw(hardware_interface::PosVelEffJointInterface* hi, cnr_controller_interface::KinematicStatus& ks)
 {
-  std::vector<std::string> names = in->getNames();
-  if( names.size() == out.q.rows() )
+  std::vector<std::string> names = hi->getNames();
+  for(size_t iAx=0; iAx< getPtr(ks)->joint_names.size(); iAx++ )
   {
-    for (size_t iAx = 0; iAx<names.size(); iAx++)
-    {
-      out.q(iAx) = in->getHandle(in->getNames().at(iAx)).getPosition();
-      out.qd(iAx) = in->getHandle(in->getNames().at(iAx)).getVelocity();
-      out.qdd(iAx) = 0.0;
-      out.effort(iAx) = in->getHandle(in->getNames().at(iAx)).getEffort();
-    }
-    return true;
+    auto it = std::find(names.begin(), names.end(), getPtr(ks)->joint_names.at(iAx));
+    if( it == names.end() )
+      RETURN_FALSE(ks);
+
+    ks.q(iAx) = hi->getHandle(getPtr(ks)->joint_names.at(iAx)).getPosition();
+    ks.qd(iAx) = hi->getHandle(getPtr(ks)->joint_names.at(iAx)).getVelocity();
+    ks.qdd(iAx) = 0.0;
+    ks.effort(iAx) = hi->getHandle(getPtr(ks)->joint_names.at(iAx)).getEffort();
   }
-  return false;
+  return true;
 }
 
-template<>
-bool set_to_hw(cnr_controller_interface::KinematicStatus& in, hardware_interface::PosVelEffJointInterface* out)
+
+bool set_to_hw(cnr_controller_interface::KinematicStatus& ks, hardware_interface::PosVelEffJointInterface* hi)
 {
-  std::vector<std::string> names = out->getNames();
-  if( names.size() == in.q.rows() )
+  std::vector<std::string> names = hi->getNames();
+  for(size_t iAx=0; iAx< getPtr(ks)->joint_names.size(); iAx++ )
   {
-    for (size_t iAx = 0; iAx<names.size(); iAx++)
-    {
-      out->getHandle(out->getNames().at(iAx)).setCommandPosition(in.q(iAx) );
-      out->getHandle(out->getNames().at(iAx)).setCommandVelocity(in.qd(iAx) );
-      out->getHandle(out->getNames().at(iAx)).setCommandEffort(in.effort(iAx) );
-    }
-    return true;
+    auto it = std::find(names.begin(), names.end(), getPtr(ks)->joint_names.at(iAx));
+    if( it == names.end() )
+      RETURN_FALSE(ks);
+
+    hi->getHandle(getPtr(ks)->joint_names.at(iAx)).setCommandPosition(ks.q(iAx) );
+    hi->getHandle(getPtr(ks)->joint_names.at(iAx)).setCommandVelocity(ks.qd(iAx) );
+    hi->getHandle(getPtr(ks)->joint_names.at(iAx)).setCommandEffort(ks.effort(iAx) );
   }
-  return false;
+  return true;
 }
 
-template<>
-bool get_from_hw(hardware_interface::PosVelEffJointInterface* in, cnr_controller_interface::KinematicStatusPtr& out)
+
+bool get_from_hw(hardware_interface::PosVelEffJointInterface* hi, cnr_controller_interface::KinematicStatusPtr& ks)
 {
-  std::vector<std::string> names = in->getNames();
-  if( names.size() == out->q.rows() )
+  std::vector<std::string> names = hi->getNames();
+  for(size_t iAx=0; iAx< getPtr(ks)->joint_names.size(); iAx++ )
   {
-    for (size_t iAx = 0; iAx<names.size(); iAx++)
-    {
-      out->q(iAx) = in->getHandle(in->getNames().at(iAx)).getPosition();
-      out->qd(iAx) = in->getHandle(in->getNames().at(iAx)).getVelocity();
-      out->qdd(iAx) = 0.0;
-      out->effort(iAx) = in->getHandle(in->getNames().at(iAx)).getEffort();
-    }
-    return true;
+    auto it = std::find(names.begin(), names.end(), getPtr(ks)->joint_names.at(iAx));
+    if( it == names.end() )
+      RETURN_FALSE(ks);
+
+    ks->q(iAx) = hi->getHandle(getPtr(ks)->joint_names.at(iAx)).getPosition();
+    ks->qd(iAx) = hi->getHandle(getPtr(ks)->joint_names.at(iAx)).getVelocity();
+    ks->qdd(iAx) = 0.0;
+    ks->effort(iAx) = hi->getHandle(getPtr(ks)->joint_names.at(iAx)).getEffort();
   }
-  return false;
+  return true;
 }
 
-template<>
-bool set_to_hw(cnr_controller_interface::KinematicStatusPtr& in, hardware_interface::PosVelEffJointInterface* out)
+
+bool set_to_hw(cnr_controller_interface::KinematicStatusPtr& ks, hardware_interface::PosVelEffJointInterface* hi)
 {
-  std::vector<std::string> names = out->getNames();
-  if( names.size() == in->q.rows() )
+  std::vector<std::string> names = hi->getNames();
+  for(size_t iAx=0; iAx< getPtr(ks)->joint_names.size(); iAx++ )
   {
-    for (size_t iAx = 0; iAx<names.size(); iAx++)
-    {
-      out->getHandle(out->getNames().at(iAx)).setCommandPosition(in->q(iAx) );
-      out->getHandle(out->getNames().at(iAx)).setCommandVelocity(in->qd(iAx) );
-      out->getHandle(out->getNames().at(iAx)).setCommandEffort(in->effort(iAx) );
-    }
-    return true;
+    auto it = std::find(names.begin(), names.end(), getPtr(ks)->joint_names.at(iAx));
+    if( it == names.end() )
+      RETURN_FALSE(ks);
+    hi->getHandle(getPtr(ks)->joint_names.at(iAx)).setCommandPosition(ks->q(iAx) );
+    hi->getHandle(getPtr(ks)->joint_names.at(iAx)).setCommandVelocity(ks->qd(iAx) );
+    hi->getHandle(getPtr(ks)->joint_names.at(iAx)).setCommandEffort  (ks->effort(iAx) );
   }
-  return false;
+  return true;
 }
 
 
@@ -233,162 +248,144 @@ bool set_to_hw(cnr_controller_interface::KinematicStatusPtr& in, hardware_interf
 /**
  * JointCommandInterface
  */
-template<>
-bool get_from_hw<hardware_interface::JointCommandInterface>(hardware_interface::JointCommandInterface* in,
-                                                            cnr_controller_interface::KinematicStatus& out)
+
+bool get_from_hw(hardware_interface::JointCommandInterface* hi, cnr_controller_interface::KinematicStatus& ks)
 {
-  std::vector<std::string> names = in->getNames();
-  if( names.size() == out.q.rows() )
+  std::vector<std::string> names = hi->getNames();
+  for(size_t iAx=0; iAx< getPtr(ks)->joint_names.size(); iAx++ )
   {
-    for (size_t iAx = 0; iAx<names.size(); iAx++)
-    {
-      out.q(iAx) = in->getHandle(in->getNames().at(iAx)).getCommand();
-      out.qd(iAx) = 0.0;
-      out.qdd(iAx) = 0.0;
-      out.effort(iAx) = 0.0;
-    }
-    return true;
+    auto it = std::find(names.begin(), names.end(), getPtr(ks)->joint_names.at(iAx));
+    if( it == names.end() )
+      RETURN_FALSE(ks);
+
+    ks.q(iAx) = hi->getHandle(getPtr(ks)->joint_names.at(iAx)).getCommand();
+    ks.qd(iAx) = 0.0;
+    ks.qdd(iAx) = 0.0;
+    ks.effort(iAx) = 0.0;
   }
-  return false;
+  return true;
 }
 
-template<>
-bool set_to_hw<hardware_interface::JointCommandInterface>(cnr_controller_interface::KinematicStatus& in,
-                                                          hardware_interface::JointCommandInterface* out)
+
+bool set_to_hw(cnr_controller_interface::KinematicStatus& ks, hardware_interface::JointCommandInterface* hi)
 {
-  std::vector<std::string> names = out->getNames();
-  if( names.size() == in.q.rows() )
+  std::vector<std::string> names = hi->getNames();
+  for(size_t iAx=0; iAx< getPtr(ks)->joint_names.size(); iAx++ )
   {
-    for (size_t iAx = 0; iAx<names.size(); iAx++)
-    {
-      out->getHandle(out->getNames().at(iAx)).setCommand(in.q(iAx) );
-    }
-    return true;
+    auto it = std::find(names.begin(), names.end(), getPtr(ks)->joint_names.at(iAx));
+    if( it == names.end() )
+      RETURN_FALSE(ks);
+    hi->getHandle(getPtr(ks)->joint_names.at(iAx)).setCommand(ks.q(iAx) );
   }
-  return false;
+  return true;
 }
 
-template<>
-bool get_from_hw<hardware_interface::JointCommandInterface>(hardware_interface::JointCommandInterface* in,
-                                                           cnr_controller_interface::KinematicStatusPtr& out)
+
+bool get_from_hw(hardware_interface::JointCommandInterface* hi, cnr_controller_interface::KinematicStatusPtr& ks)
 {
-  std::vector<std::string> names = in->getNames();
-  if( names.size() == out->q.rows() )
+  std::vector<std::string> names = hi->getNames();
+  for(size_t iAx=0; iAx< getPtr(ks)->joint_names.size(); iAx++ )
   {
-    for (size_t iAx = 0; iAx<names.size(); iAx++)
-    {
-      out->q(iAx) = in->getHandle(in->getNames().at(iAx)).getCommand();
-      out->qd(iAx) = 0.0;
-      out->qdd(iAx) = 0.0;
-      out->effort(iAx) = 0.0;
-    }
-    return true;
+    auto it = std::find(names.begin(), names.end(), getPtr(ks)->joint_names.at(iAx));
+    if( it == names.end() )
+      RETURN_FALSE(ks);
+
+    ks->q(iAx) = hi->getHandle(getPtr(ks)->joint_names.at(iAx)).getCommand();
+    ks->qd(iAx) = 0.0;
+    ks->qdd(iAx) = 0.0;
+    ks->effort(iAx) = 0.0;
   }
-  return false;
+  return true;
 }
 
-template<>
-bool set_to_hw<hardware_interface::JointCommandInterface>(cnr_controller_interface::KinematicStatusPtr& in,
-                                                           hardware_interface::JointCommandInterface* out)
+
+bool set_to_hw(cnr_controller_interface::KinematicStatusPtr& ks,hardware_interface::JointCommandInterface* hi)
 {
-  std::vector<std::string> names = out->getNames();
-  if( names.size() == in->q.rows() )
+  std::vector<std::string> names = hi->getNames();
+  for(size_t iAx=0; iAx< getPtr(ks)->joint_names.size(); iAx++ )
   {
-    for (size_t iAx = 0; iAx<names.size(); iAx++)
-    {
-      out->getHandle(out->getNames().at(iAx)).setCommand(in->q(iAx) );
-    }
-    return true;
+    auto it = std::find(names.begin(), names.end(), getPtr(ks)->joint_names.at(iAx));
+    if( it == names.end() )
+      RETURN_FALSE(ks);
+
+    hi->getHandle(getPtr(ks)->joint_names.at(iAx)).setCommand(ks->q(iAx) );
   }
-  return false;
+  return true;
 }
 
 /**
  * @brief EffortJointInterface
  */
-template<>
-bool get_from_hw<hardware_interface::EffortJointInterface>(hardware_interface::EffortJointInterface* hw,
-                                                           KinematicStatus&      st)
+
+bool get_from_hw(hardware_interface::EffortJointInterface* hw, KinematicStatus& st)
 {
-  return get_from_hw<hardware_interface::JointCommandInterface>(hw,st);
+  return get_from_hw(dynamic_cast<hardware_interface::JointCommandInterface*>(hw),st);
 }
-template<>
-bool get_from_hw<hardware_interface::EffortJointInterface>(hardware_interface::EffortJointInterface* hw,
-                                                           KinematicStatusPtr& st)
+
+bool get_from_hw(hardware_interface::EffortJointInterface* hw, KinematicStatusPtr& st)
 {
-  return get_from_hw<hardware_interface::JointCommandInterface>(hw,st);
+  return get_from_hw(dynamic_cast<hardware_interface::JointCommandInterface*>(hw),st);
 }
-template<>
-bool set_to_hw<hardware_interface::EffortJointInterface>(KinematicStatus& cmd,
-                                                         hardware_interface::EffortJointInterface* hw)
+
+bool set_to_hw(KinematicStatus& cmd,hardware_interface::EffortJointInterface* hw)
 {
-  return set_to_hw<hardware_interface::JointCommandInterface>(cmd, hw);
+  return set_to_hw(cmd, dynamic_cast<hardware_interface::JointCommandInterface*>(hw));
 }
-template<>
-bool set_to_hw<hardware_interface::EffortJointInterface>(KinematicStatusPtr& cmd,
-                                                         hardware_interface::EffortJointInterface* hw)
+
+bool set_to_hw(KinematicStatusPtr& cmd, hardware_interface::EffortJointInterface* hw)
 {
-  return set_to_hw<hardware_interface::JointCommandInterface>(cmd, hw);
+  return set_to_hw(cmd, dynamic_cast<hardware_interface::JointCommandInterface*>(hw));
 }
 
 
 /**
  * @brief VelocityJointInterface
  */
-template<>
-bool get_from_hw<hardware_interface::VelocityJointInterface>(hardware_interface::VelocityJointInterface* hw,
-                                                             KinematicStatus&      st)
+bool get_from_hw(hardware_interface::VelocityJointInterface* hw, KinematicStatus& ks)
 {
-  return get_from_hw<hardware_interface::JointCommandInterface>(hw,st);
+  return get_from_hw(dynamic_cast<hardware_interface::JointCommandInterface*>(hw),ks);
 }
-template<>
-bool get_from_hw<hardware_interface::VelocityJointInterface>(hardware_interface::VelocityJointInterface* hw,
-                                                             KinematicStatusPtr& st)
+
+bool get_from_hw(hardware_interface::VelocityJointInterface* hw, KinematicStatusPtr& st)
 {
-  return get_from_hw<hardware_interface::JointCommandInterface>(hw,st);
+  return get_from_hw(dynamic_cast<hardware_interface::JointCommandInterface*>(hw),st);
 }
-template<>
-bool set_to_hw<hardware_interface::VelocityJointInterface>(KinematicStatus& cmd,
-                                                           hardware_interface::VelocityJointInterface* hw)
+
+bool set_to_hw(KinematicStatus& cmd, hardware_interface::VelocityJointInterface* hw)
 {
-  return set_to_hw<hardware_interface::JointCommandInterface>(cmd, hw);
+  return set_to_hw(cmd, dynamic_cast<hardware_interface::JointCommandInterface*>(hw));
 }
-template<>
-bool set_to_hw<hardware_interface::VelocityJointInterface>(KinematicStatusPtr& cmd,
-                                                           hardware_interface::VelocityJointInterface* hw)
+
+bool set_to_hw(KinematicStatusPtr& cmd, hardware_interface::VelocityJointInterface* hw)
 {
-  return set_to_hw<hardware_interface::JointCommandInterface>(cmd, hw);
+  return set_to_hw(cmd, dynamic_cast<hardware_interface::JointCommandInterface*>(hw));
 }
 
 
 
 
 /**
- * @brief VelocityJointInterface
+ * @brief PositionJointInterface
  */
-template<>
-bool get_from_hw<hardware_interface::PositionJointInterface>(hardware_interface::PositionJointInterface* hw,
-                                                             KinematicStatus&      st)
+
+bool get_from_hw(hardware_interface::PositionJointInterface* hi, KinematicStatus& st)
 {
-  return get_from_hw<hardware_interface::JointCommandInterface>(hw,st);
+  return get_from_hw(dynamic_cast<hardware_interface::JointCommandInterface*>(hi),st);
 }
-template<>
-bool get_from_hw<hardware_interface::PositionJointInterface>(hardware_interface::PositionJointInterface* hw,
-                                                             KinematicStatusPtr& st)
+
+bool get_from_hw(hardware_interface::PositionJointInterface* hw,KinematicStatusPtr& st)
 {
-  return get_from_hw<hardware_interface::JointCommandInterface>(hw,st);
+  return get_from_hw(dynamic_cast<hardware_interface::JointCommandInterface*>(hw),st);
 }
-template<>
-bool set_to_hw<hardware_interface::PositionJointInterface>(KinematicStatus& cmd,
-                                                           hardware_interface::PositionJointInterface* hw)
+
+bool set_to_hw(KinematicStatus& cmd,hardware_interface::PositionJointInterface* hw)
 {
-  return set_to_hw<hardware_interface::JointCommandInterface>(cmd, hw);
+  return set_to_hw(cmd, dynamic_cast<hardware_interface::JointCommandInterface*>(hw));
 }
-template<>
-bool set_to_hw<hardware_interface::PositionJointInterface>(KinematicStatusPtr& cmd,
-                                                           hardware_interface::PositionJointInterface* hw)
+
+bool set_to_hw(KinematicStatusPtr& cmd,hardware_interface::PositionJointInterface* hw)
 {
-  return set_to_hw<hardware_interface::JointCommandInterface>(cmd, hw);
+  return set_to_hw(cmd, dynamic_cast<hardware_interface::JointCommandInterface*>(hw));
 }
 
 

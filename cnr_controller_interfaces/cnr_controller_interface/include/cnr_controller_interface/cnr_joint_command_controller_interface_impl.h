@@ -100,7 +100,7 @@ bool JointCommandController<T>::enterInit()
   }
 
   m_priority.reset();
-  m_target.resize(this->m_kin->nAx());
+  m_target.resize(this->m_kin->jointNames());
 
   this->template add_subscriber<std_msgs::Int64>("speed_ovr" , "/speed_ovr" , 1,
                       boost::bind(&JointCommandController<T>::overrideCallback, this, _1));
@@ -290,7 +290,7 @@ bool JointCommandController<T>::exitUpdate()
   report<< "qd trg: " << TP(m_target.qd.transpose()) << "\n";
   report<< "ef trg: " << TP(m_target.effort.transpose()) << "\n";
 
-  if(!set_to_hw<T>(m_target, this->m_hw))
+  if(!set_to_hw(m_target, this->m_hw))
   {
     CNR_RETURN_FALSE(*(this->m_logger), "Error in download the data to the HW.");
   }
@@ -323,7 +323,7 @@ bool JointCommandController<T>::exitStopping()
     m_target.q(iAx) = this->m_state->q(iAx);
   }
   m_target.qd.setZero();
-  set_to_hw< T >(m_target, this->m_hw);
+  set_to_hw(m_target, this->m_hw);
 
   if (!JointController<T>::exitUpdate())
   {

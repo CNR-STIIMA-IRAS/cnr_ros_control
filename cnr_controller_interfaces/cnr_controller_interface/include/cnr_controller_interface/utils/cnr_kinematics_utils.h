@@ -12,39 +12,48 @@ namespace cnr_controller_interface
 
 struct KinematicStatus
 {
+  std::vector<std::string> joint_names;
   Eigen::VectorXd  q;
   Eigen::VectorXd  qd;
   Eigen::VectorXd  qdd;
   Eigen::VectorXd  effort;
-  void resize(const size_t& nAx)
+
+  void resize(const std::vector<std::string>& names)
   {
-    q     .resize(nAx);
-    qd    .resize(nAx);
-    qdd   .resize(nAx);
-    effort.resize(nAx);
-    setZero();
+    this->joint_names = names;
+    this->q     .resize(joint_names.size());
+    this->qd    .resize(joint_names.size());
+    this->qdd   .resize(joint_names.size());
+    this->effort.resize(joint_names.size());
+    this->setZero();
   }
+
   void setZero()
   {
-    q     .setZero();
-    qd    .setZero();
-    qdd   .setZero();
-    effort.setZero();
+    this->q     .setZero();
+    this->qd    .setZero();
+    this->qdd   .setZero();
+    this->effort.setZero();
   }
+
   KinematicStatus() = default;
+
   KinematicStatus(const KinematicStatus& cpy)
   {
-    q     = q     ;
-    qd    = qd    ;
-    qdd   = qdd   ;
-    effort= effort;
+    this->joint_names = cpy.joint_names;
+    this->q           = q     ;
+    this->qd          = qd    ;
+    this->qdd         = qdd   ;
+    this->effort      = effort;
   }
+
   KinematicStatus& operator=(const KinematicStatus& rhs)
   {
-    this->q     = rhs.q     ;
-    this->qd    = rhs.qd    ;
-    this->qdd   = rhs.qdd   ;
-    this->effort= rhs.effort;
+    this->joint_names = rhs.joint_names;
+    this->q           = rhs.q     ;
+    this->qd          = rhs.qd    ;
+    this->qdd         = rhs.qdd   ;
+    this->effort      = rhs.effort;
     return *this;
   }
 };
@@ -110,6 +119,7 @@ public:
     m_J     = m_chain->getJacobian(state.q);
     m_twist = m_J * state.qd;
   }
+
   bool init(cnr_logger::TraceLoggerPtr logger, ros::NodeHandle& root_nh, ros::NodeHandle& ctrl_nh)
   {
     XmlRpc::XmlRpcValue value;

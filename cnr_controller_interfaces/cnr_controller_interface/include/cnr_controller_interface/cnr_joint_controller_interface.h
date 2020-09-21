@@ -105,23 +105,6 @@ protected:
   KinematicStatusPtr  m_state;
 
   Eigen::IOFormat m_cfrmt;
-
-//  urdf::ModelInterfaceSharedPtr                   m_model;
-//  std::string                                     m_base_link;
-//  std::string                                     m_tool_link;
-//  rosdyn::ChainPtr                                m_chain;
-//  Eigen::Affine3d                                 m_Tbt;
-//  Eigen::Matrix<double, 6, 1>                     m_twist;
-//  Eigen::Matrix6Xd                                m_J;
-
-//private:
-//  std::vector<std::string>      m_joint_names;
-//  size_t                        m_nAx;
-
-//  Eigen::VectorXd               m_upper_limit;
-//  Eigen::VectorXd               m_lower_limit;
-//  Eigen::VectorXd               m_qd_limit;
-//  Eigen::VectorXd               m_qdd_limit;
 };
 
 } // cnr_controller_interface
