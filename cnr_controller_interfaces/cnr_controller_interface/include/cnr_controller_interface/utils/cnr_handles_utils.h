@@ -1,11 +1,10 @@
 #ifndef CNR_CONTROLLER_INTERFACE__CNR_HANDLES_UTILS_H
 #define CNR_CONTROLLER_INTERFACE__CNR_HANDLES_UTILS_H
 
-#include <cnr_controller_interface/utils/cnr_kinematic_utils.h>
 #include <hardware_interface/joint_state_interface.h>
 #include <hardware_interface/joint_command_interface.h>
-#include <cnr_hardware_interface/veleff_command_interface.h>
-#include <cnr_hardware_interface/posveleff_command_interface.h>
+#include <cnr_hardware_interface/veleff_cmmand_interface.h>
+#include <cnr_hardware_interface/posveleff_cmmand_interface.h>
 
 namespace cnr_controller_interface
 {
@@ -130,7 +129,7 @@ extract(const KinematicStatus& in, hardware_interface::PosVelEffJointInterface* 
   {
     for (size_t iAx = 0; iAx<names.size(); iAx++)
     {
-      out->getHandle(out->getNames().at(iAx)).setCommandPosition(in.qd(iAx) );
+      out->getHandle(out->getNames().at(iAx)).setCommandPosition(in.q(iAx) );
       out->getHandle(out->getNames().at(iAx)).setCommandVelocity(in.qd(iAx) );
       out->getHandle(out->getNames().at(iAx)).setCommandEffort(in.effort(iAx) );
     }
@@ -139,27 +138,17 @@ extract(const KinematicStatus& in, hardware_interface::PosVelEffJointInterface* 
   return false;
 }
 
-//************************************************************
-//************************************************************
-//************************************************************
-//************************************************************
-//************************************************************
-//************************************************************
-//************************************************************
-//************************************************************
-//************************************************************
-//************************************************************
-//************************************************************
-//************************************************************
-//************************************************************
-//************************************************************
-//************************************************************
 
-
-
-
-
-
+//************************************************************
+//
+//
+//
+//
+//
+//
+//
+//
+//************************************************************
 template<>
 extract(const hardware_interface::JointStateInterface* in, KinematicStatusPtr out)
 {
@@ -280,7 +269,7 @@ extract(const KinematicStatusPtr& in, hardware_interface::PosVelEffJointInterfac
   {
     for (size_t iAx = 0; iAx<names.size(); iAx++)
     {
-      out->getHandle(out->getNames().at(iAx)).setCommandPosition(in->qd(iAx) );
+      out->getHandle(out->getNames().at(iAx)).setCommandPosition(in->q(iAx) );
       out->getHandle(out->getNames().at(iAx)).setCommandVelocity(in->qd(iAx) );
       out->getHandle(out->getNames().at(iAx)).setCommandEffort(in->effort(iAx) );
     }
@@ -290,8 +279,39 @@ extract(const KinematicStatusPtr& in, hardware_interface::PosVelEffJointInterfac
 }
 
 
+}  // namespace hardware_interface
 
 
 
+
+inline std::ostream& operator<<(std::ostream& os, const hardware_interface::JointHandle& rhs)
+{
+  os << rhs.getName() << ", state: q" << rhs.getPosition() << ", qd" << rhs.getVelocity() << ", eff " << rhs.getEffort();
+  os << ", cmd: q" << rhs.getCommand();
+  return os;
 }
+
+inline std::ostream& operator<<(std::ostream& os, const hardware_interface::JointStateHandle& rhs)
+{
+  os << rhs.getName() << ", state: q" << rhs.getPosition() << ", qd" << rhs.getVelocity() << ", eff " << rhs.getEffort();
+  return os;
+}
+
+inline std::ostream& operator<<(std::ostream& os, const hardware_interface::VelEffJointHandle& rhs)
+{
+  os << rhs.getName() << ", state: q" << rhs.getPosition() << ", qd" << rhs.getVelocity() << ", eff " << rhs.getEffort();
+  os << ", cmd: qd" << rhs.getCommandVelocity() << ", eff " << rhs.getCommandEffort();
+  return os;
+}
+
+
+inline std::ostream& operator<<(std::ostream& os, const hardware_interface::PosVelEffJointHandle& rhs)
+{
+  os << rhs.getName() << ", state: q" << rhs.getPosition() << ",  qd" << rhs.getVelocity() << ", eff " << rhs.getEffort();
+  os << ", cmd: q"<< rhs.getCommandPosition()<<", qd " << rhs.getCommandVelocity() << ", eff " << rhs.getCommandEffort();
+  return os;
+}
+
+
+
 #endif  // CNR_CONTROLLER_INTERFACE__CNR_HANDLES_UTILS_H

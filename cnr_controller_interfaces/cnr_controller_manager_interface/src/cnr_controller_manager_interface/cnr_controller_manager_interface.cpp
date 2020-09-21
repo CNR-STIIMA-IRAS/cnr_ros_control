@@ -86,7 +86,6 @@ bool ControllerManagerBase::listControllers(std::vector< controller_manager_msgs
     std::vector< controller_manager_msgs::ControllerState >&  stopped,
     const ros::Duration&                                      watchdog)
 {
-
   CNR_TRACE_START_THROTTLE(*logger_, 10.0);
   controller_manager_msgs::ListControllers listControllerss_srv;
   if (!callRequest(list_, listControllerss_srv, error_, watchdog))

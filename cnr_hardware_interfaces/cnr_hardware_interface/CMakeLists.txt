@@ -8,8 +8,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(catkin REQUIRED COMPONENTS
-  cnr_controller_manager_interface
-  cnr_controller_interface
+  cnr_logger
+  #cnr_controller_manager_interface
+  #cnr_controller_interface
   controller_manager
   diagnostic_updater
   diagnostic_msgs
@@ -32,11 +33,12 @@ endif()
 catkin_package(
  INCLUDE_DIRS   include
  LIBRARIES      cnr_hardware_interface
- CATKIN_DEPENDS cnr_controller_manager_interface 
-                cnr_controller_interface 
-                controller_manager 
-                diagnostic_updater 
-                diagnostic_msgs 
+ CATKIN_DEPENDS cnr_logger
+                #cnr_controller_manager_interface
+                #cnr_controller_interface
+                controller_manager
+                diagnostic_updater
+                diagnostic_msgs
                 hardware_interface
                 nodelet roscpp
                 sensor_msgs

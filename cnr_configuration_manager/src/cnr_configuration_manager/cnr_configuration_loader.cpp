@@ -197,14 +197,10 @@ bool ConfigurationLoader::purgeHw(const ros::Duration& watchdog)
   return true;
 }
 
-
-
 bool ConfigurationLoader::loadHw(const std::string& hw_to_load_name, const ros::Duration& watchdog, bool double_check)
 {
   return loadHw(std::vector<std::string>(1,hw_to_load_name),watchdog, double_check);
 }
-
-
 
 bool ConfigurationLoader::loadHw(const std::vector<std::string>& hw_to_load_names,
                                  const ros::Duration& watchdog,

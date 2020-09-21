@@ -54,32 +54,32 @@ typedef std::shared_ptr<KinematicStatus> KinematicStatusPtr;
 typedef const std::shared_ptr<KinematicStatus const> KinematicStatusConstPtr;
 
 
-template<class T>
-bool extract(const T* hw, KinematicStatus& st)
-{
-  return false;
-}
+//template<class T>
+//bool extract(const T* hw, KinematicStatus& st)
+//{
+//  return false;
+//}
 
 
-template<class T>
-bool extract(const KinematicStatus& cmd, T* hw)
-{
-  return false;
-}
+//template<class T>
+//bool extract(const KinematicStatus& cmd, T* hw)
+//{
+//  return false;
+//}
 
 
-template<class T>
-bool extract(const T* hw, KinematicStatusPtr st)
-{
-  return false;
-}
+//template<class T>
+//bool extract(const T* hw, KinematicStatusPtr st)
+//{
+//  return false;
+//}
 
 
-template<class T>
-bool extract(const KinematicStatusPtr cmd, T* hw)
-{
-  return false;
-}
+//template<class T>
+//bool extract(const KinematicStatusPtr cmd, T* hw)
+//{
+//  return false;
+//}
 
 
 
@@ -102,18 +102,21 @@ private:
   Eigen::VectorXd               m_lower_limit;
   Eigen::VectorXd               m_qd_limit;
   Eigen::VectorXd               m_qdd_limit;
+  Eigen::VectorXd               m_effort_limit;
 
 public:
   const size_t& nAx                         ( ) const { return m_nAx; }
-  const Eigen::VectorXd& upperLimit         ( ) const { return m_lower_limit; }
-  const Eigen::VectorXd& lowerLimit         ( ) const { return m_upper_limit; }
+  const Eigen::VectorXd& upperLimit         ( ) const { return m_upper_limit; }
+  const Eigen::VectorXd& lowerLimit         ( ) const { return m_lower_limit; }
   const Eigen::VectorXd& speedLimit         ( ) const { return m_qd_limit;    }
   const Eigen::VectorXd& accelerationLimit  ( ) const { return m_qdd_limit;   }
+  const Eigen::VectorXd& effortLimit        ( ) const { return m_effort_limit;   }
   const std::vector<std::string>& jointNames( ) const { return m_joint_names; }
-  const double& upperLimit         (size_t iAx) const { return m_lower_limit(iAx); }
-  const double& lowerLimit         (size_t iAx) const { return m_upper_limit(iAx); }
+  const double& upperLimit         (size_t iAx) const { return m_upper_limit(iAx); }
+  const double& lowerLimit         (size_t iAx) const { return m_lower_limit(iAx); }
   const double& speedLimit         (size_t iAx) const { return m_qd_limit(iAx);    }
   const double& accelerationLimit  (size_t iAx) const { return m_qdd_limit(iAx);   }
+  const double& eeffortLimit       (size_t iAx) const { return m_effort_limit(iAx);   }
   const std::string& jointName     (size_t iAx) const { return m_joint_names.at(iAx); }
   const std::vector<std::string>& linkNames ( ) const { return m_link_names;}
   const std::string& baseLink      ( )          const { return m_base_link; }

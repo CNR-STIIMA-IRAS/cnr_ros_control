@@ -69,6 +69,7 @@
 #ifndef CNR_HARDWARE_INTERFACE_ANALOG_COMMAND_INTERFACE_H
 #define CNR_HARDWARE_INTERFACE_ANALOG_COMMAND_INTERFACE_H
 
+#include <iostream>
 #include <cnr_hardware_interface/analog_state_interface.h>
 
 namespace hardware_interface
@@ -104,14 +105,24 @@ public:
     return *cmd_;
   }
 
+  friend std::ostream& operator<<(std::ostream& os, const AnalogHandle& rhs);
+
 private:
   double* cmd_;
 };
+
+inline std::ostream& operator<<(std::ostream& os, const AnalogHandle& rhs)
+{
+  os << rhs.getName() << ", state: " << rhs.getValue() << ", cmd: " << rhs.getCommand();
+  return os;
+}
+
 
 class AnalogCommandInterface : public HardwareResourceManager<AnalogHandle, ClaimResources> {};
 
 /// \ref pwmInterface for commanding pwm-based components.
 class PwmInterface : public AnalogCommandInterface {};
+
 
 
 }  // namespace hardware_interface

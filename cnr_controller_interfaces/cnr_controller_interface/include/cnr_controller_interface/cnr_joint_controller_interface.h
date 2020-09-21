@@ -104,6 +104,8 @@ protected:
   KinematicsStructPtr m_kin;
   KinematicStatusPtr  m_state;
 
+  Eigen::IOFormat m_cfrmt;
+
 //  urdf::ModelInterfaceSharedPtr                   m_model;
 //  std::string                                     m_base_link;
 //  std::string                                     m_tool_link;

@@ -97,9 +97,9 @@ public:
   void setCommandAcceleration (const double& in, size_t idx) { std::lock_guard<std::mutex> lock( m_mtx); m_target.qdd    (idx) = in; }
   void setCommandEffort       (const double& in, size_t idx) { std::lock_guard<std::mutex> lock( m_mtx); m_target.effort (idx) = in; }
 
-  virtual double generalOverride() const;
+  virtual double getTargetOverride() const;
 
-  void setPriority( const InputType& priority ) { m_priority.reset(); *m_priority = priority; }
+  void setPriority( const InputType& priority ) { m_priority.reset(new InputType()); *m_priority = priority; }
 private:
   std::mutex      m_mtx;
   std::shared_ptr<InputType> m_priority;
@@ -114,6 +114,7 @@ private:
   void overrideCallback(const std_msgs::Int64ConstPtr& msg);
   void safeOverrideCallback_1(const std_msgs::Int64ConstPtr& msg);
   void safeOverrideCallback_2(const std_msgs::Int64ConstPtr& msg);
+
 };
 
 } // cnr_controller_interface

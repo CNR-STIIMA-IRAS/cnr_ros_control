@@ -53,8 +53,8 @@
 #include <diagnostic_msgs/DiagnosticArray.h>
 #include <configuration_msgs/SetConfig.h>
 #include <configuration_msgs/GetConfig.h>
-#include <cnr_controller_interface/cnr_controller_interface.h>
-#include <cnr_controller_manager_interface/cnr_controller_manager_interface.h>
+//#include <cnr_controller_interface/cnr_controller_interface.h>
+//#include <cnr_controller_manager_interface/cnr_controller_manager_interface.h>
 #include <cnr_hardware_interface/internal/cnr_robot_hw_status.h>
 #include <cnr_hardware_interface/internal/cnr_robot_hw_utils.h>
 

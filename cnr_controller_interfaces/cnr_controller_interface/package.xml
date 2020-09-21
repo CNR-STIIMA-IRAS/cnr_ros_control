@@ -11,6 +11,12 @@
 
 
   <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>cnr_hardware_interface</build_depend>
+  <build_export_depend>cnr_hardware_interface</build_export_depend>
+  <exec_depend>cnr_hardware_interface</exec_depend>
+
+
   <build_depend>controller_interface</build_depend>
   <build_export_depend>controller_interface</build_export_depend>
   <exec_depend>controller_interface</exec_depend>
@@ -46,7 +52,6 @@
   <build_depend>subscription_notifier</build_depend>
   <build_export_depend>subscription_notifier</build_export_depend>
   <exec_depend>subscription_notifier</exec_depend>
-
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <!-- Other tools can request additional information be placed here -->

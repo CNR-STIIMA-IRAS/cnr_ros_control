@@ -36,6 +36,7 @@
 #ifndef CNR_HARDWARE_INTERFACE_ANALOG_STATE_INTERFACE_H
 #define CNR_HARDWARE_INTERFACE_ANALOG_STATE_INTERFACE_H
 
+#include <iostream>
 #include <cassert>
 #include <string>
 #include <hardware_interface/internal/hardware_resource_manager.h>
@@ -72,10 +73,20 @@ public:
     return *value_;
   }
 
+  friend std::ostream& operator<<(std::ostream& os, const AnalogStateHandle& rhs);
+
 private:
   std::string name_;
   const double* value_;
 };
+
+
+inline std::ostream& operator<<(std::ostream& os, const AnalogStateHandle& rhs)
+{
+  os << rhs.getName() << ', state: ' << rhs.getValue();
+  return os;
+}
+
 
 /** \brief Hardware interface to support reading the state of an array of joints
  *

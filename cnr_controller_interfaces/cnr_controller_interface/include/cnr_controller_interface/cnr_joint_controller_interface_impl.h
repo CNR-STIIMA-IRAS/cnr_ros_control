@@ -91,6 +91,7 @@ bool JointController<T>::doAborting(const ros::Time& /*time*/)
 template< class T >
 bool JointController<T>::enterInit()
 {
+  m_cfrmt = Eigen::IOFormat(Eigen::StreamPrecision, 0, ", ", "\n", "[", "]");
   CNR_TRACE_START(*Controller<T>::m_logger);
   if (!Controller<T>::enterInit())
   {
@@ -139,15 +140,15 @@ bool JointController<T>::enterStarting()
 template< class T >
 bool JointController<T>::enterUpdate()
 {
-  CNR_TRACE_START(*Controller<T>::m_logger);
-  if (!Controller<T>::enterStarting())
+  CNR_TRACE_START_THROTTLE(*Controller<T>::m_logger, 20.0);
+  if (!Controller<T>::enterUpdate())
   {
     CNR_RETURN_FALSE(*Controller<T>::m_logger);
   }
   extract< T >( Controller<T>::m_hw, m_state);
   m_kin->updateTransformation(*m_state);
 
-  CNR_RETURN_TRUE(*Controller<T>::m_logger);
+  CNR_RETURN_TRUE_THROTTLE(*Controller<T>::m_logger, 20.0);
 }
 
 

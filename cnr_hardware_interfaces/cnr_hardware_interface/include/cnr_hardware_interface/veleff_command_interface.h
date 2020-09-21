@@ -36,6 +36,7 @@
 #ifndef CNR_HARDWARE_INTERFACE_VELEFF_COMMAND_INTERFACE_H
 #define CNR_HARDWARE_INTERFACE_VELEFF_COMMAND_INTERFACE_H
 
+#include <iostream>
 #include <cassert>
 #include <string>
 #include <hardware_interface/internal/hardware_resource_manager.h>
@@ -102,6 +103,7 @@ private:
   double* cmd_vel_;
   double* cmd_eff_;
 };
+
 
 /** \brief Hardware interface to support commanding an array of joints.
  *

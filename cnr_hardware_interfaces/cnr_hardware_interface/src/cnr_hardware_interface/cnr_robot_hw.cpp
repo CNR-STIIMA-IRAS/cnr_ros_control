@@ -54,7 +54,7 @@ namespace cnr_hardware_interface
 RobotHW::RobotHW()
   : m_status(cnr_hardware_interface::CREATED), m_shutted_down(false), m_is_first_read(true), m_set_status_param(nullptr)
 {
-//  if ( m_resource_names.size() == 0 )
+//  if( m_resource_names.size() == 0 )
 //  {
 //    dump_state( cnr_hardware_interface::ERROR );
 //  }
@@ -64,9 +64,9 @@ RobotHW::RobotHW()
 RobotHW::~RobotHW()
 {
   CNR_TRACE_START(*m_logger);
-  if (!m_shutted_down)
+  if(!m_shutted_down)
   {
-    if (!shutdown())
+    if(!shutdown())
     {
       dump_state(cnr_hardware_interface::ERROR);
     }
@@ -85,7 +85,7 @@ bool RobotHW::init(ros::NodeHandle& root_nh, ros::NodeHandle &robothw_nh)
 
   m_logger.reset(new cnr_logger::TraceLogger(n, robothw_nh.getNamespace()));
   CNR_TRACE_START(*m_logger);
-  if (enterInit(root_nh, robothw_nh)  && doInit() && exitInit())
+  if(enterInit(root_nh, robothw_nh) && doInit() && exitInit())
   {
     CNR_RETURN_TRUE(*m_logger, "RobotHW '" + m_robot_name + "' Initialization OK");
   }
@@ -100,17 +100,17 @@ void RobotHW::read(const ros::Time& time, const ros::Duration& period)
 
   m_robot_hw_queue.callAvailable();
 
-  if (!doRead(time, period))
+  if(!doRead(time, period))
   {
     dump_state(cnr_hardware_interface::ERROR);
     CNR_RETURN_NOTOK_THROTTLE(*m_logger, void(), 5.0);
   }
 
-  if (m_is_first_read)
+  if(m_is_first_read)
   {
     dump_state(cnr_hardware_interface::RUNNING);
     m_is_first_read = false;
-    if (m_set_status_param)
+    if(m_set_status_param)
     {
       m_set_status_param("first_configuration");
     }
@@ -122,7 +122,7 @@ void RobotHW::read(const ros::Time& time, const ros::Duration& period)
 void RobotHW::write(const ros::Time& time, const ros::Duration& period)
 {
   CNR_TRACE_START_THROTTLE(*m_logger, 5.0);
-  if (enterWrite() && doWrite(time, period) && exitWrite())
+  if(enterWrite() && doWrite(time, period) && exitWrite())
   {
     CNR_RETURN_OK_THROTTLE(*m_logger, void(), 5.0);
   }
@@ -135,23 +135,47 @@ bool RobotHW::prepareSwitch(const std::list< hardware_interface::ControllerInfo 
                             const std::list< hardware_interface::ControllerInfo >& stop_list)
 {
   CNR_TRACE_START(*m_logger);
-  if (enterPrepareSwitch(start_list, stop_list) && doPrepareSwitch(start_list, stop_list) && exitPrepareSwitch())
+  CNR_DEBUG(*m_logger, "RobotHW '" << m_robothw_nh.getNamespace()
+                        << "' Status " <<  cnr_hardware_interface::to_string(m_status));
+  if(m_status==cnr_hardware_interface::ERROR
+  || m_status==cnr_hardware_interface::CTRL_ERROR
+  || m_status==cnr_hardware_interface::SRV_ERROR)
   {
-    CNR_RETURN_TRUE(*m_logger);
+    CNR_RETURN_FALSE(*m_logger, "The controller switch is not possible, since the RobotHw is in ERROR state.");
+  }
+  if(!enterPrepareSwitch(start_list, stop_list))
+  {
+    CNR_RETURN_FALSE(*m_logger);
+  }
+  if(!doPrepareSwitch(start_list, stop_list))
+  {
+    CNR_RETURN_FALSE(*m_logger);
+  }
+  if(!exitPrepareSwitch())
+  {
+    CNR_RETURN_FALSE(*m_logger);
   }
 
   m_is_first_read = false;
-  CNR_RETURN_FALSE(*m_logger);
+  CNR_RETURN_TRUE(*m_logger);
 }
 
 bool RobotHW::checkForConflict(const std::list< hardware_interface::ControllerInfo >& info) const
 {
   CNR_TRACE_START(*m_logger);
-  if (::hardware_interface::RobotHW::checkForConflict(info))
+  if(::hardware_interface::RobotHW::checkForConflict(info))
   {
     CNR_RETURN_TRUE(*m_logger, "Base Check failed");
   }
-  if (enterCheckForConflict(info) || doCheckForConflict(info) || exitCheckForConflict())
+  if(enterCheckForConflict(info))
+  {
+    CNR_RETURN_TRUE(*m_logger);
+  }
+  if(doCheckForConflict(info))
+  {
+    CNR_RETURN_TRUE(*m_logger);
+  }
+  if(exitCheckForConflict())
   {
     CNR_RETURN_TRUE(*m_logger);
   }
@@ -162,7 +186,7 @@ bool RobotHW::checkForConflict(const std::list< hardware_interface::ControllerIn
 bool RobotHW::shutdown()
 {
   CNR_TRACE_START(*m_logger, ">>>> RobotHW Shutdown (" + m_robot_name + ")");
-  if (enterShutdown()  && doShutdown() && exitShutdown())
+  if(enterShutdown()  && doShutdown() && exitShutdown())
   {
     CNR_RETURN_TRUE(*m_logger, "<<<< Robot Shutdown (" + m_robot_name + ")");
   }
@@ -179,7 +203,7 @@ bool RobotHW::enterShutdown()
 bool RobotHW::exitShutdown()
 {
   CNR_TRACE_START(*m_logger);
-  if (m_set_status_param)
+  if(m_set_status_param)
   {
     m_set_status_param("shutdown_configuration");
   }
@@ -195,9 +219,9 @@ bool RobotHW::enterWrite()
 
 bool RobotHW::exitWrite()
 {
-  if (m_status_history.back() != cnr_hardware_interface::to_string(m_status))
+  if(m_status_history.back() != cnr_hardware_interface::to_string(m_status))
   {
-    if (m_set_status_param)
+    if(m_set_status_param)
     {
       m_set_status_param("last_valid_configuration");
     }
@@ -228,7 +252,7 @@ bool RobotHW::exitInit()
   CNR_TRACE_START(*m_logger);
   bool ret = (m_resource_names.size() > 0);
 
-  if (!ret)
+  if(!ret)
   {
     CNR_FATAL(*m_logger, "Reources names not set! Remeber to assign them in the doInit function. ");
   }
@@ -250,7 +274,7 @@ bool RobotHW::enterPrepareSwitch(const std::list< hardware_interface::Controller
       return (it.name == ctrl.name);
     });  //NOLINT
 
-    if (m_active_controllers.end() == stopped_controller)
+    if(m_active_controllers.end() == stopped_controller)
     {
       add_diagnostic_message("ERROR", "controller '" + ctrl.name + "' is not active, so I cannot stop it",
                               { {"Transition", "switching"} }, true);  //NOLINT
@@ -267,7 +291,7 @@ bool RobotHW::enterPrepareSwitch(const std::list< hardware_interface::Controller
     {
       return (it.name == ctrl.name);
     });  //NOLINT
-    if (m_active_controllers.end() != stopped_controller)
+    if(m_active_controllers.end() != stopped_controller)
     {
       CNR_WARN(*m_logger, "controller " << ctrl.name << "is not active, so I cannot stop it");
     }
@@ -303,9 +327,9 @@ bool RobotHW::enterCheckForConflict(const std::list< hardware_interface::Control
       {
         for (unsigned int iJ = 0; iJ < m_resource_names.size(); iJ++)
         {
-          if (!name.compare(m_resource_names.at(iJ)))
+          if(!name.compare(m_resource_names.at(iJ)))
           {
-            if (global_resource_used.at(iJ))   // if already used by another
+            if(global_resource_used.at(iJ))   // if already used by another
             {
               CNR_FATAL(*m_logger, "Joint " + name + "%s is already used by another controller" );  //NOLINT
               dump_state(cnr_hardware_interface::CTRL_ERROR);
@@ -347,22 +371,22 @@ void RobotHW::add_diagnostic_message(const std::string& level
   diag.hardware_id = m_robot_name;
   diag.message     = summary;
 
-  if (level == "OK")
+  if(level == "OK")
   {
     diag.level = diagnostic_msgs::DiagnosticStatus::OK;
     CNR_INFO_COND(*m_logger, verbose, "[" << m_robot_name << " ] " << summary);
   }
-  if (level == "WARN")
+  if(level == "WARN")
   {
     diag.level = diagnostic_msgs::DiagnosticStatus::WARN;
     CNR_WARN_COND(*m_logger, verbose, "[" << m_robot_name << " ] " << summary);
   }
-  if (level == "ERROR")
+  if(level == "ERROR")
   {
     diag.level = diagnostic_msgs::DiagnosticStatus::ERROR;
     CNR_ERROR_COND(*m_logger, verbose, "[" << m_robot_name << " ] " << summary);
   }
-  if (level == "STALE")
+  if(level == "STALE")
   {
     diag.level = diagnostic_msgs::DiagnosticStatus::STALE;
     CNR_INFO_COND(*m_logger, verbose, "[" << m_robot_name << " ] " << summary);
@@ -396,7 +420,7 @@ void RobotHW::diagnostics(diagnostic_updater::DiagnosticStatusWrapper &stat, int
   {
     something_to_add |= static_cast<int>( s.level ) == level;
   }
-  if ( something_to_add )
+  if( something_to_add )
   {
     stat.level       = level == (int)diagnostic_msgs::DiagnosticStatus::OK ? diagnostic_msgs::DiagnosticStatus::OK
                      : level == (int)diagnostic_msgs::DiagnosticStatus::WARN ? diagnostic_msgs::DiagnosticStatus::WARN
@@ -446,13 +470,13 @@ void RobotHW::diagnosticsError(diagnostic_updater::DiagnosticStatusWrapper &stat
 bool RobotHW::dump_state() const
 {
   std::string last_status = cnr_hardware_interface::to_string(m_status);
-  if (m_status_history.size() == 0)
+  if(m_status_history.size() == 0)
   {
     m_status_history.push_back(last_status);
   }
   else
   {
-    if (m_status_history.back() != last_status)
+    if(m_status_history.back() != last_status)
     {
       m_status_history.push_back(last_status);
       m_robothw_nh.setParam(last_status_param(m_robothw_nh.getNamespace()), last_status);
@@ -466,7 +490,7 @@ bool RobotHW::dump_state() const
 
 bool RobotHW::dump_state(const cnr_hardware_interface::StatusHw& status) const
 {
-  if ((m_status_history.size() == 0) || (m_status_history.back() != cnr_hardware_interface::to_string(m_status)))
+  if((m_status_history.size() == 0) || (m_status_history.back() != cnr_hardware_interface::to_string(m_status)))
   {
     m_status_history.push_back(cnr_hardware_interface::to_string(m_status));
   }

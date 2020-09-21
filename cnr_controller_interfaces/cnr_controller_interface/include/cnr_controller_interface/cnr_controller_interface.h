@@ -50,7 +50,7 @@
 #include <cnr_logger/cnr_logger.h>
 #include <cnr_controller_interface/internal/utils.h>
 #include <realtime_utilities/time_span_tracker.h>
-
+#include <subscription_notifier/subscription_notifier.h>
 
 namespace cnr_controller_interface
 {
@@ -135,7 +135,7 @@ public:
   void waiting(const ros::Time& time)                                        final;
   void aborting(const ros::Time& time)                                       final;
 
-  std::shared_ptr<cnr_logger::TraceLogger> logger() { return m_logger; }
+  std::shared_ptr<cnr_logger::TraceLogger>& logger() { return m_logger; }
 
 public:
   virtual bool doInit()
@@ -222,8 +222,8 @@ public:
                       boost::function<void(const boost::shared_ptr<M const>& msg)> callback,
                       bool enable_watchdog = true);
 
-  std::shared_ptr<ros::Subscriber>& getSubscriber(const std::string& id);
-  std::shared_ptr<ros::Publisher>&  getPublisher(const std::string& id);
+  std::shared_ptr<ros::Subscriber> getSubscriber(const std::string& id);
+  std::shared_ptr<ros::Publisher>  getPublisher(const std::string& id);
 
   void add_diagnostic_message(const std::string& msg,
                               const std::string& name,
@@ -273,24 +273,10 @@ private:
     std::chrono::duration<double>                   time_span;
   };
 
-  struct Subscriber
-  {
-    std::shared_ptr<ros::Subscriber>&       sub;
-    const std::shared_ptr<ros::WallTime>&   msg_received_time;
-
-    Subscriber() = delete;
-    virtual ~Subscriber() = default;
-    Subscriber(const Subscriber&) = default;
-    Subscriber& operator=(const Subscriber&) = default;
-    Subscriber(Subscriber&&) = default;
-    Subscriber& operator=(Subscriber&&) = default;
-
-    Subscriber(std::shared_ptr<ros::Subscriber>& s, const std::shared_ptr<ros::WallTime>& time)
-      : sub(s), msg_received_time(time) {}
-  };
 
   std::map<std::string, Publisher > m_pub;
-  std::map<std::string, ::cnr_controller_interface::Controller<T>::Subscriber> m_sub;
+  std::map<std::string, std::shared_ptr<ros::Subscriber> > m_sub;
+  std::map<std::string, ros_helper::WallTimeMTPtr > m_sub_time;
 
   bool callAvailable( );
 

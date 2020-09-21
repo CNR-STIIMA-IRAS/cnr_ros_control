@@ -40,7 +40,6 @@
 #include <ros/ros.h>
 #include <ros/console.h>
 #include <ros/time.h>
-#include <subscription_notifier/subscription_notifier.h>
 #include <cnr_controller_interface/cnr_controller_interface.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
@@ -180,11 +179,18 @@ bool  Controller< T >::init(T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& co
 
   m_time_span_tracker.reset( new realtime_utilities::TimeSpanTracker(int(10.0/m_sampling_period), m_sampling_period));
 
-  if (enterInit() && doInit() && exitInit())
+  if(!enterInit())
   {
-    CNR_RETURN_TRUE(*m_logger);
+    CNR_RETURN_FALSE(*m_logger);
   }
-
+  if(!doInit())
+  {
+    CNR_RETURN_FALSE(*m_logger);
+  }
+  if(!exitInit())
+  {
+    CNR_RETURN_FALSE(*m_logger);
+  }
 
   CNR_RETURN_BOOL(*m_logger, dump_state()) ;
 }
@@ -317,7 +323,8 @@ bool Controller< T >::enterUpdate()
     dump_state("CALLBACK_TIMEOUT_ERROR");
     CNR_RETURN_FALSE_THROTTLE(*m_logger, 5.0);
   }
-  CNR_RETURN_TRUE(*m_logger);
+  //CNR_RETURN_TRUE_THROTTLE(*m_logger);
+  return true;
 }
 
 template< class T >
@@ -418,7 +425,7 @@ bool Controller< T >::shutdown(const std::string& state_final)
   //m_controller_nh_callback_queue.callAvailable(ros::WallDuration(5.0));
   for (auto & t : m_sub)
   {
-    t.second.sub->shutdown();
+    t.second->shutdown();
   }
   for (auto & t : m_pub)
   {
@@ -496,8 +503,8 @@ void Controller< T >::add_subscriber(const std::string& id,
     std::shared_ptr<ros_helper::SubscriptionNotifier<M> > sub(
           new ros_helper::SubscriptionNotifier<M>(m_controller_nh, topic,queue_size, callback) );
 
-    m_sub.emplace(std::piecewise_construct,
-        std::forward_as_tuple( id ), std::forward_as_tuple( sub->getSubscriber(), sub->getMsgReceivedTime()));
+    m_sub.emplace(id, sub->getSubscriber() );
+    m_sub_time.emplace(id, sub->getMsgReceivedTime());
 
   }
   else
@@ -507,13 +514,13 @@ void Controller< T >::add_subscriber(const std::string& id,
 }
 
 template< class T >
-std::shared_ptr<ros::Subscriber>& Controller< T >::getSubscriber(const std::string& id)
+std::shared_ptr<ros::Subscriber> Controller< T >::getSubscriber(const std::string& id)
 {
-  return m_sub.at(id).sub;
+  return m_sub.at(id);
 }
 
 template< class T >
-std::shared_ptr<ros::Publisher>& Controller<T>::getPublisher(const std::string& id)
+std::shared_ptr<ros::Publisher> Controller<T>::getPublisher(const std::string& id)
 {
   return m_pub.at(id).pub;
 }
@@ -527,17 +534,19 @@ bool Controller< T >::callAvailable( )
   {
     for (const auto & sub : m_sub)
     {
-      if (sub.second.msg_received_time == nullptr)
+      if (m_sub_time.at(sub.first) == nullptr)
       {
-        CNR_ERROR_THROTTLE(*m_logger, 5.0, "The topic '" + sub.second.sub->getTopic() + "' seems not yet published..");
+        CNR_WARN_THROTTLE(*m_logger, 5.0, "The topic '" + sub.second->getTopic() + "' seems not yet published..");
       }
       else
       {
         ros::WallTime now = ros::WallTime::now();
-        ros::WallDuration time_span = (now - *sub.second.msg_received_time);
+        ros::WallTime last_message_time;
+        m_sub_time.at(sub.first)->get(last_message_time);
+        ros::WallDuration time_span = (now - last_message_time);
         if (time_span.toSec() > m_watchdog)
         {
-          CNR_ERROR_THROTTLE(*m_logger, 5.0, "Watchdog on subscribed topic '" + sub.second.sub->getTopic() + "' " +
+          CNR_ERROR_THROTTLE(*m_logger, 5.0, "Watchdog on subscribed topic '" + sub.second->getTopic() + "' " +
                                              std::string("time span: ")+std::to_string(time_span.toSec())+
                                              std::string(" watchdog: ")+std::to_string(m_watchdog));
         }
