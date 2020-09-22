@@ -236,8 +236,7 @@ bool TopicRobotHW::doRead(const ros::Time& time, const ros::Duration& period)
 
 bool TopicRobotHW::doWrite(const ros::Time& time, const ros::Duration& period)
 {
-
-  CNR_TRACE_START_THROTTLE(*m_logger, 5.0);
+  CNR_TRACE_START_THROTTLE_DEFAULT(*m_logger);
   if (!m_p_jh_active && !m_v_jh_active && !m_e_jh_active)
   {
     CNR_RETURN_TRUE_THROTTLE(*m_logger, 5.0);
@@ -273,7 +272,7 @@ bool TopicRobotHW::doWrite(const ros::Time& time, const ros::Duration& period)
 
   sensor_msgs::JointStatePtr msg(new sensor_msgs::JointState());
   m_msg.swap(msg);
-  CNR_RETURN_TRUE_THROTTLE(*m_logger, 5.0);
+  CNR_RETURN_TRUE_THROTTLE_DEFAULT(*m_logger);
 }
 
 bool TopicRobotHW::doPrepareSwitch(const std::list< hardware_interface::ControllerInfo >& start_list, const std::list< hardware_interface::ControllerInfo >& stop_list)

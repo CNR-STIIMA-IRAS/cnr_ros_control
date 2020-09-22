@@ -102,11 +102,11 @@ bool JointCommandController<T>::enterInit()
   m_priority.reset();
   m_target.resize(this->m_kin->jointNames());
 
-  this->template add_subscriber<std_msgs::Int64>("speed_ovr" , "/speed_ovr" , 1,
+  this->template add_subscriber<std_msgs::Int64>("/speed_ovr" , 1,
                       boost::bind(&JointCommandController<T>::overrideCallback, this, _1));
-  this->template add_subscriber<std_msgs::Int64>("safe_ovr_1", "/safe_ovr_1", 1,
+  this->template add_subscriber<std_msgs::Int64>("/safe_ovr_1", 1,
                       boost::bind(&JointCommandController<T>::safeOverrideCallback_1, this, _1));
-  this->template add_subscriber<std_msgs::Int64>("safe_ovr_2", "/safe_ovr_2", 1,
+  this->template add_subscriber<std_msgs::Int64>("/safe_ovr_2", 1,
                       boost::bind(&JointCommandController<T>::safeOverrideCallback_2, this, _1));
 
   m_override = 1;
@@ -276,8 +276,6 @@ bool JointCommandController<T>::exitUpdate()
     m_target.qd  = saturated_qd;
     m_target.q   = m_last_target.q + m_target.qd * this->m_dt.toSec();
     // ==============================
-
-
   }
   catch(...)
   {
@@ -300,7 +298,7 @@ bool JointCommandController<T>::exitUpdate()
     report<< this->m_hw->getHandle(this->m_hw->getNames().at(iAx)) <<"\n";
   }
 
-  CNR_WARN_COND_THROTTLE(this->logger(), true, throttle_time, report.str() );
+  CNR_WARN_COND_THROTTLE(this->logger(), print_report, throttle_time, report.str() );
 
 
   if (!JointController<T>::exitUpdate())

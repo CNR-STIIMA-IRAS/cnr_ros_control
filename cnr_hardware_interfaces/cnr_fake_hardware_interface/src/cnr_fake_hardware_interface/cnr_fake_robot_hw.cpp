@@ -169,7 +169,7 @@ bool FakeRobotHW::doInit()
 
 bool FakeRobotHW::doWrite(const ros::Time& time, const ros::Duration& period)
 {
-  CNR_TRACE_START_THROTTLE(*m_logger, 5.0);
+  CNR_TRACE_START_THROTTLE_DEFAULT(*m_logger);
   if (m_p_jh_active)
   {
     m_pos = m_cmd_pos;
@@ -198,7 +198,7 @@ bool FakeRobotHW::doWrite(const ros::Time& time, const ros::Duration& period)
     m_eff.resize(m_resource_names.size());
     std::fill(m_eff.begin(), m_eff.end(), 0.0);
   }
-  CNR_RETURN_TRUE_THROTTLE(*m_logger, 5.0);
+  CNR_RETURN_TRUE_THROTTLE_DEFAULT(*m_logger);
 }
 
 bool FakeRobotHW::doPrepareSwitch(const std::list< hardware_interface::ControllerInfo >& start_list,

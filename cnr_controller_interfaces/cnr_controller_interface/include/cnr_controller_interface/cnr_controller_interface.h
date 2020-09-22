@@ -193,10 +193,10 @@ public:
    * @param queue_size
    * @param latch
    */
-  template<typename M> void add_publisher(const std::string& id,
-                                          const std::string &topic,
-                                          uint32_t queue_size,
-                                          bool latch = false);
+  template<typename M>
+  size_t add_publisher(const std::string &topic,
+                       uint32_t queue_size,
+                       bool latch = false);
 
   /**
    * @brief publish
@@ -205,7 +205,7 @@ public:
    * @return
    */
   template<typename M>
-  bool publish(const std::string& id, const M &message);
+  bool publish(const size_t& idx, const M &message);
 
   /**
    * @brief add_subscriber
@@ -216,14 +216,13 @@ public:
    * @param transport_hints
    */
   template<typename M>
-  void add_subscriber(const std::string& id,
-                      const std::string &topic,
-                      uint32_t queue_size,
-                      boost::function<void(const boost::shared_ptr<M const>& msg)> callback,
-                      bool enable_watchdog = true);
+  size_t add_subscriber(const std::string &topic,
+                        uint32_t queue_size,
+                        boost::function<void(const boost::shared_ptr<M const>& msg)> callback,
+                        bool enable_watchdog = true);
 
-  std::shared_ptr<ros::Subscriber> getSubscriber(const std::string& id);
-  std::shared_ptr<ros::Publisher>  getPublisher(const std::string& id);
+  std::shared_ptr<ros::Subscriber> getSubscriber(const size_t& id);
+  std::shared_ptr<ros::Publisher>  getPublisher(const size_t &id);
 
   void add_diagnostic_message(const std::string& msg,
                               const std::string& name,
@@ -265,18 +264,14 @@ private:
   ros::NodeHandle     m_controller_nh;
   ros::CallbackQueue  m_controller_nh_callback_queue;
 
-  struct Publisher
-  {
-    std::shared_ptr<ros::Publisher>                 pub;
-    std::chrono::high_resolution_clock::time_point* start = nullptr;
-    std::chrono::high_resolution_clock::time_point  last;
-    std::chrono::duration<double>                   time_span;
-  };
+  std::vector<std::shared_ptr<ros::Publisher>>                 m_pub;
+  std::vector<std::chrono::high_resolution_clock::time_point*> m_pub_start;
+  std::vector<std::chrono::high_resolution_clock::time_point*> m_pub_last;
 
-
-  std::map<std::string, Publisher > m_pub;
-  std::map<std::string, std::shared_ptr<ros::Subscriber> > m_sub;
-  std::map<std::string, ros_helper::WallTimeMTPtr > m_sub_time;
+  std::vector<std::shared_ptr<void>>            m_sub_notifier;
+  std::vector<std::shared_ptr<ros::Subscriber>> m_sub;
+  std::vector<ros_helper::WallTimeMTPtr>        m_sub_time;
+  std::vector<bool>                             m_sub_time_track;
 
   bool callAvailable( );
 
