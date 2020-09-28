@@ -41,6 +41,11 @@
 #include <nodelet/NodeletUnload.h>
 #include <nodelet/NodeletList.h>
 
+#include <configuration_msgs/StartConfiguration.h>
+#include <configuration_msgs/StopConfiguration.h>
+#include <configuration_msgs/ListConfigurations.h>
+#include <configuration_msgs/UpdateConfigurations.h>
+
 #include <cnr_logger/cnr_logger.h>
 #include <cnr_hardware_interface/internal/cnr_robot_hw_utils.h>
 #include <cnr_controller_manager_interface/cnr_controller_manager_interface.h>
@@ -96,7 +101,7 @@ private:
 
   bool checkRobotHwState(const std::string& hw, cnr_hardware_interface::StatusHw target = cnr_hardware_interface::RUNNING);
   bool callback(ConfigurationStruct* next_configuration, const int &strictness, const ros::Duration& watchdog);
-  bool updateConfigurations();
+  bool getAvailableConfigurationsFromParam();
 };
 
 }  // namespace cnr_configuration_manager

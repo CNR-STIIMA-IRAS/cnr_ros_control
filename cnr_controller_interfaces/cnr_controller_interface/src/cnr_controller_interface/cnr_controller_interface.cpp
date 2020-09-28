@@ -429,12 +429,54 @@ bool get_state(const std::string& hw_name,
       break;
     }
 
-    if ((watchdog.toSec() > 0) && (ros::Time::now() > (st + watchdog)))
+    if((watchdog.toSec() > 0) && (ros::Time::now() > (st + watchdog)))
     {
       error += "Timeout. Param " + p + " does not exist";
       return false;
     }
     ros::Duration(0.001).sleep();
+  }
+  return true;
+}
+
+bool check_state(const std::string& hw_name,
+                 const std::string& ctrl_name,
+                 const std::string& status,
+                 std::string& error,
+                 const ros::Duration& watchdog)
+{
+  bool ok = false;
+  ros::Time st = ros::Time::now();
+  std::string actual_status;
+  const std::string p = last_status_param(hw_name, ctrl_name);
+  ros::Time n = ros::Time::now();
+  while (ros::ok())
+  {
+    if (ros::param::get(p, actual_status))
+    {
+      if( actual_status == status)
+      {
+        ok = true;
+        break;
+      }
+    }
+
+    if((watchdog.toSec() > 0) && (ros::Time::now() > (st + watchdog)))
+    {
+      error += "Timeout.";
+      ok = false;
+      break;
+    }
+    ros::Duration(0.001).sleep();
+  }
+  ros::Time a = ros::Time::now();
+  if(!ok)
+  {
+    error += "Failed while checking '" + hw_name + "/" + ctrl_name + "' state. ";
+    error += "The state is " + actual_status + " while '" + status + "' is expected ";
+    error +="(transition waited for " + std::to_string((a-n).toSec()) + "s, ";
+    error +="watchdog: "+ std::to_string(watchdog.toSec())+ "s)";
+    return false;
   }
   return true;
 }

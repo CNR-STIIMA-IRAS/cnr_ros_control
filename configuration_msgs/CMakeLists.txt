@@ -20,6 +20,7 @@ add_service_files(
   SetConfig.srv
   GetConfig.srv
   UpdateConfigurations.srv
+  SendMessage.srv
 )
 
 generate_messages(

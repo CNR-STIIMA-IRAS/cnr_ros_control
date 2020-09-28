@@ -113,7 +113,7 @@ bool JointCommandController<T>::enterInit()
   m_safe_override_1 = 1;
   m_safe_override_2 = 1;
 
-  CNR_RETURN_BOOL(*(this->m_logger), Controller<T>::dump_state());
+  CNR_RETURN_TRUE(*(this->m_logger));
 }
 
 template< class T >
@@ -127,7 +127,7 @@ bool JointCommandController<T>::enterStarting()
 
   m_target.q  = this->m_state->q;
 
-  CNR_RETURN_BOOL(*(this->m_logger), Controller<T>::dump_state());
+  CNR_RETURN_TRUE(*(this->m_logger));
 }
 
 template< class T >
@@ -139,7 +139,7 @@ bool JointCommandController<T>::enterUpdate()
     CNR_RETURN_FALSE(*(this->m_logger));
   }
   m_last_target = m_target;
-  CNR_RETURN_BOOL_THROTTLE_DEFAULT(*this->m_logger, Controller<T>::dump_state());
+  CNR_RETURN_TRUE_THROTTLE_DEFAULT(*this->m_logger);
 }
 
 template< class T >
@@ -306,7 +306,7 @@ bool JointCommandController<T>::exitUpdate()
     CNR_RETURN_FALSE(*(this->m_logger));
   }
 
-  CNR_RETURN_BOOL_THROTTLE_DEFAULT(*(this->m_logger), Controller<T>::dump_state());
+  CNR_RETURN_TRUE_THROTTLE_DEFAULT(*(this->m_logger));
 #undef TP
 #undef SP
 }
@@ -323,14 +323,14 @@ bool JointCommandController<T>::exitStopping()
   m_target.qd.setZero();
   set_to_hw(m_target, this->m_hw);
 
-  if (!JointController<T>::exitUpdate())
+  if (!JointController<T>::exitStopping())
   {
     CNR_RETURN_FALSE(*(this->m_logger));
   }
 
   m_last_target = m_target;
 
-  CNR_RETURN_BOOL(*(this->m_logger), Controller<T>::dump_state());
+  CNR_RETURN_TRUE(*(this->m_logger));
 }
 
 template<class T>

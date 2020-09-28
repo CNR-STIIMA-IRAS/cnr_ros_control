@@ -132,9 +132,9 @@ bool  Controller< T >::init(T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& co
     if (m_ctrl_name.at(0) == '_') m_ctrl_name.erase(0, 1);
 
     m_logger.reset(new cnr_logger::TraceLogger(m_hw_name + "-" + m_ctrl_name));
-    if (!m_logger->init(controller_nh.getNamespace(), true, false))
+    if (!m_logger->init(controller_nh.getNamespace(), false, false))
     {
-      if (!m_logger->init(root_nh.getNamespace(), true, false))
+      if (!m_logger->init(root_nh.getNamespace(), false, false))
       {
         return false;
       }
@@ -206,7 +206,7 @@ bool  Controller< T >::init(T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& co
     CNR_RETURN_FALSE(m_logger, "Exception at line: " + std::to_string(l) + " error: " + std::string(e.what()) );
   }
 
-  CNR_RETURN_BOOL(m_logger, dump_state()) ;
+  CNR_RETURN_BOOL(m_logger, dump_state("INITIALIZED"));
 }
 
 template< class T >
@@ -215,12 +215,20 @@ void Controller< T >::starting(const ros::Time& time)
   CNR_TRACE_START(m_logger);
   if (enterStarting() && doStarting(time) && exitStarting())
   {
+    dump_state("RUNNING");
     CNR_RETURN_OK(m_logger, void(), "Starting Ok! Ready to go!");
   }
   else
   {
     CNR_ERROR(m_logger, "The starting of the controller failed. Abort Request to ControllerManager sent.");
-    controller_interface::Controller< T >::abortRequest(time);
+    if(controller_interface::Controller< T >::abortRequest(time))
+    {
+      dump_state("ABORTED");
+    }
+    else
+    {
+      dump_state("ERROR");
+    }
     CNR_RETURN_NOTOK(m_logger, void());
   }
 }
@@ -250,7 +258,14 @@ void Controller< T >::update(const ros::Time& time, const ros::Duration& period)
   else
   {
     CNR_ERROR(m_logger, "Error in update, stop request called to stop the controller quietly.");
-    controller_interface::Controller< T >::stopRequest(time);
+    if(controller_interface::Controller< T >::stopRequest(time))
+    {
+      dump_state("STOPPED");
+    }
+    else
+    {
+      dump_state("ERROR");
+    }
     CNR_RETURN_NOTOK_THROTTLE(m_logger, void(), 10.0);
   }
 }
@@ -261,11 +276,19 @@ void Controller< T >::stopping(const ros::Time& time)
   CNR_TRACE_START(m_logger);
   if (enterStopping() && doStopping(time) && exitStopping())
   {
+    dump_state("STOPPED");
     CNR_RETURN_OK(m_logger, void());
   }
   else
   {
-    controller_interface::Controller< T >::abortRequest(time);
+    if(controller_interface::Controller< T >::abortRequest(time))
+    {
+      dump_state("ABORTED");
+    }
+    else
+    {
+      dump_state("ERROR");
+    }
     CNR_RETURN_NOTOK(m_logger, void());
   }
 }
@@ -300,21 +323,21 @@ bool Controller< T >::enterInit()
 {
   CNR_TRACE_START(m_logger);
   m_dt = ros::Duration(0);
-  CNR_RETURN_BOOL(m_logger, dump_state());
+  CNR_RETURN_TRUE(m_logger);
 }
 
 template< class T >
 bool Controller< T >::exitInit()
 {
   CNR_TRACE_START(m_logger);
-  CNR_RETURN_BOOL(m_logger, dump_state());
+  CNR_RETURN_TRUE(m_logger);
 }
 
 template< class T >
 bool Controller< T >::enterStarting()
 {
   CNR_TRACE_START(m_logger);
-  CNR_RETURN_BOOL(m_logger, dump_state());
+  CNR_RETURN_TRUE(m_logger);
 }
 
 template< class T >
@@ -325,7 +348,7 @@ bool Controller< T >::exitStarting()
   {
     CNR_WARN(m_logger, "The callback is still not available...");
   }
-  CNR_RETURN_BOOL(m_logger, dump_state());
+  CNR_RETURN_TRUE(m_logger);
 }
 
 template< class T >
@@ -344,13 +367,15 @@ bool Controller< T >::enterUpdate()
 template< class T >
 bool Controller< T >::exitUpdate()
 {
-  return dump_state();
+  CNR_TRACE_START_THROTTLE_DEFAULT(m_logger);
+  CNR_RETURN_TRUE_THROTTLE_DEFAULT(m_logger);
 }
 
 template< class T >
 bool Controller< T >::enterStopping()
 {
-  return dump_state();
+  CNR_TRACE_START(m_logger);
+  CNR_RETURN_TRUE(m_logger);
 }
 
 template< class T >
@@ -358,7 +383,7 @@ bool Controller< T >::exitStopping()
 {
   CNR_TRACE_START(m_logger);
   bool ret = shutdown("STOPPED");
-  if (ret)
+  if(ret)
   {
     m_controller_nh_callback_queue.disable();
   }
@@ -369,28 +394,28 @@ template< class T >
 bool Controller< T >::enterWaiting()
 {
   CNR_TRACE_START(m_logger);
-  CNR_RETURN_BOOL(m_logger, dump_state());
+  CNR_RETURN_TRUE(m_logger);
 }
 
 template< class T >
 bool Controller< T >::exitWaiting()
 {
   CNR_TRACE_START(m_logger);
-  CNR_RETURN_BOOL(m_logger, dump_state());
+  CNR_RETURN_TRUE(m_logger);
 }
 
 template< class T >
 bool Controller< T >::enterAborting()
 {
   CNR_TRACE_START(m_logger);
-  CNR_RETURN_BOOL(m_logger, dump_state());
+  CNR_RETURN_TRUE(m_logger);
 }
 
 template< class T >
 bool Controller< T >::exitAborting()
 {
   CNR_TRACE_START(m_logger);
-  bool ret = shutdown( "" );
+  bool ret = shutdown("ABORTED");
   if(ret)
   {
     m_controller_nh_callback_queue.disable();
@@ -405,7 +430,8 @@ bool Controller< T >::dump_state(const std::string& status)
   if (m_status_history.size() == 0)
   {
     m_status_history.push_back(status);
-  }
+    m_controller_nh.setParam(cnr_controller_interface::last_status_param(m_hw_name, m_ctrl_name), status);
+    m_controller_nh.setParam(cnr_controller_interface::status_param(m_hw_name, m_ctrl_name), m_status_history);  }
   else
   {
     if (m_status_history.back() != status)
@@ -417,7 +443,7 @@ bool Controller< T >::dump_state(const std::string& status)
   }
 
   return true;
-}
+}/*
 
 template< class T >
 bool Controller< T >::dump_state()
@@ -429,14 +455,14 @@ bool Controller< T >::dump_state()
                           : controller_interface::Controller< T >::isStopped()     ?  "STOPPED"
                           : "CONSTRUCTED";
   return dump_state(last_status);
-}
+}*/
 
 
 template< class T >
 bool Controller< T >::shutdown(const std::string& state_final)
 {
+  bool ret = false;
   CNR_TRACE_START(m_logger);
-  //m_controller_nh_callback_queue.callAvailable(ros::WallDuration(5.0));
   for (auto & t : m_sub)
   {
     t->shutdown();
@@ -445,34 +471,50 @@ bool Controller< T >::shutdown(const std::string& state_final)
   {
     t->shutdown();
   }
-  if(state_final=="")
-  {
-    return dump_state();
-  }
+
   for( size_t idx=0; idx<m_sub.size();idx++)
   {
     m_sub.at(idx).reset();
     m_sub_time.at(idx).reset();
     m_sub_notifier.at(idx).reset();
   }
-  bool ret = dump_state(state_final);
+  m_sub.clear();
+  m_sub_time.clear();
+  m_sub_time_track.clear();
+  m_sub_notifier.clear();
+
+  for( size_t idx=0; idx<m_pub.size();idx++)
+  {
+    m_pub.at(idx).reset();
+    delete m_pub_start.at(idx);
+    delete m_pub_last.at(idx);
+  }
+  m_pub.clear();
+  m_pub_start.clear();
+  m_pub_last.clear();
+  m_pub_time_track.clear();
+
+  ret = dump_state(state_final != "" ? state_final : "STOPPED" );
+
   CNR_RETURN_BOOL(m_logger, ret);
 }
 
 
 template<typename T> template<typename M>
-size_t Controller< T >::add_publisher(const std::string &topic, uint32_t queue_size, bool latch)
+size_t Controller< T >::add_publisher(const std::string &topic, uint32_t queue_size, bool latch, bool enable_watchdog)
 {
   m_pub.push_back(std::shared_ptr<ros::Publisher>(
       new ros::Publisher(m_controller_nh.advertise< M >(topic, queue_size, latch))) );
   m_pub_start.push_back(nullptr);
   m_pub_last.push_back(nullptr);
+  m_pub_time_track.push_back(enable_watchdog);
   return m_pub.size()-1;
 }
 
 template<typename T> template<typename M>
 bool Controller< T >::publish(const size_t& idx, const M &message)
 {
+  CNR_TRACE_START_THROTTLE_DEFAULT(this->logger());
   if(idx >=m_pub.size())
   {
     CNR_RETURN_FALSE(this->logger(),
@@ -485,21 +527,27 @@ bool Controller< T >::publish(const size_t& idx, const M &message)
   }
 
   m_pub.at(idx)->publish(message);
-  auto n = std::chrono::high_resolution_clock::now();
-  if (m_pub_start.at(idx) == nullptr)
+
+  if(m_pub_time_track.at(idx))
   {
-    m_pub_start.at(idx) = new std::chrono::high_resolution_clock::time_point();
-    *m_pub_start.at(idx) = n;
-    m_pub_last.at(idx) = new std::chrono::high_resolution_clock::time_point();
-    *m_pub_last.at(idx) = n;
+    auto n = std::chrono::high_resolution_clock::now();
+    if (m_pub_start.at(idx) == nullptr)
+    {
+      m_pub_start.at(idx) = new std::chrono::high_resolution_clock::time_point();
+      *m_pub_start.at(idx) = n;
+      m_pub_last.at(idx) = new std::chrono::high_resolution_clock::time_point();
+      *m_pub_last.at(idx) = n;
+    }
+    std::chrono::duration<double> time_span = (n -  *m_pub_last.at(idx));
+    *m_pub_last.at(idx)  = n;
+    if (time_span.count() > m_watchdog)
+    {
+      CNR_RETURN_FALSE(this->logger(), "The publisher has not been called within the foreseen watchdog."
+                +std::string("Time span: ") + std::to_string(time_span.count()) + ", "
+                +std::string("watchdog: " ) + std::to_string(m_watchdog));
+    }
   }
-  std::chrono::duration<double> time_span = (n -  *m_pub_last.at(idx));
-  *m_pub_last.at(idx)  = n;
-  if (time_span.count() > m_watchdog)
-  {
-    return false;
-  }
-  return true;
+  CNR_RETURN_TRUE_THROTTLE_DEFAULT(this->logger());
 }
 
 template<typename T> template<typename M>
@@ -537,7 +585,6 @@ template< class T >
 bool Controller< T >::callAvailable( )
 {
   m_controller_nh_callback_queue.callAvailable();
-
   if (m_sub.size() > 0)
   {
     for (size_t idx=0; idx<m_sub.size(); idx++)

@@ -174,10 +174,6 @@ bool FakeRobotHW::doWrite(const ros::Time& time, const ros::Duration& period)
   {
     m_pos = m_cmd_pos;
   }
-  else
-  {
-    std::fill(m_pos.begin(), m_pos.end(), 0.0);
-  }
 
   if (m_v_jh_active)
   {

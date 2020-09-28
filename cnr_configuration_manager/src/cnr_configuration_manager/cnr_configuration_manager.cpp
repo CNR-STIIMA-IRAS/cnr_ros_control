@@ -106,7 +106,8 @@ ConfigurationManager::~ConfigurationManager() noexcept(false)
   }
 }
 
-bool ConfigurationManager::startCallback(configuration_msgs::StartConfiguration::Request&   req, configuration_msgs::StartConfiguration::Response&   res)
+bool ConfigurationManager::startCallback(configuration_msgs::StartConfiguration::Request& req,
+                                         configuration_msgs::StartConfiguration::Response& res)
 {
   CNR_TRACE_START(*m_logger);
   CNR_INFO(*m_logger, "************************** ******************************* *******************************");
@@ -144,7 +145,8 @@ bool ConfigurationManager::startCallback(configuration_msgs::StartConfiguration:
   CNR_RETURN_TRUE(*m_logger);
 }
 
-bool ConfigurationManager::stopCallback(configuration_msgs::StopConfiguration::Request&    req, configuration_msgs::StopConfiguration::Response&    res)
+bool ConfigurationManager::stopCallback(configuration_msgs::StopConfiguration::Request& req,
+                                        configuration_msgs::StopConfiguration::Response& res)
 {
   CNR_TRACE_START(*m_logger);
   CNR_INFO(*m_logger, "*************************** ******************************** ********************************");
@@ -173,12 +175,13 @@ bool ConfigurationManager::stopCallback(configuration_msgs::StopConfiguration::R
   CNR_RETURN_TRUE(*m_logger);
 }
 
-bool ConfigurationManager::listConfigurations(configuration_msgs::ListConfigurations::Request&   req, configuration_msgs::ListConfigurations::Response&   res)
+bool ConfigurationManager::listConfigurations(configuration_msgs::ListConfigurations::Request& req,
+                                              configuration_msgs::ListConfigurations::Response& res)
 {
   CNR_TRACE_START(*m_logger);
   res.configurations.clear();
   const std::lock_guard<std::mutex> lock(m_callback_mutex);
-  if (!updateConfigurations())
+  if (!getAvailableConfigurationsFromParam())
   {
     CNR_RETURN_FALSE(*m_logger, "Update COnfiguration Failed.");
   }
@@ -195,12 +198,13 @@ bool ConfigurationManager::listConfigurations(configuration_msgs::ListConfigurat
   CNR_RETURN_TRUE(*m_logger);
 }
 
-bool ConfigurationManager::updateConfigurations(configuration_msgs::UpdateConfigurations::Request& req, configuration_msgs::UpdateConfigurations::Response& res)
+bool ConfigurationManager::updateConfigurations(configuration_msgs::UpdateConfigurations::Request& req,
+                                                configuration_msgs::UpdateConfigurations::Response& res)
 {
   CNR_TRACE_START(*m_logger);
   const std::lock_guard<std::mutex> lock(m_callback_mutex);
-  bool ret = updateConfigurations();
-  CNR_RETURN_BOOL(*m_logger, ret);
+  res.ok =  getAvailableConfigurationsFromParam();
+  CNR_RETURN_TRUE(*m_logger);
 }
 
 bool ConfigurationManager::init()
@@ -210,12 +214,15 @@ bool ConfigurationManager::init()
   {
 
     CNR_WARN(*m_logger, "********************* INIT ****************************");
-    m_load_configuration      = m_nh.advertiseService("start_configuration", &cnr_configuration_manager::ConfigurationManager::startCallback,      this);
-    m_unload_configuration    = m_nh.advertiseService("stop_configuration", &cnr_configuration_manager::ConfigurationManager::stopCallback,       this);
-    m_list_controller_service = m_nh.advertiseService("list_configurations", &cnr_configuration_manager::ConfigurationManager::listConfigurations, this);
+    m_load_configuration      = m_nh.advertiseService("start_configuration",
+                                      &cnr_configuration_manager::ConfigurationManager::startCallback, this);
+    m_unload_configuration    = m_nh.advertiseService("stop_configuration",
+                                      &cnr_configuration_manager::ConfigurationManager::stopCallback, this);
+    m_list_controller_service = m_nh.advertiseService("list_configurations",
+                                      &cnr_configuration_manager::ConfigurationManager::listConfigurations, this);
 
     CNR_TRACE_START(*m_logger);
-    if (m_nh.hasParam("control_configurations") && updateConfigurations())
+    if (m_nh.hasParam("control_configurations") && getAvailableConfigurationsFromParam())
     {
       m_nh.setParam("status/active_configuration", "none");
     }
@@ -248,7 +255,8 @@ bool ConfigurationManager::run()
       bool full_check = (((cnt++) % decimator) == 0);
       if (!isOk(full_check))
       {
-        CNR_WARN_THROTTLE(*m_logger, 2, "Raised an Error by one of the Hw. Try to Stop configuration because a error has been raised by one of the Hw ");
+        CNR_WARN_THROTTLE(*m_logger, 2,
+    "\n\nRaised an Error by one of the Hw! Stop Configuration start!\n\n");
         configuration_msgs::StopConfiguration srv;
         srv.request.strictness = 1;
         if (!stopCallback(srv.request, srv.response))
@@ -264,7 +272,7 @@ bool ConfigurationManager::run()
       }
       else
       {
-        CNR_WARN_THROTTLE(*m_logger, 10.0, "Waiting for a new callback, or some change in the cofiguration state");
+        CNR_WARN_THROTTLE(*m_logger, 20.0, "Waiting for a new callback, or some change in the cofiguration state");
       }
 
       if (m_signal_handler.gotExitSignal())
@@ -293,6 +301,10 @@ bool ConfigurationManager::isOk(bool nodelet_check)
   std::string error;
   try
   {
+    const std::lock_guard<std::mutex> lock(m_callback_mutex);
+
+    std::string prefix = "Configuration '" + m_active_configuration.data.name + "': ";
+
     for (auto const & component : m_active_configuration.components)
     {
       const std::string& hw = component.first;
@@ -300,7 +312,7 @@ bool ConfigurationManager::isOk(bool nodelet_check)
 
       if (!cnr_hardware_interface::get_state(m_nh, hw, hw_status, ros::Duration(0.01), error))
       {
-        CNR_FATAL(*m_logger, "The HW " << hw << " has not any valid state: " << error);
+        CNR_FATAL(*m_logger, prefix << "The HW " << hw << " has not any valid state: " << error);
         return false;
       }
 
@@ -308,7 +320,8 @@ bool ConfigurationManager::isOk(bool nodelet_check)
        || (hw_status == cnr_hardware_interface::CTRL_ERROR)
        || (hw_status == cnr_hardware_interface::SRV_ERROR))
       {
-        CNR_FATAL(*m_logger, "The status of the HW '" << hw << "' is " << cnr_hardware_interface::to_string(hw_status));
+        CNR_FATAL(*m_logger, prefix <<
+                             "The status of the HW '" << hw << "' is " << cnr_hardware_interface::to_string(hw_status));
         return false;
       }
       for (auto const & ctrl : component.second)
@@ -316,13 +329,14 @@ bool ConfigurationManager::isOk(bool nodelet_check)
         std::string ctrl_status;
         if (!cnr_controller_interface::get_state(hw, ctrl, ctrl_status, error, ros::Duration(0.01)))
         {
-          CNR_FATAL(*m_logger, "The HW '" << hw << "' and CTRL '" << ctrl << "' has not any valid state: " << error);
+          CNR_FATAL(*m_logger,  prefix << "The HW '" << hw << "' and CTRL '" << ctrl << "' has not any valid state: "
+                                << error);
           return false;
         }
         if (ctrl_status == "ERROR")
         {
-          CNR_FATAL(*m_logger, "The status of HW '" << hw << "' and CTRL '" << ctrl << "' is " << ctrl_status
-                               << " while it should be 'RUNNING'");
+          CNR_FATAL(*m_logger, prefix << "The status of HW '" << hw << "' and CTRL '" << ctrl << "' is " << ctrl_status
+                                      << " while it should be 'RUNNING'");
           return false;
         }
       }
@@ -333,7 +347,7 @@ bool ConfigurationManager::isOk(bool nodelet_check)
       std::vector<std::string> hw_names_from_nodelet;
       if (!m_conf_loader.listHw(hw_names_from_nodelet, ros::Duration(0.1)))
       {
-        CNR_FATAL(*m_logger, "HW Nodelet Manager failed: " << m_conf_loader.error());
+        CNR_FATAL(*m_logger, prefix << "HW Nodelet Manager failed: " << m_conf_loader.error());
         return false;
       }
 
@@ -342,25 +356,22 @@ bool ConfigurationManager::isOk(bool nodelet_check)
         const std::string& hw = component.first;
         if (std::find(hw_names_from_nodelet.begin(), hw_names_from_nodelet.end(), hw) == hw_names_from_nodelet.end())
         {
-          CNR_FATAL(*m_logger, "HW " << hw << " seems not loaded in memory!");
+          CNR_FATAL(*m_logger, prefix << "HW " << hw << " seems not loaded in memory!");
           return false;
         }
         std::vector< controller_manager_msgs::ControllerState >  running;
         std::vector< controller_manager_msgs::ControllerState >  stopped;
         if (!m_conf_loader.listControllers(hw, running, stopped))
         {
-          CNR_FATAL(*m_logger, "Ctrl of the HW" << hw << " seems not working properly. "
+          CNR_FATAL(*m_logger, prefix << "The Ctrl of the HW" << hw << " seems not working properly. "
                                << "Error: " << m_conf_loader.error(hw));
           return false;
         }
         for (auto const & ctrl : component.second)
         {
-          if (std::find_if(running.begin(), running.end(), [&ctrl](auto r)
-        {
-          return r.name == ctrl;
-        }) == running.end())
+          if(running.end() == std::find_if(running.begin(), running.end(), [&ctrl](auto r){return r.name == ctrl;}))
           {
-            CNR_WARN(*m_logger, "CTRL " << ctrl << " of the HW" << hw << " is not running! ");
+            CNR_WARN(*m_logger, prefix << "CTRL " << ctrl << " of the HW '" << hw << "' is not running! ");
             return false;
           }
         }
@@ -398,7 +409,9 @@ bool ConfigurationManager::checkRobotHwState(const std::string& hw, cnr_hardware
   return true;
 }
 
-bool ConfigurationManager::callback(ConfigurationStruct* next_configuration, const int &strictness, const ros::Duration& watchdog)
+bool ConfigurationManager::callback(ConfigurationStruct* next_configuration,
+                                    const int &strictness,
+                                    const ros::Duration& watchdog)
 {
   CNR_TRACE_START(*m_logger);
 
@@ -414,7 +427,8 @@ bool ConfigurationManager::callback(ConfigurationStruct* next_configuration, con
   CNR_INFO(*m_logger, cnr_logger::BM() << ">>>>>>>>>>>> Configuring HW " << cnr_logger::RST());
   if (!m_conf_loader.listHw(hw_names_from_nodelet, watchdog))
   {
-    CNR_RETURN_FALSE(*m_logger, "Error in getting the loaded hardware interfaces by the nodelet manager: " + m_conf_loader.error());
+    CNR_RETURN_FALSE(*m_logger,
+                  "Error in getting the loaded hardware interfaces by the nodelet manager: " + m_conf_loader.error());
   }
 
   extract<std::string>(hw_next_names, hw_active_names, &hw_to_load_names, &hw_to_unload_names, nullptr);
@@ -427,7 +441,8 @@ bool ConfigurationManager::callback(ConfigurationStruct* next_configuration, con
   CNR_INFO(*m_logger, "Check coherence between nodelet status and configuration manager status");
   if (!equal(hw_active_names, hw_names_from_nodelet))
   {
-    CNR_WARN(*m_logger, "Active configuration and the nodelet status is different. We force the unload of all the nodelet.. cross the fingers");
+    CNR_WARN(*m_logger,
+"Active configuration and the nodelet status is different. We force the unload of all the nodelet.. cross the fingers");
     if (!m_conf_loader.purgeHw(watchdog))
     {
       CNR_RETURN_FALSE(*m_logger, "The purge of the nodelets failed: " + m_conf_loader.error());
@@ -440,7 +455,8 @@ bool ConfigurationManager::callback(ConfigurationStruct* next_configuration, con
   {
     if (!m_conf_loader.loadHw(hw_to_load_name, watchdog, true))
     {
-      CNR_RETURN_FALSE(*m_logger, "Loading of the RobotHW '" + hw_to_load_name + "' failed. Error:\n\t=>" + m_conf_loader.error());
+      CNR_RETURN_FALSE(*m_logger,
+                       "Loading of the RobotHW '" + hw_to_load_name + "' failed. Error:\n\t=>" + m_conf_loader.error());
     }
 
     if (!checkRobotHwState(hw_to_load_name))
@@ -486,29 +502,33 @@ bool ConfigurationManager::callback(ConfigurationStruct* next_configuration, con
   CNR_RETURN_TRUE(*m_logger);
 }
 
-bool ConfigurationManager::updateConfigurations()
+bool ConfigurationManager::getAvailableConfigurationsFromParam()
 {
-  CNR_TRACE_START(*m_logger);
+  CNR_TRACE_START_THROTTLE_DEFAULT(*m_logger);
 
   std::map<std::string, ConfigurationStruct > configurations;
   XmlRpc::XmlRpcValue                         configuration_components;
   if (!m_nh.getParam("control_configurations", configuration_components))
   {
     std::string error = "Param '" + m_nh.getNamespace() + "/control_configurations' is not found." ;
-    CNR_RETURN_BOOL(*m_logger, false, error);
+    CNR_RETURN_FALSE(*m_logger, error);
   }
 
   std::string error;
   if (!param::get_configuration_components(configuration_components, configurations, error))
   {
     error = "Param '" + m_nh.getNamespace() + "/control_configurations' error: " + m_conf_loader.error() ;
-    CNR_RETURN_BOOL(*m_logger, false, error);
+    CNR_RETURN_FALSE(*m_logger, error);
   }
 
   m_configurations.clear();
   m_configurations = configurations;
-  CNR_DEBUG(*m_logger, "CONFIGURATIONS AS IN ROSPARAM SERVER:\n" << to_string(configurations));
-  CNR_RETURN_BOOL(*m_logger, true);
+  for( auto & configuration : m_configurations )
+  {
+    configuration.second.data.state = (configuration.first == m_active_configuration_name) ? "running" : "idle";
+  }
+  //CNR_DEBUG(*m_logger, "CONFIGURATIONS AS IN ROSPARAM SERVER:\n" << to_string(configurations));
+  CNR_RETURN_TRUE_THROTTLE_DEFAULT(*m_logger);
 }
 
 }  // namespace cnr_configuration_manager

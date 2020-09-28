@@ -40,6 +40,7 @@
 
 #include <configuration_msgs/ConfigurationComponent.h>
 #include <nodelet/NodeletLoadRequest.h>
+#include <cnr_configuration_manager/internal/cnr_configuration_manager_utils.h>
 
 namespace cnr_configuration_manager
 {
@@ -51,8 +52,8 @@ namespace param
 
 inline 
 bool get_configuration_component_no_dependencies(XmlRpc::XmlRpcValue& configuration_component, 
-                                                 ConfigurationStruct& configuration, 
-                                                 std::string&         error)
+                                                 cnr_configuration_manager::ConfigurationStruct& configuration,
+                                                 std::string& error)
 {
   if (configuration_component.getType() != XmlRpc::XmlRpcValue::TypeStruct)
   {
@@ -214,9 +215,6 @@ inline bool get_configuration_components(XmlRpc::XmlRpcValue&                   
         configurations.clear();
         return false;
       }
-
-      std::cout << "[ " << configuration.first << " ]  Dep Name: "<< dep_names.at(i) 
-                << " at "<< name_to_index.at( dep_names.at(i) ) << std::endl;
       std::string         what;
       ConfigurationStruct configuration_depend_from;
       if (!param::get_configuration_component_no_dependencies(

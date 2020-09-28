@@ -46,7 +46,7 @@
 
 #include <realtime_utilities/time_span_tracker.h>
 #include <cnr_logger/cnr_logger.h>
-#include <cnr_controller_manager_interface/cnr_controller_manager_interface.h>
+#include <cnr_controller_manager_interface/cnr_controller_manager_proxy.h>
 #include <cnr_hardware_interface/cnr_robot_hw.h>
 
 namespace cnr_hardware_nodelet_interface
@@ -93,7 +93,7 @@ protected:
 
   std::shared_ptr< pluginlib::ClassLoader< cnr_hardware_interface::RobotHW > > m_robot_hw_plugin_loader;
 
-
+  ros::ServiceServer                                                        m_mail_service;
 
 
 

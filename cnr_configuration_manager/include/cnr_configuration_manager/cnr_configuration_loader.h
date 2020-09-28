@@ -60,11 +60,13 @@ private:
   std::shared_ptr<nodelet::Loader>         nodelet_loader_;
   std::map<std::string, cnr_controller_manager_interface::ControllerManagerInterface> cmi_;
 
+  std::map<std::string, ros::ServiceClient> mail_senders_;
+
 public:
 
 
   ConfigurationLoader(std::shared_ptr<cnr_logger::TraceLogger> log,
-                          const ros::NodeHandle& root_nh);
+                      const ros::NodeHandle& root_nh);
   ~ConfigurationLoader()
   {
     nodelet_loader_.reset();

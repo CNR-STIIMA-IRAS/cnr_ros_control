@@ -68,6 +68,12 @@ bool                     get_state(const std::string& hw_name,
                                    std::string& error,
                                    const ros::Duration& watchdog = ros::Duration(0.0));
 
+bool                     check_state(const std::string& hw_name,
+                                     const std::string& ctrl_name,
+                                     const std::string& status,
+                                     std::string& error,
+                                     const ros::Duration& watchdog = ros::Duration(0.0));
+
 template<typename T>
 boost::shared_ptr<T> to_boost_shared_ptr(std::shared_ptr<T>& ptr)
 {
@@ -196,7 +202,8 @@ public:
   template<typename M>
   size_t add_publisher(const std::string &topic,
                        uint32_t queue_size,
-                       bool latch = false);
+                       bool latch = false,
+                       bool enable_watchdog = false);
 
   /**
    * @brief publish
@@ -253,7 +260,7 @@ protected:
   virtual bool exitAborting();
 
   bool dump_state(const std::string& status);
-  bool dump_state();
+  //bool dump_state();
 
 protected:
   T*            m_hw;
@@ -267,6 +274,7 @@ private:
   std::vector<std::shared_ptr<ros::Publisher>>                 m_pub;
   std::vector<std::chrono::high_resolution_clock::time_point*> m_pub_start;
   std::vector<std::chrono::high_resolution_clock::time_point*> m_pub_last;
+  std::vector<bool>                                            m_pub_time_track;
 
   std::vector<std::shared_ptr<void>>            m_sub_notifier;
   std::vector<std::shared_ptr<ros::Subscriber>> m_sub;

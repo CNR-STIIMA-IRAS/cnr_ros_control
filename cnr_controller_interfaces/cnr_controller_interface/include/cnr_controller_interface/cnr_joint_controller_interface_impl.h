@@ -121,7 +121,7 @@ bool JointController<T>::enterInit()
       + "The controlled joint named '" + m_kin->jointName(iAx) + "' is managed by hardware_interface");
   }
 
-  CNR_RETURN_BOOL(*Controller<T>::m_logger, Controller<T>::dump_state());
+  CNR_RETURN_TRUE(*Controller<T>::m_logger);
 }
 
 template< class T >

@@ -83,7 +83,13 @@ bool RobotHW::init(ros::NodeHandle& root_nh, ros::NodeHandle &robothw_nh)
   std::string n = "HW" + robothw_nh.getNamespace();
   std::replace(n.begin(), n.end(), '/', '_');
 
-  m_logger.reset(new cnr_logger::TraceLogger(n, robothw_nh.getNamespace()));
+  //m_logger.reset(new cnr_logger::TraceLogger(n, robothw_nh.getNamespace()));
+  m_logger.reset(new cnr_logger::TraceLogger(n));
+  if (!m_logger->init(robothw_nh.getNamespace(), false, false))
+  {
+    ROS_ERROR("Error in creating the logger");
+    return false;
+  }
   CNR_TRACE_START(*m_logger);
   if(enterInit(root_nh, robothw_nh) && doInit() && exitInit())
   {
@@ -134,7 +140,7 @@ void RobotHW::write(const ros::Time& time, const ros::Duration& period)
 bool RobotHW::prepareSwitch(const std::list< hardware_interface::ControllerInfo >& start_list,
                             const std::list< hardware_interface::ControllerInfo >& stop_list)
 {
-  CNR_TRACE_START(*m_logger);
+  CNR_TRACE_START(*m_logger, "************************ SWITCH OF CONTROLLERS ****************************************");
   CNR_DEBUG(*m_logger, "RobotHW '" << m_robothw_nh.getNamespace()
                         << "' Status " <<  cnr_hardware_interface::to_string(m_status));
   if(m_status==cnr_hardware_interface::ERROR
@@ -157,7 +163,7 @@ bool RobotHW::prepareSwitch(const std::list< hardware_interface::ControllerInfo 
   }
 
   m_is_first_read = false;
-  CNR_RETURN_TRUE(*m_logger);
+  CNR_RETURN_TRUE(*m_logger, "************************ SWITCH OF CONTROLLERS - END **********************************");
 }
 
 bool RobotHW::checkForConflict(const std::list< hardware_interface::ControllerInfo >& info) const
@@ -180,7 +186,9 @@ bool RobotHW::checkForConflict(const std::list< hardware_interface::ControllerIn
     CNR_RETURN_TRUE(*m_logger);
   }
 
-  CNR_RETURN_FALSE(*m_logger);
+  std::string result = cnr_logger::GREEN() + "[  DONE] " + cnr_logger::RESET();
+  CNR_TRACE(*m_logger, result << __FUNCTION__);
+  return false;
 }
 
 bool RobotHW::shutdown()

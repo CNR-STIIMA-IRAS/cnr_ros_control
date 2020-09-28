@@ -94,6 +94,12 @@ SignalHandler::~SignalHandler()
 */
 bool SignalHandler::gotExitSignal()
 {
+  if(mbGotExitSignal)
+  {
+    std::cout << "******************************************************************" << std::endl;
+    std::cout << "* SIGNAL ctr+c" << std::endl;
+    std::cout << "******************************************************************" << std::endl;
+  }
   return mbGotExitSignal;
 }
 

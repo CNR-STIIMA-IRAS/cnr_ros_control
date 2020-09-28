@@ -40,6 +40,7 @@
 #include <nodelet/NodeletUnload.h>
 #include <nodelet/NodeletList.h>
 #include <cnr_logger/cnr_logger.h>
+#include <configuration_msgs/SendMessage.h>
 
 #include <cnr_controller_manager_interface/cnr_controller_manager_interface.h>
 #include <cnr_configuration_manager/cnr_configuration_loader.h>
@@ -309,6 +310,23 @@ bool ConfigurationLoader::loadAndStartControllers(const std::string&            
                                                   const ConfigurationStruct*      next_configuration,
                                                   const size_t                    strictness)
 {
+  if (mail_senders_.find(hw_name) == mail_senders_.end())
+  {
+    mail_senders_[hw_name] = root_nh_.serviceClient<configuration_msgs::SendMessage>("/"+hw_name+"/mail");
+  }
+  configuration_msgs::SendMessage srv;
+  srv.request.message.data = "========= "+next_configuration->data.name+" ======== Load and Start Controllers ========";
+  if(!mail_senders_[hw_name].exists())
+  {
+    CNR_ERROR(*logger_, "The service '" +mail_senders_[hw_name].getService() +"' does not exist... ?!?");
+  }
+  else
+  {
+    mail_senders_[hw_name].call(srv);
+  }
+
+
+
   // create proper configured servers
   if (cmi_.find(hw_name) == cmi_.end())
   {
@@ -340,13 +358,28 @@ bool ConfigurationLoader::loadAndStartControllers(const std::vector<std::string>
     {
       cmi_.emplace(hw_name, cnr_controller_manager_interface::ControllerManagerInterface(logger_, hw_name));
     }
+
+    if (mail_senders_.find(hw_name) == mail_senders_.end())
+    {
+      mail_senders_[hw_name] = root_nh_.serviceClient<configuration_msgs::SendMessage>("/"+hw_name+"/mail");
+    }
+    configuration_msgs::SendMessage srv;
+    srv.request.message.data="========= "+next_configuration->data.name+" ======== Load and Start Controllers ========";
+    if(!mail_senders_[hw_name].exists())
+    {
+      CNR_ERROR(*logger_, "The service '" +mail_senders_[hw_name].getService() +"' does not exist... ?!?");
+    }
+    else
+    {
+      mail_senders_[hw_name].call(srv);
+    }
   }
 
   auto starter=[&](const std::string & hw, cnr_controller_manager_interface::ControllerManagerInterface& ctrl,
                    const std::vector<std::string>* next_controllers, bool& ok)
   {
     CNR_INFO(*(ctrl.getLogger()), "Try starting the controllers of HW '" + hw + "'");
-    ok = ctrl.switchControllers(strictness, next_controllers, ros::Duration(0.1));
+    ok = ctrl.switchControllers(strictness, next_controllers, ros::Duration(1.0));
     if (ok)
     {
       CNR_INFO(*(ctrl.getLogger()), "Successful starting the controllers of HW '" + hw + "'");

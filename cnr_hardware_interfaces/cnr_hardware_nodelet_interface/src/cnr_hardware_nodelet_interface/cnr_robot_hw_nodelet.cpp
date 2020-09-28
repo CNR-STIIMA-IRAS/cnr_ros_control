@@ -45,6 +45,7 @@
 #include <cnr_controller_interface/cnr_controller_interface.h>
 #include <cnr_hardware_interface/cnr_robot_hw.h>
 #include <cnr_hardware_nodelet_interface/cnr_robot_hw_nodelet.h>
+#include <configuration_msgs/SendMessage.h>
 
 PLUGINLIB_EXPORT_CLASS(cnr_hardware_nodelet_interface::RobotHwNodelet, nodelet::Nodelet)
 
@@ -270,6 +271,15 @@ bool RobotHwNodelet::enterOnInit()
 
   m_robot_hw_plugin_loader.reset(
     new pluginlib::ClassLoader<cnr_hardware_interface::RobotHW>("cnr_hardware_interface", "cnr_hardware_interface::RobotHW"));
+
+  boost::function<bool(configuration_msgs::SendMessage::Request &req,configuration_msgs::SendMessage::Response &res)>
+      callback =
+      [this] (configuration_msgs::SendMessage::Request &req,configuration_msgs::SendMessage::Response &res)
+      {
+        CNR_TRACE(this->m_logger, req.message.data);
+        return true;
+      };
+  m_mail_service = getPrivateNodeHandle().advertiseService("mail", callback);
 
   CNR_RETURN_TRUE(*m_logger);
 }

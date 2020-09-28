@@ -224,7 +224,8 @@ std::vector<std::string> getNames(const std::vector< controller_manager_msgs::Co
   return ret;
 }
 
-inline bool cast(const configuration_msgs::ConfigurationComponent& in, ::cnr_configuration_manager::ConfigurationStruct& out)
+inline
+bool cast(const configuration_msgs::ConfigurationComponent& in, cnr_configuration_manager::ConfigurationStruct& out)
 {
   out.data.name  = in.name;
   out.data.state = in.state;
