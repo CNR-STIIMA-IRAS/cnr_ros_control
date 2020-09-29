@@ -29,7 +29,8 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_library(${PROJECT_NAME} src/cnr_controller_interface/cnr_controller_interface.cpp )
+add_library(${PROJECT_NAME} src/cnr_controller_interface/cnr_controller_interface.cpp
+                            src/cnr_controller_interface/utils/cnr_kinematics_utils.cpp  )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
 

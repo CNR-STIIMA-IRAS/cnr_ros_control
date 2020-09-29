@@ -115,8 +115,13 @@ bool TopicRobotHW::doInit()
   std::fill(m_eff.begin(), m_eff.end(), 0.0);
 
   m_topic_received = false;
+  m_first_topic_received = false;
 
-  m_js_sub = m_robothw_nh.subscribe<sensor_msgs::JointState>(read_js_topic, 1, &cnr_hardware_interface::TopicRobotHW::jointStateCallback, this);
+  m_js_sub = m_robothw_nh.subscribe<sensor_msgs::JointState>(read_js_topic,
+                                                             1,
+                                                             &cnr_hardware_interface::TopicRobotHW::jointStateCallback,
+                                                             this);
+
   m_js_pub = m_robothw_nh.advertise<sensor_msgs::JointState>(write_js_topic, 1);
 
   double timeout = 10;
@@ -136,14 +141,9 @@ bool TopicRobotHW::doInit()
 
   for (const std::string& joint_name : m_resource_names)
   {
-
     auto i = &joint_name - &m_resource_names[0];
 
-    hardware_interface::JointStateHandle state_handle(joint_name,
-        &(m_pos.at(i)),
-        &(m_vel.at(i)),
-        &(m_eff.at(i)));
-
+    hardware_interface::JointStateHandle state_handle(joint_name, &(m_pos.at(i)), &(m_vel.at(i)), &(m_eff.at(i)));
 
     m_js_jh.registerHandle(state_handle);
 
@@ -184,12 +184,14 @@ void TopicRobotHW::jointStateCallback(const sensor_msgs::JointStateConstPtr& msg
   std::vector<double>      vel  = msg->velocity;
   std::vector<double>      eff  = msg->effort;
 
-  if ((pos.size() < m_resource_names.size()) || (vel.size() < m_resource_names.size()) || (eff.size() < m_resource_names.size()) || (names.size() < m_resource_names.size()))
+  if((pos.size() < m_resource_names.size()) || (vel.size() < m_resource_names.size())
+  || (eff.size() < m_resource_names.size()) || (names.size() < m_resource_names.size()))
   {
-    std::string s = "Topic '" + m_js_sub.getTopic() + " [Num publisher: " + std::to_string(m_js_pub.getNumSubscribers()) + "]' Mismatch in msg size: p:" + std::to_string((int)(pos.size())) + ", v:"  + std::to_string((int)(vel.size())) + ", e:"  + std::to_string((int)(eff.size())) + ", names:" + std::to_string((int)(m_resource_names.size()));
+    std::string s = "Topic '" + m_js_sub.getTopic();
+    s += " [Num publisher: " + std::to_string(m_js_pub.getNumSubscribers()) + "]' ";
+    s += "Mismatch in msg size: p:" + std::to_string((int)(pos.size())) + ", v:"  + std::to_string((int)(vel.size()))
+      + ", e:"  + std::to_string((int)(eff.size())) + ", names:" + std::to_string((int)(m_resource_names.size()));
     CNR_ERROR_THROTTLE(*m_logger, 5.0, s);
-    // add_diagnostic_message( "[jointStateCallback] Mismatch in msg size: p:"+std::to_string((int)(pos.size())) + ", v:"  + std::to_string((int)(vel.size())) + ", e:"  + std::to_string((int)(eff.size()))+ ", names:"+ std::to_string((int)(m_resource_names.size()))
-    //                       , "callback", "ERROR", true );
     m_topic_received = false;
     return;
   }
@@ -207,6 +209,13 @@ void TopicRobotHW::jointStateCallback(const sensor_msgs::JointStateConstPtr& msg
     m_pos.at(idx) = pos.at(idx);
     m_vel.at(idx) = vel.at(idx);
     m_eff.at(idx) = eff.at(idx);
+  }
+  if(!m_first_topic_received)
+  {
+    m_first_topic_received = true;
+    m_cmd_pos = m_pos;
+    m_cmd_vel = m_vel;
+    m_cmd_eff = m_eff;
   }
 }
 
@@ -242,44 +251,48 @@ bool TopicRobotHW::doWrite(const ros::Time& time, const ros::Duration& period)
     CNR_RETURN_TRUE_THROTTLE(*m_logger, 5.0);
   }
 
-  if (m_p_jh_active)
-    m_msg->position = m_cmd_pos;
-  else
+  if(m_first_topic_received)
   {
-    m_msg->position.resize(m_resource_names.size());
-    std::fill(m_msg->position.begin(), m_msg->position.end(), 0.0);
+    if(m_p_jh_active)
+    {
+      m_msg->position = m_cmd_pos;
+    }
+
+    if(m_v_jh_active)
+    {
+      m_msg->velocity = m_cmd_vel;
+    }
+    else
+    {
+      m_msg->velocity.resize(m_resource_names.size());
+      std::fill(m_msg->velocity.begin(), m_msg->velocity.end(), 0.0);
+    }
+
+    if (m_e_jh_active)
+    {
+      m_msg->effort   = m_cmd_eff;
+    }
+    else
+    {
+      m_msg->effort.resize(m_resource_names.size());
+      std::fill(m_msg->effort.begin(), m_msg->effort.end(), 0.0);
+    }
+    m_msg->name = m_resource_names;
+    m_msg->header.stamp = ros::Time::now();
+
+    m_js_pub.publish(m_msg);
+
+    sensor_msgs::JointStatePtr msg(new sensor_msgs::JointState());
+    m_msg.swap(msg);
   }
-
-  if (m_v_jh_active)
-    m_msg->velocity = m_cmd_vel;
-  else
-  {
-    m_msg->velocity.resize(m_resource_names.size());
-    std::fill(m_msg->velocity.begin(), m_msg->velocity.end(), 0.0);
-  }
-
-  if (m_e_jh_active)
-    m_msg->effort   = m_cmd_eff;
-  else
-  {
-    m_msg->effort.resize(m_resource_names.size());
-    std::fill(m_msg->effort.begin(), m_msg->effort.end(), 0.0);
-  }
-  m_msg->name = m_resource_names;
-  m_msg->header.stamp = ros::Time::now();
-
-  m_js_pub.publish(m_msg);
-
-  sensor_msgs::JointStatePtr msg(new sensor_msgs::JointState());
-  m_msg.swap(msg);
   CNR_RETURN_TRUE_THROTTLE_DEFAULT(*m_logger);
 }
 
-bool TopicRobotHW::doPrepareSwitch(const std::list< hardware_interface::ControllerInfo >& start_list, const std::list< hardware_interface::ControllerInfo >& stop_list)
+bool TopicRobotHW::doPrepareSwitch(const std::list< hardware_interface::ControllerInfo >& start_list,
+                                   const std::list< hardware_interface::ControllerInfo >& stop_list)
 {
   CNR_TRACE_START(*m_logger);
   bool p_jh_active, v_jh_active, e_jh_active;
-
 
   p_jh_active = m_p_jh_active;
   v_jh_active = m_v_jh_active;

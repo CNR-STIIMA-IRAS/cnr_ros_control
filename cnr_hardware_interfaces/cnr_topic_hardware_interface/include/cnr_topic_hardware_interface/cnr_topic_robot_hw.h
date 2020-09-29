@@ -95,6 +95,7 @@ protected:
 
   unsigned int  m_missing_messages;
   unsigned int  m_max_missing_messages;
+  bool          m_first_topic_received;
   bool          m_topic_received;
 
   ros::Time     m_start_time;

@@ -235,7 +235,9 @@ bool set_to_hw(cnr_controller_interface::KinematicStatusPtr& ks, hardware_interf
   {
     auto it = std::find(names.begin(), names.end(), getPtr(ks)->joint_names.at(iAx));
     if( it == names.end() )
+    {
       RETURN_FALSE(ks);
+    }
     hi->getHandle(getPtr(ks)->joint_names.at(iAx)).setCommandPosition(ks->q(iAx) );
     hi->getHandle(getPtr(ks)->joint_names.at(iAx)).setCommandVelocity(ks->qd(iAx) );
     hi->getHandle(getPtr(ks)->joint_names.at(iAx)).setCommandEffort  (ks->effort(iAx) );
