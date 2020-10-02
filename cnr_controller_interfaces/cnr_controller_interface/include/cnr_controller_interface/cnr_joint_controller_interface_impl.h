@@ -132,7 +132,7 @@ bool JointController<T>::enterStarting()
   {
     CNR_RETURN_FALSE(*Controller<T>::m_logger);
   }
-  get_from_hw( Controller<T>::m_hw, m_state);
+  get_from_hw(Controller<T>::m_hw, getPtr(m_state));
   m_state->qd.setZero();
   m_state->qdd.setZero();
   m_state->effort.setZero();
@@ -150,7 +150,7 @@ bool JointController<T>::enterUpdate()
   {
     CNR_RETURN_FALSE(*Controller<T>::m_logger);
   }
-  get_from_hw( Controller<T>::m_hw, m_state);
+  get_from_hw( Controller<T>::m_hw, getPtr(m_state));
   m_kin->updateTransformation(*m_state);
 
   CNR_RETURN_TRUE_THROTTLE(*Controller<T>::m_logger, 20.0);

@@ -109,14 +109,21 @@ ConfigurationManager::~ConfigurationManager() noexcept(false)
 bool ConfigurationManager::startCallback(configuration_msgs::StartConfiguration::Request& req,
                                          configuration_msgs::StartConfiguration::Response& res)
 {
+  static size_t n_transition = 0;
+  n_transition++;
   CNR_TRACE_START(*m_logger);
   CNR_INFO(*m_logger, "************************** ******************************* *******************************");
-  CNR_INFO(*m_logger, "************************** Start Configuration: '" << req.start_configuration << "'");
+  CNR_INFO(*m_logger, "************************** Start Configuration: '" << req.start_configuration << "'  " << n_transition << "#" );
   CNR_INFO(*m_logger, "************************** ******************************* *******************************");
 
   try
   {
     const std::lock_guard<std::mutex> lock(m_callback_mutex);
+    if( m_active_configuration_name == req.start_configuration )
+    {
+      res.ok = true;
+      CNR_RETURN_TRUE(*m_logger);
+    }
     if (m_configurations.find(req.start_configuration) == m_configurations.end())
     {
       res.ok = false;
@@ -124,11 +131,10 @@ bool ConfigurationManager::startCallback(configuration_msgs::StartConfiguration:
     }
     else
     {
-      ConfigurationStruct next_configuration  = m_configurations.at(req.start_configuration);
-      res.ok = callback(&next_configuration, req.strictness,  ros::Duration(10.0));
+      res.ok = callback(m_configurations.at(req.start_configuration), req.strictness,  ros::Duration(10.0));
       if (res.ok)
       {
-        m_active_configuration      = next_configuration;
+        m_active_configuration      = m_configurations.at(req.start_configuration);
         m_active_configuration_name = req.start_configuration;
         m_nh.setParam("status/active_configuration", m_active_configuration_name);
       }
@@ -156,7 +162,8 @@ bool ConfigurationManager::stopCallback(configuration_msgs::StopConfiguration::R
   try
   {
     const std::lock_guard<std::mutex> lock(m_callback_mutex);
-    res.ok = callback(nullptr, req.strictness, ros::Duration(10.0));
+    ConfigurationStruct empty;
+    res.ok = callback(empty, req.strictness, ros::Duration(10.0));
     if (res.ok)
     {
       m_active_configuration      = ConfigurationStruct();
@@ -253,7 +260,7 @@ bool ConfigurationManager::run()
     while (ros::ok())
     {
       bool full_check = (((cnt++) % decimator) == 0);
-      if (!isOk(full_check))
+      if (!isOk(false))
       {
         CNR_WARN_THROTTLE(*m_logger, 2,
     "\n\nRaised an Error by one of the Hw! Stop Configuration start!\n\n");
@@ -409,16 +416,14 @@ bool ConfigurationManager::checkRobotHwState(const std::string& hw, cnr_hardware
   return true;
 }
 
-bool ConfigurationManager::callback(ConfigurationStruct* next_configuration,
-                                    const int &strictness,
-                                    const ros::Duration& watchdog)
+bool ConfigurationManager::callback(const ConfigurationStruct& next_configuration,
+                                    const int&                 strictness,
+                                    const ros::Duration&       watchdog)
 {
   CNR_TRACE_START(*m_logger);
 
   const std::vector<std::string>  hw_active_names = getHardwareInterfacesNames(m_active_configuration);
-  const std::vector<std::string>  hw_next_names   = next_configuration
-                                                  ?  getHardwareInterfacesNames(*next_configuration)
-                                                  : std::vector<std::string>();
+  const std::vector<std::string>  hw_next_names   = getHardwareInterfacesNames(next_configuration);
   std::vector<std::string>        hw_to_load_names;
   std::vector<std::string>        hw_to_unload_names;
   std::vector<std::string>        hw_names_from_nodelet;

@@ -60,6 +60,15 @@ namespace cnr_controller_manager_interface
 class ControllerManagerProxy : public ::cnr_controller_manager_interface::ControllerManager
 {
 public:
+  
+    
+  ControllerManagerProxy() = delete;
+  virtual ~ControllerManagerProxy() = default;
+  ControllerManagerProxy(const ControllerManagerProxy&) = delete;
+  ControllerManagerProxy& operator=(const ControllerManagerProxy&) = delete;
+  ControllerManagerProxy(ControllerManagerProxy&&) = delete;
+  ControllerManagerProxy& operator=(ControllerManagerProxy&&) = delete;
+    
   ControllerManagerProxy(std::shared_ptr<cnr_logger::TraceLogger>  logger,
                          const std::string&                        hw_name,
                          hardware_interface::RobotHW*              robot_hw,

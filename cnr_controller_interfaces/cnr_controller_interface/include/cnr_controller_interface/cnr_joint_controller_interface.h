@@ -35,6 +35,7 @@
 #ifndef CNR_CONTROLLER_INTERFACE__JOINT_CONTROLLER_INTERFACE_H
 #define CNR_CONTROLLER_INTERFACE__JOINT_CONTROLLER_INTERFACE_H
 
+#include <mutex>
 #include <eigen3/Eigen/Core>
 #include <ros/ros.h>
 #include <cnr_logger/cnr_logger.h>
@@ -104,6 +105,7 @@ protected:
   KinematicsStructPtr m_kin;
   KinematicStatusPtr  m_state;
 
+  std::mutex m_mtx;
   Eigen::IOFormat m_cfrmt;
 };
 

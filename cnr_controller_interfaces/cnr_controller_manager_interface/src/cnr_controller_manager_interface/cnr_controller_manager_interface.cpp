@@ -74,19 +74,19 @@ bool ControllerManagerInterface::loadRequest(controller_manager_msgs::LoadContro
                                              std::string& error,
                                              const ros::Duration& watchdog)
 {
-  return callRequest(load_, msg, error, watchdog);
+  return callRequest(mtx_, load_, msg, error, watchdog);
 }
 bool ControllerManagerInterface::unloadRequest(controller_manager_msgs::UnloadController& msg,
                                                std::string& error,
                                                const ros::Duration& watchdog)
 {
-  return callRequest(unload_, msg, error, watchdog);
+  return callRequest(mtx_, unload_, msg, error, watchdog);
 }
 bool ControllerManagerInterface::switchRequest(controller_manager_msgs::SwitchController& msg,
                                                std::string& error,
                                                const ros::Duration& watchdog)
 {
-  return callRequest(doswitch_, msg, error, watchdog);
+  return callRequest(mtx_, doswitch_, msg, error, watchdog);
 }
 
 bool ControllerManagerInterface::loadController(const std::string& to_load_name, const ros::Duration& watchdog)
@@ -130,9 +130,9 @@ bool ControllerManagerInterface::loadController(const std::string& to_load_name,
 }
 
 bool ControllerManagerInterface::switchController(const int                        strictness             ,
-                                                  const std::vector<std::string>*  to_load_and_start_names,
-                                                  const std::vector<std::string>*  to_restart_names       ,
-                                                  const std::vector<std::string>*  to_stop_unload_names   ,
+                                                  const std::vector<std::string>&  to_load_and_start_names,
+                                                  const std::vector<std::string>&  to_restart_names       ,
+                                                  const std::vector<std::string>&  to_stop_unload_names   ,
                                                   const ros::Duration&             watchdog               )
 {
 
@@ -143,9 +143,9 @@ bool ControllerManagerInterface::switchController(const int                     
   switch_ctrl_srv.request.start_controllers.resize(0);
   switch_ctrl_srv.request.stop_controllers.resize(0);
 
-  auto check = [] (const std::vector<std::string>* ptr)
+  auto check = [] (const std::vector<std::string>& ptr)
   {
-      return ptr ? ptr->size()>0 : false;
+      return ptr.size()>0;
   };
 
   CNR_DEBUG(*logger_, "HW: " + getHwName() + " -----------------");
@@ -157,15 +157,15 @@ bool ControllerManagerInterface::switchController(const int                     
   //--
   if(check(to_load_and_start_names))
   {
-    CNR_DEBUG(*logger_, "HW: " + getHwName() + to_string(*to_load_and_start_names, "Controllers to load/start...: "));
-    for (auto const & ctrl : *to_load_and_start_names)
+    CNR_DEBUG(*logger_, "HW: " + getHwName() + to_string(to_load_and_start_names, "Controllers to load/start...: "));
+    for (auto const & ctrl : to_load_and_start_names)
       switch_ctrl_srv.request.start_controllers.push_back(ctrl);
   }
 
   if((strictness!=1) && check(to_restart_names))
   {
-    CNR_DEBUG(*logger_, "HW: " + getHwName() + to_string(*to_restart_names, " Controllers to Restart......: "));
-    for (auto const & ctrl : *to_restart_names)
+    CNR_DEBUG(*logger_, "HW: " + getHwName() + to_string(to_restart_names, " Controllers to Restart......: "));
+    for (auto const & ctrl : to_restart_names)
     {
       switch_ctrl_srv.request.start_controllers.push_back(ctrl);
     }
@@ -173,8 +173,8 @@ bool ControllerManagerInterface::switchController(const int                     
 
   if(check(to_stop_unload_names))
   {
-    CNR_DEBUG(*logger_, "HW: " + getHwName() + to_string(*to_stop_unload_names, " Controllers to stop/unload..: "));
-    for (auto const & ctrl : *to_stop_unload_names)
+    CNR_DEBUG(*logger_, "HW: " + getHwName() + to_string(to_stop_unload_names, " Controllers to stop/unload..: "));
+    for (auto const & ctrl : to_stop_unload_names)
       switch_ctrl_srv.request.stop_controllers .push_back(ctrl);
   }
 

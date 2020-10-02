@@ -102,9 +102,9 @@ bool ControllerManager::loadController(const std::string& ctrl_to_load_name, con
 
 
 bool ControllerManager::switchController(const int                        strictness,
-                                         const std::vector<std::string>*  to_load_and_start_names,
-                                         const std::vector<std::string>*  to_restart_names,
-                                         const std::vector<std::string>*  to_stop_unload_names,
+                                         const std::vector<std::string>&  to_load_and_start_names,
+                                         const std::vector<std::string>&  to_restart_names,
+                                         const std::vector<std::string>&  to_stop_unload_names,
                                          const ros::Duration&             watchdog)
 {
   CNR_TRACE_START(*logger_, "HW: "+ getHwName());
@@ -113,22 +113,22 @@ bool ControllerManager::switchController(const int                        strict
   std::vector<std::string> stop_controllers;
 
   //--
-  if (to_load_and_start_names)
+  if (to_load_and_start_names.size())
   {
-    CNR_DEBUG(*logger_, to_string(*to_load_and_start_names, "to_load_and_start_names  "));
-    for (auto const & ctrl : *to_load_and_start_names)
+    CNR_DEBUG(*logger_, to_string(to_load_and_start_names, "to_load_and_start_names  "));
+    for (auto const & ctrl : to_load_and_start_names)
       start_controllers.push_back(ctrl);
   }
-  if (to_restart_names)
+  if (to_restart_names.size())
   {
-    CNR_DEBUG(*logger_, to_string(*to_restart_names, "to_restart_names         "));
-    for (auto const & ctrl : *to_restart_names)
+    CNR_DEBUG(*logger_, to_string(to_restart_names, "to_restart_names         "));
+    for (auto const & ctrl : to_restart_names)
       start_controllers.push_back(ctrl);
   }
-  if (to_stop_unload_names)
+  if (to_stop_unload_names.size())
   {
-    CNR_DEBUG(*logger_, to_string(*to_stop_unload_names, "to_stop_unload_names "));
-    for (auto const & ctrl : *to_stop_unload_names)
+    CNR_DEBUG(*logger_, to_string(to_stop_unload_names, "to_stop_unload_names "));
+    for (auto const & ctrl : to_stop_unload_names)
       stop_controllers.push_back(ctrl);
   }
 

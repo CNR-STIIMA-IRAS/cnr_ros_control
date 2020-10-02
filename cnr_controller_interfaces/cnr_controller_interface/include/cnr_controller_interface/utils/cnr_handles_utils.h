@@ -10,62 +10,54 @@
 namespace cnr_controller_interface
 {
 
+const KinematicStatus * const getPtr( const KinematicStatusConstPtr& in);
+const KinematicStatus * const getPtr( const KinematicStatus& in);
+KinematicStatus* getPtr( KinematicStatusPtr& in);
+KinematicStatus* getPtr( KinematicStatus& in);
+
+
 /**
  * JointStateInterface
  */
-
-bool get_from_hw(hardware_interface::JointStateInterface* hi, cnr_controller_interface::KinematicStatus& ks);
-bool get_from_hw(hardware_interface::JointStateInterface* hi, KinematicStatusPtr&                        ks);
+bool get_from_hw(hardware_interface::JointStateInterface* hi, KinematicStatus* ks);
 
 /**
  * hardware_interface::VelEffJointInterface
  */
-bool get_from_hw(hardware_interface::VelEffJointInterface*   hi, cnr_controller_interface::KinematicStatus&    ks);
-bool get_from_hw(hardware_interface::VelEffJointInterface*   hi, cnr_controller_interface::KinematicStatusPtr& ks);
-bool set_to_hw(cnr_controller_interface::KinematicStatus&    ks, hardware_interface::VelEffJointInterface*     hi);
-bool set_to_hw(cnr_controller_interface::KinematicStatusPtr& ks, hardware_interface::VelEffJointInterface*     hi);
+bool get_from_hw(hardware_interface::VelEffJointInterface* const hi, KinematicStatus* ks);
+bool set_to_hw  (const KinematicStatus * const ks, hardware_interface::VelEffJointInterface*  hi);
 
 /**
  * PosVelEffJointInterface
  */
-bool get_from_hw(hardware_interface::PosVelEffJointInterface* hi, cnr_controller_interface::KinematicStatus&    ks);
-bool get_from_hw(hardware_interface::PosVelEffJointInterface* hi, cnr_controller_interface::KinematicStatusPtr& ks);
-bool set_to_hw(cnr_controller_interface::KinematicStatus&     ks, hardware_interface::PosVelEffJointInterface*  hi);
-bool set_to_hw(cnr_controller_interface::KinematicStatusPtr&  ks, hardware_interface::PosVelEffJointInterface*  hi);
+bool get_from_hw(hardware_interface::PosVelEffJointInterface* const hi, KinematicStatus* ks);
+bool set_to_hw  (const KinematicStatus * const ks, hardware_interface::PosVelEffJointInterface* hi);
 
 /**
  * JointCommandInterface
  */
 
-bool get_from_hw(hardware_interface::JointCommandInterface*  in, cnr_controller_interface::KinematicStatus&    ks);
-bool get_from_hw(hardware_interface::JointCommandInterface*  in, cnr_controller_interface::KinematicStatusPtr& ks);
-bool set_to_hw(cnr_controller_interface::KinematicStatus&    ks, hardware_interface::JointCommandInterface*    hi);
-bool set_to_hw(cnr_controller_interface::KinematicStatusPtr& ks,hardware_interface::JointCommandInterface*     hi);
+bool get_from_hw(hardware_interface::JointCommandInterface* const in, KinematicStatus* ks);
+bool set_to_hw(const KinematicStatus* const  ks,hardware_interface::JointCommandInterface* hi);
 
 /**
  * @brief EffortJointInterface
  */
-bool get_from_hw(hardware_interface::EffortJointInterface* hi, KinematicStatus&                          ks);
-bool get_from_hw(hardware_interface::EffortJointInterface* hi, KinematicStatusPtr&                       ks);
-bool set_to_hw(KinematicStatus&                            ks, hardware_interface::EffortJointInterface* hi);
-bool set_to_hw(KinematicStatusPtr&                         ks, hardware_interface::EffortJointInterface* hi);
+bool get_from_hw(hardware_interface::EffortJointInterface* const ki, KinematicStatus * ks);
+bool set_to_hw(const KinematicStatus * const ks, hardware_interface::EffortJointInterface* hi);
 
 /**
  * @brief VelocityJointInterface
  */
-bool get_from_hw(hardware_interface::VelocityJointInterface* hi, KinematicStatus&                            ks);
-bool get_from_hw(hardware_interface::VelocityJointInterface* hi, KinematicStatusPtr&                         ks);
-bool set_to_hw  (KinematicStatus&                            ks, hardware_interface::VelocityJointInterface* hi);
-bool set_to_hw  (KinematicStatusPtr&                         ks, hardware_interface::VelocityJointInterface* hi);
+bool get_from_hw(hardware_interface::VelocityJointInterface* const hi, KinematicStatus * ks);
+bool set_to_hw  (const KinematicStatus* const ks, hardware_interface::VelocityJointInterface* hi);
 
 /**
  * @brief VelocityJointInterface
  */
 
-bool get_from_hw(hardware_interface::PositionJointInterface* hi,KinematicStatus&                            ks);
-bool get_from_hw(hardware_interface::PositionJointInterface* hi,KinematicStatusPtr&                         ks);
-bool set_to_hw  (KinematicStatus&                            ks,hardware_interface::PositionJointInterface* hi);
-bool set_to_hw  (KinematicStatusPtr&                         ks,hardware_interface::PositionJointInterface* hi);
+bool get_from_hw(hardware_interface::PositionJointInterface* const hi,KinematicStatus* ks);
+bool set_to_hw  (const KinematicStatus* const ks, hardware_interface::PositionJointInterface* hi);
 
 }  // namespace hardware_interface
 
@@ -76,7 +68,7 @@ bool set_to_hw  (KinematicStatusPtr&                         ks,hardware_interfa
 inline std::ostream& operator<<(std::ostream& os, hardware_interface::JointHandle& rhs)
 {
   os << rhs.getName() << ", state: q" << rhs.getPosition() << ", qd" << rhs.getVelocity() << ", eff " << rhs.getEffort();
-  os << ", cmd: q" << rhs.getCommand();
+  os << ", cmd: " << rhs.getCommand();
   return os;
 }
 
@@ -105,7 +97,7 @@ inline std::ostream& operator<<(std::ostream& os, hardware_interface::PosVelEffJ
 inline std::ostream& operator<<(std::ostream& os, hardware_interface::JointHandle rhs)
 {
   os << rhs.getName() << ", state: q" << rhs.getPosition() << ", qd" << rhs.getVelocity() << ", eff " << rhs.getEffort();
-  os << ", cmd: q" << rhs.getCommand();
+  os << ", cmd: " << rhs.getCommand();
   return os;
 }
 

@@ -100,7 +100,7 @@ private:
   SignalHandler                                    m_signal_handler;
 
   bool checkRobotHwState(const std::string& hw, cnr_hardware_interface::StatusHw target = cnr_hardware_interface::RUNNING);
-  bool callback(ConfigurationStruct* next_configuration, const int &strictness, const ros::Duration& watchdog);
+  bool callback(const ConfigurationStruct& next_configuration, const int &strictness, const ros::Duration& watchdog);
   bool getAvailableConfigurationsFromParam();
 };
 

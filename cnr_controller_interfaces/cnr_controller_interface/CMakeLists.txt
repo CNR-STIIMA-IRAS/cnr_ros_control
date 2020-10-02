@@ -12,6 +12,8 @@ find_package(catkin REQUIRED COMPONENTS
   rosdyn_core subscription_notifier
 )
 
+find_package (Eigen3 3.3 REQUIRED NO_MODULE)
+
 if(CATKIN_ENABLE_TESTING AND ENABLE_COVERAGE_TESTING)
   find_package(code_coverage REQUIRED)
   # Add compiler flags for coverage instrumentation before defining any targets
@@ -24,14 +26,16 @@ catkin_package(
   CATKIN_DEPENDS urdf realtime_utilities cnr_hardware_interface controller_interface cnr_logger rosdyn_core subscription_notifier
 )
 
+message(WARN, ${EIGEN3_INCLUDE_DIRS})
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
 )
 
 add_library(${PROJECT_NAME} src/cnr_controller_interface/cnr_controller_interface.cpp
                             src/cnr_controller_interface/utils/cnr_kinematics_utils.cpp  )
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} Eigen3::Eigen)
 
 
 #############

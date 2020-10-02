@@ -64,6 +64,14 @@ protected:
   controller_manager::ControllerManager cm_;
 
 public:
+  
+  ControllerManager() = delete;
+  virtual ~ControllerManager() = default;
+  ControllerManager(const ControllerManager&) = delete;
+  ControllerManager& operator=(const ControllerManager&) = delete;
+  ControllerManager(ControllerManager&&) = delete;
+  ControllerManager& operator=(ControllerManager&&) = delete;
+  
   ControllerManager(std::shared_ptr<cnr_logger::TraceLogger>  log,
                     const std::string&                        hw_name,
                     hardware_interface::RobotHW*              robot_hw,
@@ -73,9 +81,9 @@ public:
                       const ros::Duration& watchdog = ros::Duration(0.0)) final;
 
   bool switchController(const int                        strictness,
-                        const std::vector<std::string>*  to_load_and_start_names,
-                        const std::vector<std::string>*  to_restart_names,
-                        const std::vector<std::string>*  to_stop_unload_names,
+                        const std::vector<std::string>&  to_load_and_start_names,
+                        const std::vector<std::string>&  to_restart_names,
+                        const std::vector<std::string>&  to_stop_unload_names,
                         const ros::Duration&             watchdog = ros::Duration(0.0) ) final;
 
   bool unloadController(const std::string& to_unload_name,

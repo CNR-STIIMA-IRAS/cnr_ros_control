@@ -82,6 +82,14 @@ private:
                      const ros::Duration&  watchdog = ros::Duration(0.0));
 
 public:
+  
+  ControllerManagerInterface() = delete;
+  virtual ~ControllerManagerInterface() = default;
+  ControllerManagerInterface(const ControllerManagerInterface&) = delete;
+  ControllerManagerInterface& operator=(const ControllerManagerInterface&) = delete;
+  ControllerManagerInterface(ControllerManagerInterface&&) = delete;
+  ControllerManagerInterface& operator=(ControllerManagerInterface&&) = delete;
+
   /**
    * @brief ControllerManagerInterface
    * @param logger
@@ -99,13 +107,17 @@ public:
   bool loadController(const std::string& to_load_name, const ros::Duration& watchdog) final;
 
   bool switchController(const int                       strictness,
-                       const std::vector<std::string>*  to_load_and_start_names,
-                       const std::vector<std::string>*  to_restart_names,
-                       const std::vector<std::string>*  to_stop_unload_names,
+                       const std::vector<std::string>&  to_load_and_start_names,
+                       const std::vector<std::string>&  to_restart_names,
+                       const std::vector<std::string>&  to_stop_unload_names,
                        const ros::Duration&             watchdog = ros::Duration(0.0)) final;
 
   bool unloadController(const std::string& to_unload_name, const ros::Duration& watchdog = ros::Duration(0.0)) final;
 };
+
+
+typedef std::shared_ptr< ControllerManagerInterface > ControllerManagerInterfacePtr;
+typedef const std::shared_ptr< ControllerManagerInterface const > ControllerManagerInterfaceConstPtr;
 
 
 

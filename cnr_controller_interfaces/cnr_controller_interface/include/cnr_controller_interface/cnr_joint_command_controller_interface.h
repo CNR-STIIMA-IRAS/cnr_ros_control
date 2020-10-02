@@ -100,8 +100,12 @@ public:
   virtual double getTargetOverride() const;
 
   void setPriority( const InputType& priority ) { m_priority.reset(new InputType()); *m_priority = priority; }
-private:
+  
+protected:
   std::mutex      m_mtx;
+  
+private:
+  
   std::shared_ptr<InputType> m_priority;
   KinematicStatus m_target;
   KinematicStatus m_last_target;
@@ -109,7 +113,7 @@ private:
   double m_override;
   double m_safe_override_1;
   double m_safe_override_2;
-
+  double m_max_velocity_multiplier;
 
   void overrideCallback(const std_msgs::Int64ConstPtr& msg);
   void safeOverrideCallback_1(const std_msgs::Int64ConstPtr& msg);

@@ -262,7 +262,8 @@ bool ConfigurationLoader::loadHw(const std::vector<std::string>& hw_to_load_name
 
 bool ConfigurationLoader::unloadHw(const std::vector<std::string>& hw_to_unload_names, const ros::Duration& watchdog)
 {
-
+  static const std::vector<controller_manager_msgs::ControllerState> vc_empty;
+  static const std::vector<std::string> vs_empty;
   CNR_TRACE_START(*logger_);
   CNR_DEBUG(*logger_, "Loop over the hw: " << to_string(hw_to_unload_names));
   for (auto old : hw_to_unload_names)
@@ -272,24 +273,24 @@ bool ConfigurationLoader::unloadHw(const std::vector<std::string>& hw_to_unload_
     std::vector<controller_manager_msgs::ControllerState> stopped;
 
     CNR_DEBUG(*logger_, "get the ctrl list");
-    if (!cmi_.at(old).listControllers(running, stopped, watchdog))
+    if (!cmi_.at(old)->listControllers(running, stopped, watchdog))
     {
-      error_ = "error_ in getting the information of the status of the controllers." + cmi_.at(old).error();
-      CNR_RETURN_FALSE(*logger_, cmi_.at(old).error());
+      error_ = "error_ in getting the information of the status of the controllers." + cmi_.at(old)->error();
+      CNR_RETURN_FALSE(*logger_, cmi_.at(old)->error());
     }
     stopped.insert(stopped.end(), running.begin(), running.end());
 
     CNR_DEBUG(*logger_, "ctrl doswitch (stop)");
-    if (!cmi_.at(old).switchControllers(1, nullptr, nullptr, &running, watchdog))
+    if (!cmi_.at(old)->switchControllers(1, vc_empty, vc_empty, running, watchdog))
     {
-      error_ = "error_ in unloding the controllers: " + cmi_.at(old).error();
+      error_ = "error_ in unloding the controllers: " + cmi_.at(old)->error();
       CNR_RETURN_FALSE(*logger_, error_);
     }
 
     CNR_DEBUG(*logger_, "ctrl unload");
-    if (!cmi_.at(old).unloadControllers(stopped, watchdog))
+    if (!cmi_.at(old)->unloadControllers(stopped, watchdog))
     {
-      error_ = "error_ in unloding the controllers: " + cmi_.at(old).error();
+      error_ = "error_ in unloding the controllers: " + cmi_.at(old)->error();
       CNR_RETURN_FALSE(*logger_, error_);
     }
 
@@ -306,16 +307,16 @@ bool ConfigurationLoader::unloadHw(const std::vector<std::string>& hw_to_unload_
   CNR_RETURN_TRUE(*logger_);
 }
 
-bool ConfigurationLoader::loadAndStartControllers(const std::string&              hw_name,
-                                                  const ConfigurationStruct*      next_configuration,
-                                                  const size_t                    strictness)
+bool ConfigurationLoader::loadAndStartControllers(const std::string&         hw_name,
+                                                  const ConfigurationStruct& next_configuration,
+                                                  const size_t               strictness)
 {
   if (mail_senders_.find(hw_name) == mail_senders_.end())
   {
     mail_senders_[hw_name] = root_nh_.serviceClient<configuration_msgs::SendMessage>("/"+hw_name+"/mail");
   }
   configuration_msgs::SendMessage srv;
-  srv.request.message.data = "========= "+next_configuration->data.name+" ======== Load and Start Controllers ========";
+  srv.request.message.data = "========= "+next_configuration.data.name+" ======== Load and Start Controllers ========";
   if(!mail_senders_[hw_name].exists())
   {
     CNR_ERROR(*logger_, "The service '" +mail_senders_[hw_name].getService() +"' does not exist... ?!?");
@@ -330,23 +331,26 @@ bool ConfigurationLoader::loadAndStartControllers(const std::string&            
   // create proper configured servers
   if (cmi_.find(hw_name) == cmi_.end())
   {
-    cmi_.emplace(hw_name, cnr_controller_manager_interface::ControllerManagerInterface(logger_, hw_name));
+    cnr_controller_manager_interface::ControllerManagerInterfacePtr pcmi( 
+                                new cnr_controller_manager_interface::ControllerManagerInterface(logger_, hw_name) );
+    cmi_.emplace(hw_name, pcmi);
   }
 
-  const std::vector<std::string>* next_controllers = ( next_configuration ?
-                                                    & (next_configuration->components.at(hw_name))
-                                                    : nullptr );
+  std::vector<std::string> next_controllers = next_configuration.components.find(hw_name) != next_configuration.components.end() 
+                                            ? next_configuration.components.at(hw_name)
+                                            : std::vector<std::string>();
   CNR_DEBUG(*logger_, "List of controllers to be uploaded for the RobotHw: " << hw_name
-                      << " next controllers: " << (next_controllers ?  to_string(*next_controllers) : "none"));
-  if (!cmi_.at(hw_name).switchControllers(strictness, next_controllers, ros::Duration(10.0)))
+                      << " next controllers: " << (next_controllers.size()>0 ?  to_string(next_controllers) : "none"));
+  if (!cmi_.at(hw_name)->switchControllers(strictness, next_controllers, ros::Duration(10.0)))
   {
     CNR_RETURN_FALSE(*logger_, "Error in switching the controller");
   }
+  CNR_RETURN_TRUE(*logger_);
 }
 
 
 bool ConfigurationLoader::loadAndStartControllers(const std::vector<std::string>& hw_next_names,
-                                                  const ConfigurationStruct*      next_configuration,
+                                                  const ConfigurationStruct&      next_configuration,
                                                   const size_t                    strictness)
 {
   std::map<std::string, std::thread* > starters;
@@ -356,7 +360,9 @@ bool ConfigurationLoader::loadAndStartControllers(const std::vector<std::string>
     start_ok[hw_name] = false;
     if (cmi_.find(hw_name) == cmi_.end())
     {
-      cmi_.emplace(hw_name, cnr_controller_manager_interface::ControllerManagerInterface(logger_, hw_name));
+      cnr_controller_manager_interface::ControllerManagerInterfacePtr pcmi(
+        new cnr_controller_manager_interface::ControllerManagerInterface(logger_, hw_name) );
+      cmi_.emplace(hw_name, pcmi);
     }
 
     if (mail_senders_.find(hw_name) == mail_senders_.end())
@@ -364,7 +370,7 @@ bool ConfigurationLoader::loadAndStartControllers(const std::vector<std::string>
       mail_senders_[hw_name] = root_nh_.serviceClient<configuration_msgs::SendMessage>("/"+hw_name+"/mail");
     }
     configuration_msgs::SendMessage srv;
-    srv.request.message.data="========= "+next_configuration->data.name+" ======== Load and Start Controllers ========";
+    srv.request.message.data="========= "+next_configuration.data.name+" ======== Load and Start Controllers ========";
     if(!mail_senders_[hw_name].exists())
     {
       CNR_ERROR(*logger_, "The service '" +mail_senders_[hw_name].getService() +"' does not exist... ?!?");
@@ -375,47 +381,64 @@ bool ConfigurationLoader::loadAndStartControllers(const std::vector<std::string>
     }
   }
 
-  auto starter=[&](const std::string & hw, cnr_controller_manager_interface::ControllerManagerInterface& ctrl,
-                   const std::vector<std::string>* next_controllers, bool& ok)
+  auto starter=[&](const std::string & hw, cnr_controller_manager_interface::ControllerManagerInterfacePtr ctrl,
+                   const std::vector<std::string>& next_controllers, bool& ok, std::string& error)
   {
-    CNR_INFO(*(ctrl.getLogger()), "Try starting the controllers of HW '" + hw + "'");
-    ok = ctrl.switchControllers(strictness, next_controllers, ros::Duration(1.0));
-    if (ok)
+    try
     {
-      CNR_INFO(*(ctrl.getLogger()), "Successful starting the controllers of HW '" + hw + "'");
+      ok = ctrl->switchControllers(strictness, next_controllers, ros::Duration(1.0));
     }
-    else
+    catch(std::exception& e)
     {
-      CNR_ERROR(*(ctrl.getLogger()), "Error in starting the controllers of HW '" + hw + "': " + ctrl.error());
+      error = "Exception in switch controllers. Error: " + std::string(e.what());
+      ok = false;
     }
+    catch(...)
+    {
+      error = "Unhandled Exception in switch controllers. ";
+      ok = false;
+    }
+    return;
   };
 
 
+  std::map<std::string, std::string> errors;
   for (auto const & hw_name : hw_next_names)
   {
-    const std::vector<std::string>* next_controllers = ( next_configuration ?
-                                                      & (next_configuration->components.at(hw_name))
-                                                      : nullptr );
-
-    starters[hw_name] = new std::thread(starter, hw_name,  std::ref(cmi_.at(hw_name)),
-                                        next_controllers, std::ref(start_ok[hw_name]));
+    std::vector<std::string> next_controllers = next_configuration.components.find(hw_name) != next_configuration.components.end() 
+                                              ? next_configuration.components.at(hw_name)
+                                              : std::vector<std::string>();
+ 
+    errors[hw_name] = "";
+    starters[hw_name] = new std::thread(starter, hw_name,  std::ref(cmi_.at(hw_name)), next_controllers, 
+                                        std::ref(start_ok[hw_name]), std::ref(errors[hw_name]));
   }
 
   CNR_DEBUG(*logger_,  "Waiting for threads");
   for (auto& thread : starters)
   {
-    CNR_DEBUG(*(cmi_.at(thread.first).getLogger()), thread.first << ": Waiting for thread join execution ...");
+    CNR_DEBUG(*(cmi_.at(thread.first)->getLogger()), thread.first << ": Waiting for thread join execution ...");
     if (thread.second->joinable())
     {
       thread.second->join();
     }
-    CNR_DEBUG(*(cmi_.at(thread.first).getLogger()), thread.first << ": Thread Finished ");
+    delete thread.second;
+    CNR_DEBUG(*(cmi_.at(thread.first)->getLogger()), thread.first << ": Thread Finished ");
   }
   CNR_DEBUG(*logger_,  "Threads Joined");
 
   bool ok = true;
   std::for_each(start_ok.begin(), start_ok.end(), [&](std::pair<std::string, bool> b)
   {
+    if(b.second)
+    {
+      CNR_INFO(cmi_.at(b.first)->getLogger(), "Successful starting the controllers of HW '" + b.first + "'");
+    }
+    else
+    {
+      CNR_ERROR(cmi_.at(b.first)->getLogger(), "Error in starting the controllers of HW '" + b.first + "': " 
+                                             + cmi_.at(b.first)->error() + " (" + errors[b.first] + ")" );
+    }
     ok &= b.second;
   });
 
@@ -435,39 +458,58 @@ bool ConfigurationLoader::stopAndUnloadAllControllers( const std::vector<std::st
   {
     unload_ok[hw_name] = false;
   }
-  auto stopper=[&](const std::string & hw, cnr_controller_manager_interface::ControllerManagerInterface& ctrl, bool& ok)
+  auto stopper=[&](const std::string & hw, cnr_controller_manager_interface::ControllerManagerInterfacePtr ctrl, 
+                   bool& ok, std::string& error)
   {
-    CNR_INFO(*(ctrl.getLogger()), "Try stopping the controllers of HW '" + hw + "'");
-    ok = ctrl.stopUnloadAllControllers(watchdog);
-    if (ok)
+    try
     {
-      CNR_INFO(*(ctrl.getLogger()), "Successful stopping the controllers of HW '" + hw + "'");
+      ok = ctrl->stopUnloadAllControllers(watchdog);
     }
-    else
+   catch(std::exception& e)
     {
-      CNR_ERROR(*(ctrl.getLogger()), "Error in stopping the controllers of HW '" + hw + "': " + ctrl.error());
+      error = "Exception in switch controllers. Error: " + std::string(e.what());
+      ok = false;
     }
+    catch(...)
+    {
+      error = "Unhandled Exception in switch controllers. ";
+      ok = false;
+    }
+    return;
+    
   };
 
+  std::map<std::string,std::string> errors;
   for (auto const & hw_name : hw_to_unload_names)
   {
-    stoppers[hw_name] = new std::thread(stopper, hw_name,  std::ref(cmi_.at(hw_name)), std::ref(unload_ok[hw_name]));
+    errors[hw_name]="";
+    stoppers[hw_name] = new std::thread(stopper, hw_name,  cmi_.at(hw_name), 
+                                        std::ref(unload_ok[hw_name]), std::ref(errors[hw_name]));
   }
   CNR_DEBUG(*logger_,  "Waiting for threads");
   for (auto& thread : stoppers)
   {
-    CNR_DEBUG(*(cmi_.at(thread.first).getLogger()), thread.first << ": Waiting for thread join execution ...");
+    CNR_DEBUG(*(cmi_.at(thread.first)->getLogger()), thread.first << ": Waiting for thread join execution ...");
     if (thread.second->joinable())
     {
       thread.second->join();
     }
-    CNR_DEBUG(*(cmi_.at(thread.first).getLogger()), thread.first << ": Thread Finished ");
+    CNR_DEBUG(*(cmi_.at(thread.first)->getLogger()), thread.first << ": Thread Finished ");
   }
   CNR_DEBUG(*logger_,  "Threads Joined");
 
   bool ok = true;
   std::for_each(unload_ok.begin(), unload_ok.end(), [&](std::pair<std::string, bool> b)
   {
+    if(b.second)
+    {
+      CNR_INFO(cmi_.at(b.first)->getLogger(), "Successful stopping the controllers of HW '" + b.first + "'");
+    }
+    else
+    {
+      CNR_ERROR(cmi_.at(b.first)->getLogger(), "Error in stopping the controllers of HW '" + b.first + "': " 
+      + cmi_.at(b.first)->error()+ "(" + errors[b.first]+")");
+    }
     ok &= b.second;
   });
 
@@ -481,7 +523,7 @@ bool ConfigurationLoader::listControllers(const std::string& hw_name,
   if (cmi_.find(hw_name) == cmi_.end())
     return false;
 
-  return cmi_.at(hw_name).listControllers(running, stopped, ros::Duration(1.0));
+  return cmi_.at(hw_name)->listControllers(running, stopped, ros::Duration(1.0));
 }
 
 

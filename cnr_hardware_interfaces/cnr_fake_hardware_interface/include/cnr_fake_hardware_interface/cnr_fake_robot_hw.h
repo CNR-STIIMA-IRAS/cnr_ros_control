@@ -66,12 +66,12 @@ protected:
   sensor_msgs::JointState* m_msg;
   void initialJointStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
 
-  hardware_interface::JointStateInterface    m_js_jh;   //interface for reading joint state
-  hardware_interface::PositionJointInterface m_p_jh;    //interface for writing position target
-  hardware_interface::VelocityJointInterface m_v_jh;    //interface for writing velocity target
-  hardware_interface::EffortJointInterface   m_e_jh;    //interface for writing effort target
+  hardware_interface::JointStateInterface     m_js_jh;   //interface for reading joint state
+  hardware_interface::PositionJointInterface  m_p_jh;    //interface for writing position target
+  hardware_interface::VelocityJointInterface  m_v_jh;    //interface for writing velocity target
+  hardware_interface::EffortJointInterface    m_e_jh;    //interface for writing effort target
   hardware_interface::PosVelEffJointInterface m_pve_jh;
-  hardware_interface::VelEffJointInterface m_ve_jh;
+  hardware_interface::VelEffJointInterface    m_ve_jh;
 
   bool m_p_jh_active;
   bool m_v_jh_active;

@@ -170,7 +170,7 @@ bool FakeRobotHW::doInit()
 bool FakeRobotHW::doWrite(const ros::Time& time, const ros::Duration& period)
 {
   CNR_TRACE_START_THROTTLE_DEFAULT(*m_logger);
-  if (m_p_jh_active)
+  if(m_p_jh_active)
   {
     m_pos = m_cmd_pos;
   }
@@ -178,6 +178,13 @@ bool FakeRobotHW::doWrite(const ros::Time& time, const ros::Duration& period)
   if (m_v_jh_active)
   {
     m_vel = m_cmd_vel;
+    if(!m_p_jh_active)
+    {
+      for(size_t iAx=0; iAx<m_resource_names.size(); iAx++)
+      {
+        m_pos.at(iAx) = m_pos.at(iAx) + m_cmd_vel.at(iAx) * period.toSec();
+      }
+    }
   }
   else
   {

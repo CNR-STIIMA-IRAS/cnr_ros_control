@@ -102,12 +102,17 @@ bool JointCommandController<T>::enterInit()
   m_priority.reset();
   m_target.resize(this->m_kin->jointNames());
 
-  this->template add_subscriber<std_msgs::Int64>("/speed_ovr" , 1,
-                      boost::bind(&JointCommandController<T>::overrideCallback, this, _1));
-  this->template add_subscriber<std_msgs::Int64>("/safe_ovr_1", 1,
-                      boost::bind(&JointCommandController<T>::safeOverrideCallback_1, this, _1));
-  this->template add_subscriber<std_msgs::Int64>("/safe_ovr_2", 1,
-                      boost::bind(&JointCommandController<T>::safeOverrideCallback_2, this, _1));
+ this->template add_subscriber<std_msgs::Int64>("/speed_ovr" , 1,
+                     boost::bind(&JointCommandController<T>::overrideCallback, this, _1), false);
+ this->template add_subscriber<std_msgs::Int64>("/safe_ovr_1", 1,
+                     boost::bind(&JointCommandController<T>::safeOverrideCallback_1, this, _1), false);
+ this->template add_subscriber<std_msgs::Int64>("/safe_ovr_2", 1,
+                     boost::bind(&JointCommandController<T>::safeOverrideCallback_2, this, _1), false);
+
+  if(!(this->getControllerNh().getParam("max_velocity_multiplier", m_max_velocity_multiplier)) )
+  {
+    m_max_velocity_multiplier = 10;
+  }
 
   m_override = 1;
   m_safe_override_1 = 1;
@@ -144,8 +149,8 @@ bool JointCommandController<T>::enterUpdate()
 
 template< class T >
 bool JointCommandController<T>::exitUpdate()
-#define SP std::fixed  << std::setprecision(3)
-#define TP(X) std::fixed << std::setprecision(3) << X.format(this->m_cfrmt)
+#define SP std::fixed  << std::setprecision(5)
+#define TP(X) std::fixed << std::setprecision(5) << X.format(this->m_cfrmt)
 {
 
   std::stringstream report;
@@ -160,7 +165,7 @@ bool JointCommandController<T>::exitUpdate()
   try
   {
     report << "==========\n";
-    report << "Priorty: " << std::to_string(*m_priority) << "\n";
+    report << "Priorty            : " << std::to_string(*m_priority) << "\n";
     report << "upper limit        : " << TP(this->m_kin->upperLimit().transpose()) << "\n";
     report << "lower limit        : " << TP(this->m_kin->lowerLimit().transpose()) << "\n";
     report << "Speed Limit        : " << TP(this->m_kin->speedLimit().transpose()) << "\n";
@@ -188,93 +193,18 @@ bool JointCommandController<T>::exitUpdate()
         nominal_qd.setZero();
       }
     }
-    report << "Nominal qd                  : " << TP(nominal_qd.transpose()) << "\n";
+    report << "Nominal command qd (input)  : " << TP(nominal_qd.transpose()) << "\n";
     // ============================== ==============================
 
 
     // ============================== ==============================
-    Eigen::VectorXd scale(this->m_kin->nAx());
-    for(size_t iAx=0;iAx<this->m_kin->nAx();iAx++)
-    {
-      scale(iAx) = std::fabs(nominal_qd(iAx)) > this->m_kin->speedLimit(iAx)
-                 ? this->m_kin->speedLimit(iAx) / std::fabs(nominal_qd(iAx) )
-                 : 1.0;
-    }
-    Eigen::VectorXd saturated_qd = scale.minCoeff() * nominal_qd;
-    report << "Saturated qd  [speed limits]: " << TP(saturated_qd.transpose()) << "\n";
-    if(scale.minCoeff()  < 1 )
+    Eigen::VectorXd saturated_qd = nominal_qd;
+    
+    if(this->m_kin->saturateSpeed(saturated_qd, this->qd(), this->q(), 
+                               this->m_sampling_period, m_max_velocity_multiplier, true, &report))
     {
       print_report = true;
-      report << "*** Join Velocity Saturation (Max allowed velocity)\n";
     }
-    // ==============================
-
-    Eigen::VectorXd qd_dir;
-    if(nominal_qd.norm() > 1e-5)
-    {
-      qd_dir = nominal_qd.normalized();
-    }
-    else
-    {
-      qd_dir = (nominal_qd - m_target.qd).normalized();
-    }
-
-    Eigen::VectorXd qd_sup = m_last_target.qd + this->m_kin->accelerationLimit() * this->m_dt.toSec();
-    Eigen::VectorXd qd_inf = m_last_target.qd - this->m_kin->accelerationLimit() * this->m_dt.toSec();
-    Eigen::VectorXd dqd(this->m_kin->nAx());
-    for(size_t iAx=0;iAx<this->m_kin->nAx();iAx++)
-    {
-      dqd (iAx) = saturated_qd(iAx) > qd_sup(iAx) ? (qd_sup(iAx) - saturated_qd(iAx))
-                : saturated_qd(iAx) < qd_inf(iAx) ? (qd_inf(iAx) - saturated_qd(iAx))
-                : 0.0;
-    }
-    if(dqd.minCoeff() * dqd.maxCoeff() >= 0.0)
-    {
-      saturated_qd += (dqd.dot(qd_dir) * qd_dir);
-    }
-    else
-    {
-      print_report = true;
-
-      report << "**** The target velocity cannot be reached without the deformation ****\n";
-      report << "dqd            : " << TP(saturated_qd.transpose()) <<"\n";
-      report << "dqd min        : " << dqd.minCoeff() << " max: " << dqd.maxCoeff() <<"\n";
-      report << "Prev target vel: " << TP(m_target.qd.transpose()) << "\n";
-      report << "qd_sup         : " << TP(qd_sup.transpose()) << "\n";
-      report << "qd_inf         : " << TP(qd_inf.transpose()) << "\n";
-      report << "Calc correction: " << TP(dqd.transpose()) << "\n";
-      saturated_qd += dqd;
-    }
-    report << "Saturated vel [acc limits] : " << TP(saturated_qd.transpose()) << "\n";
-
-    Eigen::VectorXd q_saturated_qd = m_last_target.q + saturated_qd* this->m_dt.toSec();
-    Eigen::VectorXd braking_distance(this->nAx());
-    for(size_t iAx=0; iAx<this->m_kin->nAx();iAx++)
-    {
-      braking_distance(iAx)  = 0.5 * this->m_kin->accelerationLimit(iAx)
-                               * std::pow(std::abs(saturated_qd(iAx))/this->m_kin->accelerationLimit(iAx) , 2.0);
-    }
-    report << "q_saturated_qd  : " << TP(q_saturated_qd.transpose()) << "\n";
-    report << "braking_distance: " << TP(braking_distance.transpose()) << "\n";
-
-    for(size_t iAx=0; iAx<this->m_kin->nAx();iAx++)
-    {
-      if ((q_saturated_qd(iAx) > (this->m_kin->upperLimit(iAx) - braking_distance(iAx))) && (saturated_qd(iAx)>0))
-      {
-        print_report = true;
-        report << "**** Brake! Maximum limit approaching on '" <<  this->m_kin->jointName(iAx) << "' ****\n";
-        saturated_qd(iAx) = std::max(0.0, saturated_qd(iAx) - this->m_kin->accelerationLimit(iAx) * this->m_dt.toSec());
-      }
-      else if((q_saturated_qd(iAx)<(this->m_kin->lowerLimit(iAx) + braking_distance(iAx))) && (saturated_qd(iAx)<0))
-      {
-        print_report = true;
-        report << "**** Brake! Minimum limit approaching on '" <<  this->m_kin->jointName(iAx) << "' ****\n";
-        saturated_qd(iAx) = std::min(0.0, saturated_qd(iAx) + this->m_kin->accelerationLimit(iAx) * this->m_dt.toSec());
-      }
-    }
-    report << "Saturated vel [braking] : " << TP(saturated_qd.transpose()) << "\n";
-    m_target.qd  = saturated_qd;
-    m_target.q   = m_last_target.q + m_target.qd * this->m_dt.toSec();
     // ==============================
   }
   catch(...)
@@ -288,14 +218,14 @@ bool JointCommandController<T>::exitUpdate()
   report<< "qd trg: " << TP(m_target.qd.transpose()) << "\n";
   report<< "ef trg: " << TP(m_target.effort.transpose()) << "\n";
 
-  if(!set_to_hw(m_target, this->m_hw))
+  if(!set_to_hw(getPtr(m_target), this->m_hw))
   {
     CNR_RETURN_FALSE(*(this->m_logger), "Error in download the data to the HW.");
   }
 
-  for (size_t iAx = 0; iAx<this->m_hw->getNames().size(); iAx++)
+  for (size_t iAx = 0; iAx<this->jointNames().size(); iAx++)
   {
-    report<< this->m_hw->getHandle(this->m_hw->getNames().at(iAx)) <<"\n";
+    report<< this->m_hw->getHandle(this->jointName(iAx)) <<"\n";
   }
 
   CNR_WARN_COND_THROTTLE(this->logger(), print_report, throttle_time, report.str() );
@@ -321,7 +251,7 @@ bool JointCommandController<T>::exitStopping()
     m_target.q(iAx) = this->m_state->q(iAx);
   }
   m_target.qd.setZero();
-  set_to_hw(m_target, this->m_hw);
+  set_to_hw(getPtr(m_target), this->m_hw);
 
   if (!JointController<T>::exitStopping())
   {

@@ -1,4 +1,9 @@
+#include <sstream>
 #include <cnr_controller_interface/utils/cnr_kinematics_utils.h>
+
+
+#define SP std::fixed  << std::setprecision(5)
+#define TP(X) std::fixed << std::setprecision(5) << X.format(m_cfrmt)
 
 namespace cnr_controller_interface
 {
@@ -57,39 +62,42 @@ void KinematicsStruct::updateTransformation(const KinematicStatus& state)
   m_twist = m_J * state.qd;
 }
 
+void get_joint_names(ros::NodeHandle* nh, std::vector<std::string>& names)
+{
+  std::vector<std::string> alternative_keys =
+    {"controlled_resources", "controlled_resource", "controlled_joints", "controlled_joint", "joint_names", "joint_name"};
+
+  names.clear();
+  for(auto const & key : alternative_keys)
+  {
+    if(!nh->getParam(key, names))
+    {
+      std::string joint_name;
+      if(nh->getParam(key, joint_name))
+      {
+        names.push_back(joint_name);
+      }
+    }
+  }
+  return;
+}
+
 bool KinematicsStruct::init(cnr_logger::TraceLoggerPtr logger, ros::NodeHandle& root_nh, ros::NodeHandle& ctrl_nh)
 {
 
   try
   {
-
-    XmlRpc::XmlRpcValue value;
-    if (!ctrl_nh.getParam("controlled_joint", value) && !ctrl_nh.getParam("controlled_joints", value))
+    get_joint_names(&ctrl_nh,m_joint_names);
+    if(m_joint_names.size()==1 && m_joint_names.front() == "all")
     {
-      CNR_RETURN_FALSE(*logger, "The param " + ctrl_nh.getNamespace() + "/controlled_joint(s) not defined");
+      get_joint_names(&root_nh, m_joint_names);
     }
 
-    if (value.getType() == XmlRpc::XmlRpcValue::TypeArray)
+    if(m_joint_names.size()==0)
     {
-      if (value[0].getType() == XmlRpc::XmlRpcValue::TypeString)
-      {
-        for (int i = 0; i < value.size(); i++)
-        {
-          m_joint_names.push_back((std::string)(value[i]));
-        }
-      }
-      else
-      {
-        CNR_RETURN_FALSE(*logger, "The param " + ctrl_nh.getNamespace() + "/controlled_joint(s) bad formed");
-      }
-    }
-    else if (value.getType() == XmlRpc::XmlRpcValue::TypeString)
-    {
-      m_joint_names.push_back((std::string)(value));
-    }
-    else
-    {
-      CNR_RETURN_FALSE(*logger,  "The param " + ctrl_nh.getNamespace() + "/controlled_joint(s) bad formed");
+      CNR_ERROR(logger, "Neither '"<< ctrl_nh.getNamespace() << "/controlled_joint(s)' nor '"
+                          << ctrl_nh.getNamespace() << "'controlled_resources(s)' are specified. Abrot");
+      CNR_RETURN_FALSE(logger);
     }
 
     m_nAx = m_joint_names.size();
@@ -213,6 +221,8 @@ bool KinematicsStruct::init(cnr_logger::TraceLoggerPtr logger, ros::NodeHandle& 
     m_chain->setInputJointsName(m_joint_names);
     m_link_names = m_chain->getLinksName( );
 
+    m_cfrmt = Eigen::IOFormat(Eigen::StreamPrecision, 0, ", ", "\n", "[", "]");
+
     CNR_RETURN_TRUE(*logger);
   }
   catch(std::exception& e)
@@ -221,8 +231,172 @@ bool KinematicsStruct::init(cnr_logger::TraceLoggerPtr logger, ros::NodeHandle& 
   }
 }
 
+bool KinematicsStruct::saturateSpeed(Eigen::Ref<Eigen::VectorXd> qd_next,
+                                     double max_velocity_multiplier,
+                                     bool preserve_direction,
+                                     std::stringstream* report)
+{
+  if(report)
+  {
+    *report << "[-----][SPEED SATURATION] INPUT  qd: " << TP(qd_next.transpose()) << "\n";
+  }
+  Eigen::VectorXd scale(nAx());
+  for(size_t iAx=0;iAx<nAx();iAx++)
+  {
+    scale(iAx) = std::fabs(qd_next(iAx)) > speedLimit(iAx) * max_velocity_multiplier
+               ? speedLimit(iAx) * max_velocity_multiplier/ std::fabs(qd_next(iAx) )
+               : 1.0;
+  }
+  if(preserve_direction)
+  {
+    qd_next = scale.minCoeff() * qd_next;
+  }
+  else
+  {
+    qd_next = scale.asDiagonal() * qd_next;
+  }
+
+  if(report)
+  {
+    *report << (scale.minCoeff()<1 ? "[TRUE ]": "[FALSE]" )
+            << "[SPEED SATURATION] OUTPUT qd: " << TP(qd_next.transpose()) << "\n";
+  }
+
+  return scale.minCoeff()<1;
+}
+
+bool KinematicsStruct::saturateSpeed(Eigen::Ref<Eigen::VectorXd> qd_next,
+                                     const Eigen::Ref<const Eigen::VectorXd> qd_actual,
+                                     double dt,
+                                     double max_velocity_multiplier,
+                                     bool preserve_direction,
+                                     std::stringstream* report)
+{
+  bool saturated = saturateSpeed(qd_next, max_velocity_multiplier, preserve_direction, report);
+
+  if(report)
+  {
+    *report<<"[-----][ACC   SATURATION] INPUT  qd: "<<TP(qd_next.transpose())
+           <<"( qd actual:"<<TP(qd_actual.transpose())<<")\n";
+  }
+  Eigen::VectorXd qd_sup  = qd_actual + accelerationLimit() * dt;
+  Eigen::VectorXd qd_inf  = qd_actual - accelerationLimit() * dt;
+  Eigen::VectorXd dqd(nAx()); dqd.setZero();
+  for(size_t iAx=0;iAx<nAx();iAx++)
+  {
+    dqd(iAx) = qd_next(iAx) > qd_sup(iAx) ? (qd_sup(iAx) - qd_next(iAx))
+             : qd_next(iAx) < qd_inf(iAx) ? (qd_inf(iAx) - qd_next(iAx))
+             : 0.0;
+  }
+  saturated |= dqd.cwiseAbs().maxCoeff()>0.0;
+  if( preserve_direction )
+  {
+    Eigen::VectorXd dqd_dir = (qd_next - qd_actual).normalized();
+    if(dqd.norm() < 1e-5)
+    {
+      dqd_dir.setZero();
+    }
+
+    if(dqd.minCoeff() * dqd.maxCoeff() >= 0.0)
+    {
+      qd_next = qd_next + (dqd.dot(dqd_dir) * dqd_dir);
+    }
+    else
+    {
+      *report << "Target vel     : " << TP(qd_next.transpose()) << "\n";
+      *report << "Prev target vel: " << TP(qd_actual.transpose()) << "\n";
+      *report << "qd_sup         : " << TP(qd_sup.transpose()) << "\n";
+      *report << "qd_inf         : " << TP(qd_inf.transpose()) << "\n";
+      *report << "Calc correction: " << TP(dqd.transpose()) << "\n";
+      qd_next = qd_next + dqd;
+    }
+  }
+
+
+  if(report)
+  {
+    *report << (saturated ? "[TRUE ]": "[FALSE]" )
+            <<"[ACC   SATURATION] OUTPUT qd: "<<TP(qd_next.transpose())<< "\n";
+  }
+  return saturated;
+}
+
+bool KinematicsStruct::saturateSpeed(Eigen::Ref<Eigen::VectorXd> qd_next,
+                                     const Eigen::Ref<const Eigen::VectorXd> qd_actual,
+                                     const Eigen::Ref<const Eigen::VectorXd> q_actual,
+                                     double dt,
+                                     double max_velocity_multiplier,
+                                     bool preserve_direction,
+                                     std::stringstream* report)
+{
+  bool saturated = saturateSpeed(qd_next, qd_actual, dt,  max_velocity_multiplier, preserve_direction, report);
+
+  if(report)
+  {
+    *report << "[-----][BRK   SATURATION] INPUT  qd: " << TP(qd_next.transpose()) 
+            << " qd actual: " << TP(qd_actual.transpose()) << "\n";
+  }
+  Eigen::VectorXd braking_distance(this->nAx());
+  for(size_t iAx=0; iAx<this->nAx();iAx++)
+  {
+    braking_distance(iAx)  = 0.5 * this->accelerationLimit(iAx)
+                             * std::pow(std::abs(qd_next(iAx))/this->accelerationLimit(iAx) , 2.0);
+  }
+
+  Eigen::VectorXd q_saturated_qd = q_actual + qd_actual* dt;
+  for(size_t iAx=0; iAx<this->nAx();iAx++)
+  {
+    if ((q_saturated_qd(iAx) > (this->upperLimit(iAx) - braking_distance(iAx))) && (qd_next(iAx)>0))
+    {
+      saturated |= true;
+      qd_next(iAx) = std::max(0.0, qd_next(iAx) - this->accelerationLimit(iAx) * dt);
+    }
+    else if((q_saturated_qd(iAx)<(this->lowerLimit(iAx) + braking_distance(iAx))) && (qd_next(iAx)<0))
+    {
+      saturated |= true;
+      qd_next(iAx) = std::min(0.0, qd_next(iAx) + this->accelerationLimit(iAx) * dt);
+    }
+  }
+
+  if(report)
+  {
+    *report << (saturated ? "[TRUE ]": "[FALSE]" )
+            << "[BRK   SATURATION] OUTPUT qd: " << TP(qd_next.transpose()) << "\n";
+  }
+  return saturated;
+
+}
+
+bool KinematicsStruct::saturatePosition(Eigen::Ref<Eigen::VectorXd> q_next, std::stringstream* report)
+{
+  if(report)
+  {
+    *report << "[POS   SATURATION] INPUT  q: " << TP(q_next.transpose()) << "\n";
+  }
+  
+  Eigen::VectorXd dq(q_next.rows());
+  for(size_t iAx=0;iAx<nAx();iAx++)
+  {
+    dq(iAx)  = q_next(iAx) > upperLimit(iAx) ? (upperLimit(iAx) - q_next(iAx))
+             : q_next(iAx) < lowerLimit(iAx) ? (lowerLimit(iAx) - q_next(iAx))
+             : 0.0;
+  }
+  
+  q_next += dq;
+  
+  if(report)
+  {
+    *report << (dq.cwiseAbs().maxCoeff()>0.0 ? "[TRUE ]": "[FALSE]" )
+            << "[POS   SATURATION] OUTPUT q: " << TP(q_next.transpose()) << "\n";
+  }
+
+  return (dq.cwiseAbs().maxCoeff()>0.0);
+}
+
 
 }
 
 
 
+#undef TP
+#undef SP
