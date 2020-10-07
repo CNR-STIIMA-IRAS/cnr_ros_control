@@ -38,7 +38,7 @@
 #include <ros/ros.h>
 #include <cnr_logger/cnr_logger.h>
 #include <cnr_controller_interface/utils/cnr_kinematics_utils.h>
-#include <cnr_controller_interface/utils/cnr_handles_utils.h>
+#include <cnr_controller_interface/internal/cnr_handles.h>
 #include <cnr_controller_interface/cnr_joint_controller_interface.h>
 #include <rosdyn_core/primitives.h>
 #include <urdf_model/model.h>
@@ -47,109 +47,109 @@
 namespace cnr_controller_interface
 {
 
-template< class T >
-JointController< T >::~JointController()
+template<class H, class T>
+JointController<H,T>::~JointController()
 {
   m_kin.reset();
   m_state.reset();
   CNR_TRACE_START(*cnr_controller_interface::Controller< T >::m_logger);
 }
 
-template< class T >
-bool JointController< T >::doInit()
+template<class H, class T>
+bool JointController<H,T>::doInit()
 {
   return true;
 }
-template< class T >
-bool JointController<T>::doStarting(const ros::Time& /*time*/)
-{
-  return true;
-}
-
-template< class T >
-bool JointController<T>::doUpdate(const ros::Time& /*time*/, const ros::Duration& /*period*/)
+template<class H, class T>
+bool JointController<H,T>::doStarting(const ros::Time& /*time*/)
 {
   return true;
 }
 
-template< class T >
-bool JointController<T>::doStopping(const ros::Time& /*time*/)
+template<class H, class T>
+bool JointController<H,T>::doUpdate(const ros::Time& /*time*/, const ros::Duration& /*period*/)
 {
   return true;
 }
 
-template< class T >
-bool JointController<T>::doWaiting(const ros::Time& /*time*/)
+template<class H, class T>
+bool JointController<H,T>::doStopping(const ros::Time& /*time*/)
 {
   return true;
 }
 
-template< class T >
-bool JointController<T>::doAborting(const ros::Time& /*time*/)
+template<class H, class T>
+bool JointController<H,T>::doWaiting(const ros::Time& /*time*/)
 {
   return true;
 }
 
-template< class T >
-bool JointController<T>::enterInit()
+template<class H, class T>
+bool JointController<H,T>::doAborting(const ros::Time& /*time*/)
+{
+  return true;
+}
+
+template<class H, class T>
+bool JointController<H,T>::enterInit()
 {
   m_cfrmt = Eigen::IOFormat(Eigen::StreamPrecision, 0, ", ", "\n", "[", "]");
-  CNR_TRACE_START(*Controller<T>::m_logger);
+  CNR_TRACE_START(this->m_logger);
   if (!Controller<T>::enterInit())
   {
-    CNR_RETURN_FALSE(*Controller<T>::m_logger);
+    CNR_RETURN_FALSE(this->m_logger);
   }
   m_kin.reset(new KinematicsStruct());
   m_kin->init(Controller<T>::m_logger, Controller<T>::getRootNh(), Controller<T>::getControllerNh());
 
   m_state.reset(new KinematicStatus(m_kin));
-  for (unsigned int iAx = 0; iAx < m_kin->nAx(); iAx++)
+  for (unsigned int iAx=0; iAx<m_kin->nAx(); iAx++)
   {
     try
     {
-      Controller<T>::m_hw->getHandle(m_kin->jointName(iAx));
+      m_handler.handles_[m_kin->jointName(iAx)] = Controller<T>::m_hw->getHandle(m_kin->jointName(iAx));
     }
     catch (...)
     {
-      CNR_RETURN_FALSE(*Controller<T>::m_logger,
+      CNR_RETURN_FALSE(this->m_logger,
         "Controller '" + Controller<T>::getControllerNamespace() + "' failed in init. " + std::string("")
         + "The controlled joint named '" + m_kin->jointName(iAx) + "' is not managed by hardware_interface");
     }
-    CNR_DEBUG(*Controller<T>::m_logger,
+    CNR_DEBUG(this->m_logger,
       "Controller '" + Controller<T>::getControllerNamespace() + std::string("'")
       + "The controlled joint named '" + m_kin->jointName(iAx) + "' is managed by hardware_interface");
   }
 
-  CNR_RETURN_TRUE(*Controller<T>::m_logger);
+  CNR_RETURN_TRUE(this->m_logger);
 }
 
-template< class T >
-bool JointController<T>::enterStarting()
+template<class H, class T>
+bool JointController<H,T>::enterStarting()
 {
-  CNR_TRACE_START(*Controller<T>::m_logger);
+  CNR_TRACE_START(this->m_logger);
   if (!Controller<T>::enterStarting())
   {
-    CNR_RETURN_FALSE(*Controller<T>::m_logger);
+    CNR_RETURN_FALSE(this->m_logger);
   }
-  get_from_hw(Controller<T>::m_hw, getPtr(m_state));
+  m_handler >> m_state;
   
   m_state->updateTransformation();
 
-  CNR_RETURN_TRUE(*Controller<T>::m_logger);
+  CNR_RETURN_TRUE(this->m_logger);
 }
 
-template< class T >
-bool JointController<T>::enterUpdate()
+template<class H, class T>
+bool JointController<H,T>::enterUpdate()
 {
-  CNR_TRACE_START_THROTTLE(*Controller<T>::m_logger, 20.0);
+  CNR_TRACE_START_THROTTLE(this->m_logger, 20.0);
   if (!Controller<T>::enterUpdate())
   {
-    CNR_RETURN_FALSE(*Controller<T>::m_logger);
+    CNR_RETURN_FALSE(this->m_logger);
   }
-  get_from_hw( Controller<T>::m_hw, getPtr(m_state));
+  this->m_handler >> m_state;
   m_state->updateTransformation();
 
-  CNR_RETURN_TRUE_THROTTLE(*Controller<T>::m_logger, 20.0);
+  CNR_RETURN_TRUE_THROTTLE(this->m_logger, 20.0);
 }
 
 

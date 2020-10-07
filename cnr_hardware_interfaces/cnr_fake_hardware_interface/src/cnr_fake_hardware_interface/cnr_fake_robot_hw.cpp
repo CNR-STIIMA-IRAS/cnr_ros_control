@@ -141,10 +141,7 @@ bool FakeRobotHW::doInit()
 
     auto i = &joint_name - &m_resource_names[0];
 
-    hardware_interface::JointStateHandle state_handle(joint_name,
-        &(m_pos.at(i)),
-        &(m_vel.at(i)),
-        &(m_eff.at(i)));
+    hardware_interface::JointStateHandle state_handle(joint_name, &(m_pos.at(i)), &(m_vel.at(i)), &(m_eff.at(i)));
 
     m_js_jh.registerHandle(state_handle);
 

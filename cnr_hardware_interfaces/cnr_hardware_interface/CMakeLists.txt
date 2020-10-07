@@ -9,8 +9,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(catkin REQUIRED COMPONENTS
   cnr_logger
-  #cnr_controller_manager_interface
-  #cnr_controller_interface
   controller_manager
   diagnostic_updater
   diagnostic_msgs
@@ -34,8 +32,6 @@ catkin_package(
  INCLUDE_DIRS   include
  LIBRARIES      cnr_hardware_interface
  CATKIN_DEPENDS cnr_logger
-                #cnr_controller_manager_interface
-                #cnr_controller_interface
                 controller_manager
                 diagnostic_updater
                 diagnostic_msgs

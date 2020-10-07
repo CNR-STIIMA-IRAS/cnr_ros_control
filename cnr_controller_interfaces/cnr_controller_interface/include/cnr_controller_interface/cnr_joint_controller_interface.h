@@ -40,8 +40,7 @@
 #include <ros/ros.h>
 #include <cnr_logger/cnr_logger.h>
 #include <cnr_controller_interface/cnr_controller_interface.h>
-
-
+#include <cnr_controller_interface/internal/cnr_handles.h>
 #include <cnr_controller_interface/utils/cnr_kinematics_utils.h>
 
 namespace cnr_controller_interface
@@ -55,29 +54,29 @@ namespace cnr_controller_interface
  *
  * Base class to log the controller status
  */
-template< class T >
-class JointController: public cnr_controller_interface::Controller< T >
+template<class H, class T>
+class JointController: public cnr_controller_interface::Controller<T>
 {
 public:
 
   ~JointController();
 
-  virtual bool doInit();
-  virtual bool doStarting(const ros::Time& /*time*/);
-  virtual bool doUpdate(const ros::Time& /*time*/, const ros::Duration& /*period*/);
-  virtual bool doStopping(const ros::Time& /*time*/);
-  virtual bool doWaiting(const ros::Time& /*time*/);
-  virtual bool doAborting(const ros::Time& /*time*/);
+  virtual bool doInit() override;
+  virtual bool doStarting(const ros::Time& /*time*/) override;
+  virtual bool doUpdate(const ros::Time& /*time*/, const ros::Duration& /*period*/) override;
+  virtual bool doStopping(const ros::Time& /*time*/) override;
+  virtual bool doWaiting(const ros::Time& /*time*/) override;
+  virtual bool doAborting(const ros::Time& /*time*/) override;
 
-  virtual bool enterInit();
-  virtual bool enterStarting();
-  virtual bool enterUpdate();
+  virtual bool enterInit() override;
+  virtual bool enterStarting() override;
+  virtual bool enterUpdate() override;
 
   const size_t& nAx                         ( ) const { return m_kin->nAx(); }
-  const Eigen::VectorXd& q                  ( ) const { return m_state->q; }
-  const Eigen::VectorXd& qd                 ( ) const { return m_state->qd; }
-  const Eigen::VectorXd& qdd                ( ) const { return m_state->qdd; }
-  const Eigen::VectorXd& effort             ( ) const { return m_state->effort; }
+  const Eigen::VectorXd& q                  ( ) const { return m_state->q(); }
+  const Eigen::VectorXd& qd                 ( ) const { return m_state->qd(); }
+  const Eigen::VectorXd& qdd                ( ) const { return m_state->qdd(); }
+  const Eigen::VectorXd& effort             ( ) const { return m_state->effort(); }
   const Eigen::VectorXd& upperLimit         ( ) const { return m_kin->upperLimit       (); }
   const Eigen::VectorXd& lowerLimit         ( ) const { return m_kin->lowerLimit       (); }
   const Eigen::VectorXd& speedLimit         ( ) const { return m_kin->speedLimit       (); }
@@ -98,10 +97,11 @@ public:
   const std::string& baseFrame   ( ) const { return baseLink();       }
   const std::string& toolLink    ( ) const { return m_kin->toolLink(); }
   const std::string& toolFrame   ( ) const { return toolLink();       }
-  const Eigen::Affine3d& toolPose( ) const { return m_kin->toolPose(); }
+  const Eigen::Affine3d& toolPose( ) const { return m_state->toolPose(); }
 
 protected:
-
+  
+  Handler<H,T>        m_handler; 
   KinematicsStructPtr m_kin;
   KinematicStatusPtr  m_state;
 
@@ -111,7 +111,7 @@ protected:
 
 } // cnr_controller_interface
 
-#include <cnr_controller_interface/cnr_joint_controller_interface_impl.h>
+#include <cnr_controller_interface/internal/cnr_joint_controller_interface_impl.h>
 
 #endif
 

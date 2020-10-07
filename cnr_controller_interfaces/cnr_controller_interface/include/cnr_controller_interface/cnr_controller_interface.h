@@ -74,17 +74,36 @@ bool                     check_state(const std::string& hw_name,
                                      std::string& error,
                                      const ros::Duration& watchdog = ros::Duration(0.0));
 
-template<typename T>
-boost::shared_ptr<T> to_boost_shared_ptr(std::shared_ptr<T>& ptr)
+template<class SharedPointer> 
+struct Holder 
 {
-    return boost::shared_ptr<T>(ptr.get(), [ptr](T*) mutable {ptr.reset();});
+    SharedPointer p;
+
+    Holder(const SharedPointer &p) : p(p) {}
+    Holder(const Holder &other) : p(other.p) {}
+    Holder(Holder &&other) : p(std::move(other.p)) {}
+
+    void operator () (...) { p.reset(); }
+};
+
+template<class T> 
+std::shared_ptr<T> to_std_ptr(const boost::shared_ptr<T> &p) 
+{
+    typedef Holder<std::shared_ptr<T>>   StandardHolder;
+    typedef Holder<boost::shared_ptr<T>> BoostHolder;
+    
+    StandardHolder *h = boost::get_deleter<StandardHolder>(p);
+    if( h ) 
+    {
+      return h->p;
+    } 
+    else 
+    {
+      return std::shared_ptr<T>(p.get(), BoostHolder(p));
+    }
 }
 
-template<typename T>
-std::shared_ptr<T> to_std_shared_ptr(boost::shared_ptr<T>& ptr)
-{
-    return std::shared_ptr<T>(ptr.get(), [ptr](T*) mutable {ptr.reset();});
-}
+
 
 class ControllerDiagnostic
 {
@@ -288,6 +307,6 @@ private:
 }  // namespace cnr_controller_interface
 
 
-#include <cnr_controller_interface/cnr_controller_interface_impl.h>
+#include <cnr_controller_interface/internal/cnr_controller_interface_impl.h>
 
 #endif  // CNR_CONTROLLER_INTERFACE_CNR_CONTROLLER_INTERFACE_H

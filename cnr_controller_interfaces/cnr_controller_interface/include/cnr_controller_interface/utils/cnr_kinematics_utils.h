@@ -14,50 +14,6 @@
 namespace cnr_controller_interface
 {
 
-struct KinematicStatus
-{
-  std::vector<std::string> joint_names;
-  Eigen::VectorXd  q;
-  Eigen::VectorXd  qd;
-  Eigen::VectorXd  qdd;
-  Eigen::VectorXd  effort;
-
-  const std::string&               get_joint_name (const size_t iAx) const { return joint_names.at(iAx);}
-  const std::vector<std::string>&  get_joint_names() const { return joint_names;}
-  const Eigen::VectorXd&           get_q          () const { return q;          }
-  const Eigen::VectorXd&           get_qd         () const { return qd;         }
-  const Eigen::VectorXd&           get_qdd        () const { return qdd;        }
-  const Eigen::VectorXd&           get_effort     () const { return effort;     }
-
-  const double&  get_q           (const size_t& iAx) const { return q     (iAx); }
-  const double&  get_qd          (const size_t& iAx) const { return qd    (iAx); }
-  const double&  get_qdd         (const size_t& iAx) const { return qdd   (iAx); }
-  const double&  get_effort      (const size_t& iAx) const { return effort(iAx); }
-
-  int  get_index (const std::string& name) const
-  {
-    auto it = std::find(joint_names.begin(), joint_names.end(), name);
-    return (it == joint_names.end()) ? -1 : std::distance(joint_names.begin(),it);
-  }
-
-  double get_q     (const std::string& name) const {int iAx = get_index(name); return iAx==-1 ? NAN : q     (iAx); }
-  double get_qd    (const std::string& name) const {int iAx = get_index(name); return iAx==-1 ? NAN : qd    (iAx); }
-  double get_qdd   (const std::string& name) const {int iAx = get_index(name); return iAx==-1 ? NAN : qdd   (iAx); }
-  double get_effort(const std::string& name) const {int iAx = get_index(name); return iAx==-1 ? NAN : effort(iAx); }
-
-
-  KinematicStatus() = default;
-  KinematicStatus(const KinematicStatus& cpy);
-  KinematicStatus& operator=(const KinematicStatus& rhs);
-
-  void resize(const std::vector<std::string>& names);
-  void setZero();
-};
-
-typedef std::shared_ptr<KinematicStatus> KinematicStatusPtr;
-typedef const std::shared_ptr<KinematicStatus const> KinematicStatusConstPtr;
-
-
 class KinematicsStruct
 {
 
@@ -66,9 +22,6 @@ private:
   std::string                   m_base_link;
   std::string                   m_tool_link;
   rosdyn::ChainPtr              m_chain;
-  Eigen::Affine3d               m_Tbt;
-  Eigen::Matrix<double, 6, 1>   m_twist;
-  Eigen::Matrix6Xd              m_J;
 
   std::vector<std::string>      m_joint_names;
   std::vector<std::string>      m_link_names;
@@ -82,12 +35,12 @@ private:
   Eigen::IOFormat               m_cfrmt;
 
 public:
-  const size_t& nAx                         ( ) const { return m_nAx; }
+  const size_t& nAx                         ( ) const { return m_nAx;         }
   const Eigen::VectorXd& upperLimit         ( ) const { return m_upper_limit; }
   const Eigen::VectorXd& lowerLimit         ( ) const { return m_lower_limit; }
   const Eigen::VectorXd& speedLimit         ( ) const { return m_qd_limit;    }
   const Eigen::VectorXd& accelerationLimit  ( ) const { return m_qdd_limit;   }
-  const Eigen::VectorXd& effortLimit        ( ) const { return m_effort_limit;   }
+  const Eigen::VectorXd& effortLimit        ( ) const { return m_effort_limit;}
   const std::vector<std::string>& jointNames( ) const { return m_joint_names; }
   const double& upperLimit         (size_t iAx) const { return m_upper_limit(iAx); }
   const double& lowerLimit         (size_t iAx) const { return m_lower_limit(iAx); }
@@ -106,15 +59,15 @@ public:
     return it == m_joint_names.end() ? -1 : std::distance(m_joint_names.begin(), it);
   }
 
-  const std::vector<std::string>& linkNames ( ) const { return m_link_names;}
-  const std::string& baseLink      ( )          const { return m_base_link; }
-  const std::string& baseFrame     ( )          const { return baseLink();  }
-  const std::string& toolLink      ( )          const { return m_tool_link; }
-  const std::string& toolFrame     ( )          const { return toolLink();  }
-  const Eigen::Affine3d& toolPose  ( )          const { return m_Tbt;       }
+  const std::vector<std::string>&    linkNames ( ) const { return m_link_names;}
+  const std::string&                 baseLink  ( ) const { return m_base_link; }
+  const std::string&                 baseFrame ( ) const { return baseLink();  }
+  const std::string&                 toolLink  ( ) const { return m_tool_link; }
+  const std::string&                 toolFrame ( ) const { return toolLink();  }
+  
   rosdyn::ChainPtr       getChain  ( )                { return m_chain;     }
   rosdyn::ChainPtr       getChain  ( const std::string& from, const std::string& to);
-  void updateTransformation(const KinematicStatus& state);
+
   bool init(cnr_logger::TraceLoggerPtr logger, ros::NodeHandle& root_nh, ros::NodeHandle& ctrl_nh);
 
 
@@ -144,6 +97,90 @@ public:
 
 typedef std::shared_ptr<KinematicsStruct> KinematicsStructPtr;
 typedef const std::shared_ptr<KinematicsStruct const> KinematicsStructConstPtr;
+
+
+
+
+class KinematicStatus
+{
+private:
+  Eigen::VectorXd               q_;
+  Eigen::VectorXd               qd_;
+  Eigen::VectorXd               qdd_;
+  Eigen::VectorXd               effort_;
+  
+  Eigen::Affine3d               Tbt_;
+  Eigen::Matrix<double, 6, 1>   twist_;
+  Eigen::Matrix<double, 6, 1>   twistd_;
+  Eigen::Matrix6Xd              jacobian_;
+
+  int  index (const std::string& name) const
+  {
+    auto it = std::find(kin_->jointNames().begin(), kin_->jointNames().end(), name);
+    return (it == kin_->jointNames().end()) ? -1 : std::distance(kin_->jointNames().begin(),it);
+  }
+  
+  KinematicsStructPtr kin_;
+public:
+  
+  typedef std::shared_ptr<KinematicStatus> Ptr;
+  typedef const std::shared_ptr<KinematicStatus const> ConstPtr;
+
+  // GETTER
+  const std::string&               jointName  (const size_t iAx) const { return kin_->jointNames().at(iAx);}
+  const std::vector<std::string>&  jointNames () const { return kin_->jointNames();}
+  const size_t                     nAx        () const { return kin_->nAx(); }
+  const Eigen::VectorXd&           q          () const { return q_;          }
+  const Eigen::VectorXd&           qd         () const { return qd_;         }
+  const Eigen::VectorXd&           qdd        () const { return qdd_;        }
+  const Eigen::VectorXd&           effort     () const { return effort_;     }
+
+  const double& q      (const size_t& iAx) const { if(iAx>=nAx()) throw std::runtime_error("Index out of range!");return q_     (iAx); }
+  const double& qd     (const size_t& iAx) const { if(iAx>=nAx()) throw std::runtime_error("Index out of range!");return qd_    (iAx); }
+  const double& qdd    (const size_t& iAx) const { if(iAx>=nAx()) throw std::runtime_error("Index out of range!");return qdd_   (iAx); }
+  const double& effort (const size_t& iAx) const { if(iAx>=nAx()) throw std::runtime_error("Index out of range!");return effort_(iAx); }
+
+  const double& q     (const std::string& name) const {int iAx = index(name); if(iAx==-1) throw std::runtime_error("Name not in the joint_names list"); return q     (iAx); }
+  const double& qd    (const std::string& name) const {int iAx = index(name); if(iAx==-1) throw std::runtime_error("Name not in the joint_names list"); return qd    (iAx); }
+  const double& qdd   (const std::string& name) const {int iAx = index(name); if(iAx==-1) throw std::runtime_error("Name not in the joint_names list"); return qdd   (iAx); }
+  const double& effort(const std::string& name) const {int iAx = index(name); if(iAx==-1) throw std::runtime_error("Name not in the joint_names list"); return effort(iAx); }
+
+  // SETTER
+  Eigen::VectorXd&  q          () { return q_;          }
+  Eigen::VectorXd&  qd         () { return qd_;         }
+  Eigen::VectorXd&  qdd        () { return qdd_;        }
+  Eigen::VectorXd&  effort     () { return effort_;     }
+
+  double& q      (const size_t& iAx) { return q_     (iAx); }
+  double& qd     (const size_t& iAx) { return qd_    (iAx); }
+  double& qdd    (const size_t& iAx) { return qdd_   (iAx); }
+  double& effort (const size_t& iAx) { return effort_(iAx); }
+
+  double& q     (const std::string& name) {int iAx = index(name); if(iAx==-1) throw std::runtime_error("Name not in the joint_names list"); return q     (iAx); }
+  double& qd    (const std::string& name) {int iAx = index(name); if(iAx==-1) throw std::runtime_error("Name not in the joint_names list"); return qd    (iAx); }
+  double& qdd   (const std::string& name) {int iAx = index(name); if(iAx==-1) throw std::runtime_error("Name not in the joint_names list"); return qdd   (iAx); }
+  double& effort(const std::string& name) {int iAx = index(name); if(iAx==-1) throw std::runtime_error("Name not in the joint_names list"); return effort(iAx); }
+  
+  KinematicsStructPtr getKin() const { return kin_; }
+  KinematicStatus& updateTransformation( );
+  
+  const Eigen::Affine3d&             toolPose  ( ) const { return Tbt_;       }
+  const Eigen::Matrix<double, 6, 1>& twist     ( ) const { return twist_;     }
+  const Eigen::Matrix<double, 6, 1>& twistd    ( ) const { return twistd_;    }
+  const Eigen::Matrix6Xd             jacobian  ( ) const { return jacobian_;  }
+
+  KinematicStatus() = delete;
+  KinematicStatus(KinematicsStructPtr kin);
+  KinematicStatus(const KinematicStatus& cpy);
+  KinematicStatus& operator=(const KinematicStatus& rhs);
+
+  void setZero();
+};
+
+typedef KinematicStatus::Ptr KinematicStatusPtr;
+typedef KinematicStatus::ConstPtr KinematicStatusConstPtr;
+
+
 
 }
 #endif  // CNR_CONTROLLER_INTERFACE__CNR_HANDLES_UTILS_H
