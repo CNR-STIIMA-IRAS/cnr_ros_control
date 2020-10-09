@@ -155,7 +155,6 @@ bool JointCommandController<H,T>::exitUpdate()
 #define SP std::fixed  << std::setprecision(5)
 #define TP(X) std::fixed << std::setprecision(5) << X.format(this->m_cfrmt)
 {
-
   std::stringstream report;
   bool print_report = false;
   double throttle_time = 1.0;

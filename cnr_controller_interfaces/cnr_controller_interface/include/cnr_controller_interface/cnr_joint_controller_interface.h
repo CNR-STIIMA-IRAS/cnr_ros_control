@@ -61,16 +61,16 @@ public:
 
   ~JointController();
 
-  virtual bool doInit();
-  virtual bool doStarting(const ros::Time& /*time*/);
-  virtual bool doUpdate(const ros::Time& /*time*/, const ros::Duration& /*period*/);
-  virtual bool doStopping(const ros::Time& /*time*/);
-  virtual bool doWaiting(const ros::Time& /*time*/);
-  virtual bool doAborting(const ros::Time& /*time*/);
+  virtual bool doInit() override;
+  virtual bool doStarting(const ros::Time& /*time*/) override;
+  virtual bool doUpdate(const ros::Time& /*time*/, const ros::Duration& /*period*/) override;
+  virtual bool doStopping(const ros::Time& /*time*/) override;
+  virtual bool doWaiting(const ros::Time& /*time*/) override;
+  virtual bool doAborting(const ros::Time& /*time*/) override;
 
-  virtual bool enterInit();
-  virtual bool enterStarting();
-  virtual bool enterUpdate();
+  virtual bool enterInit() override;
+  virtual bool enterStarting() override;
+  virtual bool enterUpdate() override;
 
   const Eigen::VectorXd& q                  ( ) const { return m_rstate->q(); }
   const Eigen::VectorXd& qd                 ( ) const { return m_rstate->qd(); }
@@ -113,6 +113,6 @@ protected:
 
 #include <cnr_controller_interface/internal/cnr_joint_controller_interface_impl.h>
 
-#endif
+#endif  // CNR_CONTROLLER_INTERFACE__JOINT_CONTROLLER_INTERFACE_H
 
 

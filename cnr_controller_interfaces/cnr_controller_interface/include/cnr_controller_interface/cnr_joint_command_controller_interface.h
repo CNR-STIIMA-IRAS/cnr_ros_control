@@ -64,18 +64,18 @@ public:
   enum InputType { Q_PRIORITY, QD_PRIORITY };
   ~JointCommandController();
 
-  virtual bool doInit();
-  virtual bool doStarting(const ros::Time& /*time*/);
-  virtual bool doUpdate(const ros::Time& /*time*/, const ros::Duration& /*period*/);
-  virtual bool doStopping(const ros::Time& /*time*/);
-  virtual bool doWaiting(const ros::Time& /*time*/);
-  virtual bool doAborting(const ros::Time& /*time*/);
+  virtual bool doInit() override;
+  virtual bool doStarting(const ros::Time& /*time*/) override;
+  virtual bool doUpdate(const ros::Time& /*time*/, const ros::Duration& /*period*/) override;
+  virtual bool doStopping(const ros::Time& /*time*/) override;
+  virtual bool doWaiting(const ros::Time& /*time*/) override;
+  virtual bool doAborting(const ros::Time& /*time*/) override;
 
-  virtual bool enterInit();
-  virtual bool enterStarting();
-  virtual bool enterUpdate();
-  virtual bool exitUpdate();
-  virtual bool exitStopping();
+  virtual bool enterInit() override;
+  virtual bool enterStarting() override;
+  virtual bool enterUpdate() override;
+  virtual bool exitUpdate() override;
+  virtual bool exitStopping() override;
 
   const Eigen::VectorXd& getCommandPosition    ( ) { std::lock_guard<std::mutex> lock( m_mtx); return m_target->q(); }
   const Eigen::VectorXd& getCommandVelocity    ( ) { std::lock_guard<std::mutex> lock( m_mtx); return m_target->qd(); }
@@ -125,6 +125,6 @@ private:
 
 #include <cnr_controller_interface/internal/cnr_joint_command_controller_interface_impl.h>
 
-#endif
+#endif  // CNR_CONTROLLER_INTERFACE__JOINT_COMMAND_CONTROLLER_INTERFACE_H
 
 

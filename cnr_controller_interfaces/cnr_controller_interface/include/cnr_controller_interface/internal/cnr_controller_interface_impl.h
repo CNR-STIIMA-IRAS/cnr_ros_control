@@ -36,6 +36,7 @@
 #ifndef CNR_CONTROLLER_INFERFACE_CNR_CONTROLLER_INFERFACE_IMPL_H
 #define CNR_CONTROLLER_INFERFACE_CNR_CONTROLLER_INFERFACE_IMPL_H
 
+#include <stdexcept>
 #include <mutex>
 #include <ros/ros.h>
 #include <ros/console.h>

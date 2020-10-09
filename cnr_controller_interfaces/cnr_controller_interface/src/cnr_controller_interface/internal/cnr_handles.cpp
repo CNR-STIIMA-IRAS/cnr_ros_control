@@ -1,3 +1,13 @@
+#include <memory>
+#include <thread>
+#include <cstring>
+
+#include <hardware_interface/joint_state_interface.h>
+#include <hardware_interface/joint_command_interface.h>
+#include <hardware_interface/posvel_command_interface.h>
+#include <hardware_interface/posvelacc_command_interface.h>
+#include <cnr_hardware_interface/veleff_command_interface.h>
+#include <cnr_hardware_interface/posveleff_command_interface.h>
 #include <cnr_controller_interface/utils/cnr_kinematics_utils.h>
 #include <cnr_controller_interface/internal/cnr_handles.h>
 
@@ -78,11 +88,7 @@ HandleIndexes get_index_map(const std::vector<std::string>& names, cnr_controlle
   return ret;
 }
 
-
-
 }
-
-
 
 // streaming status of the handle (by reference)
 std::ostream& operator<<(std::ostream& os, hardware_interface::JointHandle& rhs)

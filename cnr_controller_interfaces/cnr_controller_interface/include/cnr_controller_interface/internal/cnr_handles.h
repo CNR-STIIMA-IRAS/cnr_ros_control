@@ -1,5 +1,5 @@
-#ifndef CNR_CONTROLLER_INTERFACE__CNR_HANDLES_UTILS_H
-#define CNR_CONTROLLER_INTERFACE__CNR_HANDLES_UTILS_H
+#ifndef CNR_CONTROLLER_INTERFACE__CNR_HANDLES__H
+#define CNR_CONTROLLER_INTERFACE__CNR_HANDLES__H
 
 #include <map>
 #include <cnr_controller_interface/utils/cnr_kinematics_utils.h>
@@ -26,7 +26,7 @@ HandleIndexes get_index_map(const std::vector<std::string>& names, cnr_controlle
 
 struct HandlerBase
 {
-  bool initialized_=false;
+  bool initialized_ = false;
   HandleIndexes indexes_;
 
   template<class H>
@@ -276,4 +276,4 @@ std::ostream& operator<<(std::ostream& os, hardware_interface::JointStateHandle 
 std::ostream& operator<<(std::ostream& os, hardware_interface::VelEffJointHandle rhs);
 std::ostream& operator<<(std::ostream& os, hardware_interface::PosVelEffJointHandle rhs);
 
-#endif  // CNR_CONTROLLER_INTERFACE__CNR_HANDLES_UTILS_H
+#endif  // CNR_CONTROLLER_INTERFACE__CNR_HANDLES__H
