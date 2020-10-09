@@ -40,8 +40,7 @@
 #include <ros/ros.h>
 #include <cnr_logger/cnr_logger.h>
 #include <cnr_controller_interface/cnr_controller_interface.h>
-
-
+#include <cnr_controller_interface/internal/cnr_handles.h>
 #include <cnr_controller_interface/utils/cnr_kinematics_utils.h>
 
 namespace cnr_controller_interface
@@ -55,8 +54,8 @@ namespace cnr_controller_interface
  *
  * Base class to log the controller status
  */
-template< class T >
-class JointController: public cnr_controller_interface::Controller< T >
+template<class H, class T>
+class JointController: public cnr_controller_interface::Controller<T>
 {
 public:
 
@@ -73,37 +72,38 @@ public:
   virtual bool enterStarting();
   virtual bool enterUpdate();
 
-  const size_t& nAx                         ( ) const { return m_kin->nAx(); }
-  const Eigen::VectorXd& q                  ( ) const { return m_state->q; }
-  const Eigen::VectorXd& qd                 ( ) const { return m_state->qd; }
-  const Eigen::VectorXd& qdd                ( ) const { return m_state->qdd; }
-  const Eigen::VectorXd& effort             ( ) const { return m_state->effort; }
-  const Eigen::VectorXd& upperLimit         ( ) const { return m_kin->upperLimit       (); }
-  const Eigen::VectorXd& lowerLimit         ( ) const { return m_kin->lowerLimit       (); }
-  const Eigen::VectorXd& speedLimit         ( ) const { return m_kin->speedLimit       (); }
-  const Eigen::VectorXd& accelerationLimit  ( ) const { return m_kin->accelerationLimit(); }
-  const std::vector<std::string>& jointNames( ) const { return m_kin->jointNames       (); }
-  const std::vector<std::string>& linkNames ( ) const { return m_kin->linkNames        (); }
-  const double& q                  (size_t iAx) const { return m_state->q(iAx); }
-  const double& qd                 (size_t iAx) const { return m_state->qd(iAx); }
-  const double& qdd                (size_t iAx) const { return m_state->qdd(iAx); }
-  const double& effort             (size_t iAx) const { return m_state->effort(iAx); }
-  const double& upperLimit         (size_t iAx) const { return m_kin->upperLimit       (iAx);}
-  const double& lowerLimit         (size_t iAx) const { return m_kin->lowerLimit       (iAx);}
-  const double& speedLimit         (size_t iAx) const { return m_kin->speedLimit       (iAx);}
-  const double& accelerationLimit  (size_t iAx) const { return m_kin->accelerationLimit(iAx);}
-  const std::string& jointName     (size_t iAx) const { return m_kin->jointName        (iAx);}
+  const Eigen::VectorXd& q                  ( ) const { return m_rstate->q(); }
+  const Eigen::VectorXd& qd                 ( ) const { return m_rstate->qd(); }
+  const Eigen::VectorXd& qdd                ( ) const { return m_rstate->qdd(); }
+  const Eigen::VectorXd& effort             ( ) const { return m_rstate->effort(); }
+  const double& q                  (size_t iAx) const { return m_rstate->q(iAx); }
+  const double& qd                 (size_t iAx) const { return m_rstate->qd(iAx); }
+  const double& qdd                (size_t iAx) const { return m_rstate->qdd(iAx); }
+  const double& effort             (size_t iAx) const { return m_rstate->effort(iAx); }
 
-  const std::string& baseLink    ( ) const { return m_kin->baseLink(); }
-  const std::string& baseFrame   ( ) const { return baseLink();       }
-  const std::string& toolLink    ( ) const { return m_kin->toolLink(); }
-  const std::string& toolFrame   ( ) const { return toolLink();       }
-  const Eigen::Affine3d& toolPose( ) const { return m_kin->toolPose(); }
-
+  const size_t& nAx                         ( ) const { return m_rkin->nAx(); }
+  const Eigen::VectorXd&  upperLimit        ( ) const { return m_rkin->upperLimit       (); }
+  const Eigen::VectorXd&  lowerLimit        ( ) const { return m_rkin->lowerLimit       (); }
+  const Eigen::VectorXd&  speedLimit        ( ) const { return m_rkin->speedLimit       (); }
+  const Eigen::VectorXd&  accelerationLimit ( ) const { return m_rkin->accelerationLimit(); }
+  const std::string&      baseLink          ( ) const { return m_rkin->baseLink(); }
+  const std::string&      baseFrame         ( ) const { return baseLink();       }
+  const std::string&      toolLink          ( ) const { return m_rkin->toolLink(); }
+  const std::string&      toolFrame         ( ) const { return toolLink();       }
+  const Eigen::Affine3d&  toolPose          ( ) const { return m_rstate->toolPose(); }
+  const double& upperLimit         (size_t iAx) const { return m_rkin->upperLimit       (iAx);}
+  const double& lowerLimit         (size_t iAx) const { return m_rkin->lowerLimit       (iAx);}
+  const double& speedLimit         (size_t iAx) const { return m_rkin->speedLimit       (iAx);}
+  const double& accelerationLimit  (size_t iAx) const { return m_rkin->accelerationLimit(iAx);}
+  const std::vector<std::string>& jointNames( ) const { return m_rkin->jointNames       (); }
+  const std::vector<std::string>& linkNames ( ) const { return m_rkin->linkNames        (); }
+  const std::string& jointName     (size_t iAx) const { return m_rkin->jointName        (iAx);}
+  const std::string& linkName      (size_t iAx) const { return m_rkin->linkNames        (iAx);} 
 protected:
-
-  KinematicsStructPtr m_kin;
-  KinematicStatusPtr  m_state;
+  
+  Handler<H,T>        m_handler; 
+  KinematicsStructPtr m_rkin;
+  KinematicStatusPtr  m_rstate;
 
   std::mutex m_mtx;
   Eigen::IOFormat m_cfrmt;
@@ -111,7 +111,7 @@ protected:
 
 } // cnr_controller_interface
 
-#include <cnr_controller_interface/cnr_joint_controller_interface_impl.h>
+#include <cnr_controller_interface/internal/cnr_joint_controller_interface_impl.h>
 
 #endif
 

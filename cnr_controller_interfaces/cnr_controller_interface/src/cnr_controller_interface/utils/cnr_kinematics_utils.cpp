@@ -9,43 +9,6 @@ namespace cnr_controller_interface
 {
 
 
-void KinematicStatus::resize(const std::vector<std::string>& names)
-{
-  this->joint_names = names;
-  this->q     .resize(joint_names.size());
-  this->qd    .resize(joint_names.size());
-  this->qdd   .resize(joint_names.size());
-  this->effort.resize(joint_names.size());
-  this->setZero();
-}
-
-void KinematicStatus::setZero()
-{
-  this->q     .setZero();
-  this->qd    .setZero();
-  this->qdd   .setZero();
-  this->effort.setZero();
-}
-
-KinematicStatus::KinematicStatus(const KinematicStatus& cpy)
-{
-  this->joint_names = cpy.joint_names;
-  this->q           = q     ;
-  this->qd          = qd    ;
-  this->qdd         = qdd   ;
-  this->effort      = effort;
-}
-
-KinematicStatus& KinematicStatus::operator=(const KinematicStatus& rhs)
-{
-  this->joint_names = rhs.joint_names;
-  this->q           = rhs.q     ;
-  this->qd          = rhs.qd    ;
-  this->qdd         = rhs.qdd   ;
-  this->effort      = rhs.effort;
-  return *this;
-}
-
 
 rosdyn::ChainPtr  KinematicsStruct::getChain  ( const std::string& from, const std::string& to)
 {
@@ -53,13 +16,6 @@ rosdyn::ChainPtr  KinematicsStruct::getChain  ( const std::string& from, const s
   gravity << 0, 0, -9.806;
   rosdyn::ChainPtr chain = rosdyn::createChain(*m_model,from,to,gravity);
   return chain;
-}
-
-void KinematicsStruct::updateTransformation(const KinematicStatus& state)
-{
-  m_Tbt   = m_chain->getTransformation(state.q);
-  m_J     = m_chain->getJacobian(state.q);
-  m_twist = m_J * state.qd;
 }
 
 void get_joint_names(ros::NodeHandle* nh, std::vector<std::string>& names)
@@ -391,6 +347,59 @@ bool KinematicsStruct::saturatePosition(Eigen::Ref<Eigen::VectorXd> q_next, std:
   }
 
   return (dq.cwiseAbs().maxCoeff()>0.0);
+}
+
+KinematicStatus::KinematicStatus(KinematicsStructPtr kin) 
+: kin_(kin) 
+{   
+  assert(kin); 
+  this->q_     .resize(this->kin_->nAx());
+  this->qd_    .resize(this->kin_->nAx());
+  this->qdd_   .resize(this->kin_->nAx());
+  this->effort_.resize(this->kin_->nAx());
+  this->setZero();
+} 
+
+void KinematicStatus::setZero()
+{
+  this->q_     .setZero();
+  this->qd_    .setZero();
+  this->qdd_   .setZero();
+  this->effort_.setZero();
+  updateTransformation();
+}
+
+KinematicStatus::KinematicStatus(const KinematicStatus& cpy)
+{
+  this->kin_         = cpy.kin_   ;
+  this->q_           = cpy.q_     ;
+  this->qd_          = cpy.qd_    ;
+  this->qdd_         = cpy.qdd_   ;
+  this->effort_      = cpy.effort_;
+  updateTransformation();
+  
+}
+
+KinematicStatus& KinematicStatus::operator=(const KinematicStatus& rhs)
+{
+  this->kin_         = rhs.kin_   ;
+  this->q_           = rhs.q_     ;
+  this->qd_          = rhs.qd_    ;
+  this->qdd_         = rhs.qdd_   ;
+  this->effort_      = rhs.effort_;
+  updateTransformation();
+  return *this;
+}
+
+
+KinematicStatus& KinematicStatus::updateTransformation( )
+{
+  Tbt_      = kin_->getChain()->getTransformation(this->q());
+  jacobian_ = kin_->getChain()->getJacobian(this->q());
+  twist_    = kin_->getChain()->getTwistTool(this->q(), this->qd());
+  twistd_   = kin_->getChain()->getDTwistTool(this->q(), this->qd(),this->qdd());
+  
+  return *this;
 }
 
 

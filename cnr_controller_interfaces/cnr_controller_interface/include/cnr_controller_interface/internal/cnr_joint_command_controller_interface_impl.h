@@ -39,7 +39,7 @@
 #include <ros/ros.h>
 #include <cnr_logger/cnr_logger.h>
 #include <cnr_controller_interface/utils/cnr_kinematics_utils.h>
-#include <cnr_controller_interface/utils/cnr_handles_utils.h>
+#include <cnr_controller_interface/internal/cnr_handles.h>
 #include <cnr_controller_interface/cnr_joint_command_controller_interface.h>
 
 #include <urdf_model/model.h>
@@ -48,66 +48,67 @@
 namespace cnr_controller_interface
 {
 
-template< class T >
-JointCommandController< T >::~JointCommandController()
+template<class H, class T>
+JointCommandController<H,T>::~JointCommandController()
 {
   CNR_TRACE_START(*cnr_controller_interface::Controller< T >::m_logger);
 }
 
-template< class T >
-bool JointCommandController< T >::doInit()
+template<class H, class T>
+bool JointCommandController<H,T>::doInit()
 {
   return true;
 }
 
-template< class T >
-bool JointCommandController<T>::doStarting(const ros::Time& /*time*/)
+template<class H, class T>
+bool JointCommandController<H,T>::doStarting(const ros::Time& /*time*/)
 {
   return true;
 }
 
-template< class T >
-bool JointCommandController<T>::doUpdate(const ros::Time& /*time*/, const ros::Duration& /*period*/)
+template<class H, class T>
+bool JointCommandController<H,T>::doUpdate(const ros::Time& /*time*/, const ros::Duration& /*period*/)
 {
   return true;
 }
 
-template< class T >
-bool JointCommandController<T>::doStopping(const ros::Time& /*time*/)
+template<class H, class T>
+bool JointCommandController<H,T>::doStopping(const ros::Time& /*time*/)
 {
   return true;
 }
 
-template< class T >
-bool JointCommandController<T>::doWaiting(const ros::Time& /*time*/)
+template<class H, class T>
+bool JointCommandController<H,T>::doWaiting(const ros::Time& /*time*/)
 {
   return true;
 }
 
-template< class T >
-bool JointCommandController<T>::doAborting(const ros::Time& /*time*/)
+template<class H, class T>
+bool JointCommandController<H,T>::doAborting(const ros::Time& /*time*/)
 {
   return true;
 }
 
-template< class T >
-bool JointCommandController<T>::enterInit()
+template<class H, class T>
+bool JointCommandController<H,T>::enterInit()
 {
-  CNR_TRACE_START(*(this->m_logger));
-  if (!JointController<T>::enterInit())
+  CNR_TRACE_START(this->m_logger);
+  if (!JointController<H,T>::enterInit())
   {
-    CNR_RETURN_FALSE(*(this->m_logger));
+    CNR_RETURN_FALSE(this->m_logger);
   }
 
-  m_priority.reset();
-  m_target.resize(this->m_kin->jointNames());
+  m_priority = QD_PRIORITY;
+  m_target.reset(new cnr_controller_interface::KinematicStatus(this->m_rkin));
+  m_last_target.reset(new cnr_controller_interface::KinematicStatus(this->m_rkin));
 
  this->template add_subscriber<std_msgs::Int64>("/speed_ovr" , 1,
-                     boost::bind(&JointCommandController<T>::overrideCallback, this, _1), false);
+                     boost::bind(&JointCommandController<H,T>::overrideCallback, this, _1), false);
  this->template add_subscriber<std_msgs::Int64>("/safe_ovr_1", 1,
-                     boost::bind(&JointCommandController<T>::safeOverrideCallback_1, this, _1), false);
+                     boost::bind(&JointCommandController<H,T>::safeOverrideCallback_1, this, _1), false);
  this->template add_subscriber<std_msgs::Int64>("/safe_ovr_2", 1,
-                     boost::bind(&JointCommandController<T>::safeOverrideCallback_2, this, _1), false);
+                     boost::bind(&JointCommandController<H,T>::safeOverrideCallback_2, this, _1), false);
 
   if(!(this->getControllerNh().getParam("max_velocity_multiplier", m_max_velocity_multiplier)) )
   {
@@ -118,37 +119,39 @@ bool JointCommandController<T>::enterInit()
   m_safe_override_1 = 1;
   m_safe_override_2 = 1;
 
-  CNR_RETURN_TRUE(*(this->m_logger));
+  CNR_RETURN_TRUE(this->m_logger);
 }
 
-template< class T >
-bool JointCommandController<T>::enterStarting()
+template<class H, class T>
+bool JointCommandController<H,T>::enterStarting()
 {
-  CNR_TRACE_START(*(this->m_logger));
-  if (!JointController<T>::enterStarting())
+  CNR_TRACE_START(this->m_logger);
+  if (!JointController<H,T>::enterStarting())
   {
-    CNR_RETURN_FALSE(*(this->m_logger));
+    CNR_RETURN_FALSE(this->m_logger);
   }
 
-  m_target.q  = this->m_state->q;
-
-  CNR_RETURN_TRUE(*(this->m_logger));
+  m_target->setZero();
+  m_target->q() = this->m_rstate->q();
+  m_target->updateTransformation();
+  
+  CNR_RETURN_TRUE(this->m_logger);
 }
 
-template< class T >
-bool JointCommandController<T>::enterUpdate()
+template<class H, class T>
+bool JointCommandController<H,T>::enterUpdate()
 {
   CNR_TRACE_START_THROTTLE_DEFAULT(*this->m_logger);
-  if (!JointController<T>::enterUpdate())
+  if (!JointController<H,T>::enterUpdate())
   {
-    CNR_RETURN_FALSE(*(this->m_logger));
+    CNR_RETURN_FALSE(this->m_logger);
   }
-  m_last_target = m_target;
+  *m_last_target = *m_target;
   CNR_RETURN_TRUE_THROTTLE_DEFAULT(*this->m_logger);
 }
 
-template< class T >
-bool JointCommandController<T>::exitUpdate()
+template<class H, class T>
+bool JointCommandController<H,T>::exitUpdate()
 #define SP std::fixed  << std::setprecision(5)
 #define TP(X) std::fixed << std::setprecision(5) << X.format(this->m_cfrmt)
 {
@@ -158,35 +161,31 @@ bool JointCommandController<T>::exitUpdate()
   double throttle_time = 1.0;
   CNR_TRACE_START_THROTTLE_DEFAULT(*this->m_logger);
 
-  if(!m_priority)
-  {
-    CNR_RETURN_FALSE(*this->m_logger, "The scaling priority is not set (do it in the intherited function doInit())");
-  }
   try
   {
     report << "==========\n";
-    report << "Priorty            : " << std::to_string(*m_priority) << "\n";
-    report << "upper limit        : " << TP(this->m_kin->upperLimit().transpose()) << "\n";
-    report << "lower limit        : " << TP(this->m_kin->lowerLimit().transpose()) << "\n";
-    report << "Speed Limit        : " << TP(this->m_kin->speedLimit().transpose()) << "\n";
-    report << "Acceleration Limit : " << TP(this->m_kin->accelerationLimit().transpose()) << "\n";
+    report << "Priorty            : " << std::to_string(m_priority) << "\n";
+    report << "upper limit        : " << TP(this->m_rkin->upperLimit().transpose()) << "\n";
+    report << "lower limit        : " << TP(this->m_rkin->lowerLimit().transpose()) << "\n";
+    report << "Speed Limit        : " << TP(this->m_rkin->speedLimit().transpose()) << "\n";
+    report << "Acceleration Limit : " << TP(this->m_rkin->accelerationLimit().transpose()) << "\n";
     report << "----------\n";
     // ============================== ==============================
     ROS_DEBUG_ONCE("Set Target according to Priority");
-    Eigen::VectorXd nominal_qd(this->m_kin->nAx()); nominal_qd.setZero();
-    if(*m_priority == Q_PRIORITY)
+    Eigen::VectorXd nominal_qd(this->m_rkin->nAx()); nominal_qd.setZero();
+    if(m_priority == Q_PRIORITY)
     {
-      if(std::isnan(m_target.q.norm()))
+      if(std::isnan(m_target->q().norm()))
       {
         print_report = true;
         report << "SAFETY CHECK - Received a position with nan values... superimposed to zero!\n";
-        m_target.q = m_last_target.q;
+        m_target->q() = m_last_target->q();
       }
-      nominal_qd = (m_target.q - m_last_target.q) / this->m_dt.toSec();
+      nominal_qd = (m_target->q() - m_last_target->q()) / this->m_dt.toSec();
     }
-    else if(*m_priority == QD_PRIORITY)
+    else if(m_priority == QD_PRIORITY)
     {
-      nominal_qd = m_target.qd;
+      nominal_qd = m_target->qd();
       if(std::isnan(nominal_qd.norm()))
       {
         print_report = true;
@@ -200,7 +199,7 @@ bool JointCommandController<T>::exitUpdate()
     // ============================== ==============================
     Eigen::VectorXd saturated_qd = nominal_qd;
     
-    if(this->m_kin->saturateSpeed(saturated_qd, this->qd(), this->q(), 
+    if(this->m_rkin->saturateSpeed(saturated_qd, this->qd(), this->q(), 
                                this->m_sampling_period, m_max_velocity_multiplier, true, &report))
     {
       print_report = true;
@@ -210,18 +209,15 @@ bool JointCommandController<T>::exitUpdate()
   catch(...)
   {
     CNR_WARN(*this->logger(),"something wrong in JointTargetFilter::update");
-    m_target.q  = m_last_target.q;
-    m_target.qd.setZero();
+    m_target->q()  = m_last_target->q();
+    m_target->qd().setZero();
   }
 
-  report<< "q  trg: " << TP(m_target.q.transpose()) << "\n";
-  report<< "qd trg: " << TP(m_target.qd.transpose()) << "\n";
-  report<< "ef trg: " << TP(m_target.effort.transpose()) << "\n";
+  report<< "q  trg: " << TP(m_target->q().transpose()) << "\n";
+  report<< "qd trg: " << TP(m_target->qd().transpose()) << "\n";
+  report<< "ef trg: " << TP(m_target->effort().transpose()) << "\n";
 
-  if(!set_to_hw(getPtr(m_target), this->m_hw))
-  {
-    CNR_RETURN_FALSE(*(this->m_logger), "Error in download the data to the HW.");
-  }
+  this->m_handler << m_target;
 
   for (size_t iAx = 0; iAx<this->jointNames().size(); iAx++)
   {
@@ -229,48 +225,45 @@ bool JointCommandController<T>::exitUpdate()
   }
 
   CNR_WARN_COND_THROTTLE(this->logger(), print_report, throttle_time, report.str() );
-
-
-  if (!JointController<T>::exitUpdate())
+  if (!JointController<H,T>::exitUpdate())
   {
-    CNR_RETURN_FALSE(*(this->m_logger));
+    CNR_RETURN_FALSE(this->m_logger);
   }
 
-  CNR_RETURN_TRUE_THROTTLE_DEFAULT(*(this->m_logger));
+  CNR_RETURN_TRUE_THROTTLE_DEFAULT(this->m_logger);
 #undef TP
 #undef SP
 }
 
-template< class T >
-bool JointCommandController<T>::exitStopping()
+template<class H, class T>
+bool JointCommandController<H,T>::exitStopping()
 {
-  CNR_TRACE_START(*(this->m_logger));
+  CNR_TRACE_START(this->m_logger);
 
-  for (unsigned int iAx=0; iAx<this->m_kin->nAx(); iAx++)
+  for (unsigned int iAx=0; iAx<this->m_rkin->nAx(); iAx++)
   {
-    m_target.q(iAx) = this->m_state->q(iAx);
+    m_target->q(iAx) = this->m_rstate->q(iAx);
   }
-  m_target.qd.setZero();
-  set_to_hw(getPtr(m_target), this->m_hw);
+  m_target->qd().setZero();
+  this->m_handler << m_target;
 
-  if (!JointController<T>::exitStopping())
+  if (!JointController<H,T>::exitStopping())
   {
-    CNR_RETURN_FALSE(*(this->m_logger));
+    CNR_RETURN_FALSE(this->m_logger);
   }
-
   m_last_target = m_target;
 
-  CNR_RETURN_TRUE(*(this->m_logger));
+  CNR_RETURN_TRUE(this->m_logger);
 }
 
-template<class T>
-double JointCommandController<T>::getTargetOverride() const
+template<class H, class T>
+double JointCommandController<H,T>::getTargetOverride() const
 {
   return m_override * m_safe_override_1 * m_safe_override_2;
 }
 
-template< class T>
-void JointCommandController<T>::overrideCallback(const std_msgs::Int64ConstPtr& msg)
+template<class H, class T>
+void JointCommandController<H,T>::overrideCallback(const std_msgs::Int64ConstPtr& msg)
 {
   double ovr;
   if (msg->data > 100)
@@ -282,8 +275,8 @@ void JointCommandController<T>::overrideCallback(const std_msgs::Int64ConstPtr& 
   m_override = ovr;
 }
 
-template< class T>
-void JointCommandController<T>::safeOverrideCallback_1(const std_msgs::Int64ConstPtr& msg)
+template<class H, class T>
+void JointCommandController<H,T>::safeOverrideCallback_1(const std_msgs::Int64ConstPtr& msg)
 {
   double ovr;
   if (msg->data > 100)
@@ -295,8 +288,8 @@ void JointCommandController<T>::safeOverrideCallback_1(const std_msgs::Int64Cons
   m_safe_override_1 = ovr;
 }
 
-template< class T>
-void JointCommandController<T>::safeOverrideCallback_2(const std_msgs::Int64ConstPtr& msg)
+template<class H, class T>
+void JointCommandController<H,T>::safeOverrideCallback_2(const std_msgs::Int64ConstPtr& msg)
 {
   double ovr;
   if (msg->data > 100)
