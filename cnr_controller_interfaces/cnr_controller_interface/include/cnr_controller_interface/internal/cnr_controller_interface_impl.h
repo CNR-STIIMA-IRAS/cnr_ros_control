@@ -214,7 +214,7 @@ template< class T >
 void Controller< T >::starting(const ros::Time& time)
 {
   CNR_TRACE_START(m_logger);
-  if (enterStarting() && doStarting(time) && exitStarting())
+  if(enterStarting() && doStarting(time) && exitStarting())
   {
     dump_state("RUNNING");
     CNR_RETURN_OK(m_logger, void(), "Starting Ok! Ready to go!");
@@ -359,7 +359,14 @@ bool Controller< T >::enterUpdate()
   if (!callAvailable( ))
   {
     dump_state("CALLBACK_TIMEOUT_ERROR");
-    CNR_RETURN_FALSE_THROTTLE(m_logger, 5.0);
+    CNR_RETURN_FALSE_THROTTLE(m_logger, 5.0, "Callback Timeout Error");
+  }
+
+  std::string status;
+  m_controller_nh.getParam(cnr_controller_interface::last_status_param(m_hw_name, m_ctrl_name), status);
+  if( status != "RUNNING" )
+  {
+    CNR_RETURN_FALSE_THROTTLE(m_logger, 5.0, "The status is not 'RUNNING' as expected. Abort.");    
   }
   //CNR_RETURN_TRUE_THROTTLE(m_logger);
   return true;
