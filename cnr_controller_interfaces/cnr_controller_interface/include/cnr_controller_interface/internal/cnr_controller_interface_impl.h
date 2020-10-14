@@ -355,7 +355,7 @@ bool Controller< T >::exitStarting()
 template< class T >
 bool Controller< T >::enterUpdate()
 {
-  //CNR_TRACE_START_THROTTLE(m_logger, 10.0);
+  CNR_TRACE_START_THROTTLE_DEFAULT(m_logger);
   if (!callAvailable( ))
   {
     dump_state("CALLBACK_TIMEOUT_ERROR");
@@ -368,8 +368,7 @@ bool Controller< T >::enterUpdate()
   {
     CNR_RETURN_FALSE_THROTTLE(m_logger, 5.0, "The status is not 'RUNNING' as expected. Abort.");    
   }
-  //CNR_RETURN_TRUE_THROTTLE(m_logger);
-  return true;
+  CNR_RETURN_TRUE_THROTTLE_DEFAULT(m_logger);
 }
 
 template< class T >
