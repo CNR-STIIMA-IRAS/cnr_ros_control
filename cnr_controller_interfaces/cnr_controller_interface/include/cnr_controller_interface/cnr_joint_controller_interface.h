@@ -41,7 +41,7 @@
 #include <cnr_logger/cnr_logger.h>
 #include <cnr_controller_interface/cnr_controller_interface.h>
 #include <cnr_controller_interface/internal/cnr_handles.h>
-#include <cnr_controller_interface/utils/cnr_kinematics_utils.h>
+#include <rosdyn_core/chain_state.h>
 
 namespace cnr_controller_interface
 {
@@ -102,8 +102,8 @@ public:
 protected:
   
   Handler<H,T>        m_handler; 
-  KinematicsStructPtr m_rkin;
-  KinematicStatusPtr  m_rstate;
+  rosdyn::ChainInterfacePtr m_rkin;
+  rosdyn::ChainStatePtr  m_rstate;
 
   std::mutex m_mtx;
   Eigen::IOFormat m_cfrmt;

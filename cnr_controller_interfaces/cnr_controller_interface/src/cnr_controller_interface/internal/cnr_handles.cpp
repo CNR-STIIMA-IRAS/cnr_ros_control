@@ -8,35 +8,35 @@
 #include <hardware_interface/posvelacc_command_interface.h>
 #include <cnr_hardware_interface/veleff_command_interface.h>
 #include <cnr_hardware_interface/posveleff_command_interface.h>
-#include <cnr_controller_interface/utils/cnr_kinematics_utils.h>
+#include <rosdyn_core/chain_state.h>
 #include <cnr_controller_interface/internal/cnr_handles.h>
 
 namespace cnr_controller_interface
 {
   
-const KinematicStatus * const getPtr( const KinematicStatusConstPtr& in)
+const rosdyn::ChainState * const getPtr( const rosdyn::ChainStateConstPtr& in)
 {
   return in.get();
 }
 
-const KinematicStatus * const getPtr( const KinematicStatus& in)
+const rosdyn::ChainState * const getPtr( const rosdyn::ChainState& in)
 {
   return &in;
 }
 
 
-KinematicStatus* getPtr(KinematicStatusPtr& in)
+rosdyn::ChainState* getPtr(rosdyn::ChainStatePtr& in)
 {
   return in.get();
 }
 
-KinematicStatus* getPtr( KinematicStatus& in)
+rosdyn::ChainState* getPtr( rosdyn::ChainState& in)
 {
   return &in;
 }
 
 
-HandleIndexes get_index_map(const std::vector<std::string>& names, cnr_controller_interface::KinematicsStructConstPtr ks)
+HandleIndexes get_index_map(const std::vector<std::string>& names, rosdyn::ChainInterfaceConstPtr ks)
 { 
   HandleIndexes ret;
   try
@@ -63,7 +63,7 @@ HandleIndexes get_index_map(const std::vector<std::string>& names, cnr_controlle
 
 
 
-HandleIndexes get_index_map(const std::vector<std::string>& names, cnr_controller_interface::KinematicStatusConstPtr ks)
+HandleIndexes get_index_map(const std::vector<std::string>& names, rosdyn::ChainStateConstPtr ks)
 { 
   HandleIndexes ret;
   try

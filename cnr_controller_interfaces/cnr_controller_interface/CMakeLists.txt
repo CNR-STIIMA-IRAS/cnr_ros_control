@@ -35,8 +35,7 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME} src/cnr_controller_interface/cnr_controller_interface.cpp
-                            src/cnr_controller_interface/internal/cnr_handles.cpp 
-                            src/cnr_controller_interface/utils/cnr_kinematics_utils.cpp  )
+                            src/cnr_controller_interface/internal/cnr_handles.cpp )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_SYSTEM_LIBRARY} Eigen3::Eigen)
 
 

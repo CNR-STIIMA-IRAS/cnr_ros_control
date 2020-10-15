@@ -85,10 +85,6 @@ protected:
   std::vector<double> m_cmd_vel; //target velocity
   std::vector<double> m_cmd_eff; //target effort
 
-  std::mutex m_mutex;
-
-  enum status { created, initialized, run, error };
-
   friend void setParam(FakeRobotHW* hw, const std::string& ns);
 
 };

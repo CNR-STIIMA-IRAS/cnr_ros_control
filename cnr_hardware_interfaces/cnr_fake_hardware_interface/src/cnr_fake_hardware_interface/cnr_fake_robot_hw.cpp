@@ -34,7 +34,7 @@
  */
 #include <pluginlib/class_list_macros.h>
 
-#include <cnr_controller_interface/internal/utils.h>
+#include <cnr_controller_interface/utils/utils.h>
 #include <cnr_hardware_interface/cnr_robot_hw.h>
 #include <cnr_fake_hardware_interface/cnr_fake_robot_hw.h>
 
@@ -64,8 +64,6 @@ FakeRobotHW::FakeRobotHW()
 
 FakeRobotHW::~FakeRobotHW()
 {
-  m_mutex.lock();
-  m_mutex.unlock();
   if (!m_shutted_down)
   {
     shutdown();
@@ -291,18 +289,8 @@ bool FakeRobotHW::doCheckForConflict(const std::list< hardware_interface::Contro
           {
             if (global_joint_used.at(iJ)) // if already used by another
             {
-              ROS_ERROR("Joint %s is already used by another controller", name.c_str());
-              diagnostic_msgs::DiagnosticStatus diag;
-              diag.name = m_robothw_nh.getNamespace();
-              diag.hardware_id = m_robothw_nh.getNamespace();
-              diag.level = diagnostic_msgs::DiagnosticStatus::ERROR;
-              diag.message = "Hardware interface " + m_robothw_nh.getNamespace() + " run time: Joint "
-                           + name + " is already used by another controller";
-
-              std::lock_guard<std::mutex> lock(m_mutex);
-              m_diagnostic.status.push_back(diag);
-
-              CNR_RETURN_TRUE(*m_logger, diag.message);
+              add_diagnostic_message("ERROR", "Joint " + name + " is already used by another controller", {{"Transition", "switching"}}, true);
+              CNR_RETURN_TRUE(*m_logger, "Joint " + name + " is already used by another controller");
             }
             else
             {

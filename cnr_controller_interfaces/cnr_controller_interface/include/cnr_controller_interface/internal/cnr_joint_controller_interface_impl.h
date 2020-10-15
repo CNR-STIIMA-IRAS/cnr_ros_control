@@ -35,9 +35,10 @@
 #ifndef CNR_CONTOLLER_INTERFACE__CNR_JOINT_CONTROLLER_INTERFACE_IMPL_H
 #define CNR_CONTOLLER_INTERFACE__CNR_JOINT_CONTROLLER_INTERFACE_IMPL_H
 
+#include <sstream>
 #include <ros/ros.h>
 #include <cnr_logger/cnr_logger.h>
-#include <cnr_controller_interface/utils/cnr_kinematics_utils.h>
+#include <rosdyn_core/chain_state.h>
 #include <cnr_controller_interface/internal/cnr_handles.h>
 #include <cnr_controller_interface/cnr_joint_controller_interface.h>
 #include <rosdyn_core/primitives.h>
@@ -99,10 +100,26 @@ bool JointController<H,T>::enterInit()
   {
     CNR_RETURN_FALSE(this->m_logger);
   }
-  m_rkin.reset(new KinematicsStruct());
-  m_rkin->init(Controller<T>::m_logger, Controller<T>::getRootNh(), Controller<T>::getControllerNh());
+  m_rkin.reset(new rosdyn::ChainInterface());
+  std::stringstream report;
+  if(m_rkin->init(Controller<T>::getRootNh(), Controller<T>::getControllerNh(),report))
+  {
+    if(report.str().length()>0)
+    {
+      CNR_INFO(this->logger(), report.str() );
+    }
+  }
+  else
+  {
+    if(report.str().length()>0)
+    {
+      CNR_ERROR(this->logger(), report.str() );
+    }
+    CNR_RETURN_FALSE(this->logger());
+  }
+  
 
-  m_rstate.reset(new KinematicStatus(m_rkin));
+  m_rstate.reset(new rosdyn::ChainState(m_rkin));
   for (unsigned int iAx=0; iAx<m_rkin->nAx(); iAx++)
   {
     try

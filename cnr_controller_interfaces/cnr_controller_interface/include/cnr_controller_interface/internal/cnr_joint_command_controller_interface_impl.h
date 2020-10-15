@@ -38,7 +38,7 @@
 #include <std_msgs/Int64.h>
 #include <ros/ros.h>
 #include <cnr_logger/cnr_logger.h>
-#include <cnr_controller_interface/utils/cnr_kinematics_utils.h>
+#include <rosdyn_core/chain_state.h>
 #include <cnr_controller_interface/internal/cnr_handles.h>
 #include <cnr_controller_interface/cnr_joint_command_controller_interface.h>
 
@@ -100,8 +100,8 @@ bool JointCommandController<H,T>::enterInit()
   }
 
   m_priority = QD_PRIORITY;
-  m_target.reset(new cnr_controller_interface::KinematicStatus(this->m_rkin));
-  m_last_target.reset(new cnr_controller_interface::KinematicStatus(this->m_rkin));
+  m_target.reset(new rosdyn::ChainState(this->m_rkin));
+  m_last_target.reset(new rosdyn::ChainState(this->m_rkin));
 
  this->template add_subscriber<std_msgs::Int64>("/speed_ovr" , 1,
                      boost::bind(&JointCommandController<H,T>::overrideCallback, this, _1), false);

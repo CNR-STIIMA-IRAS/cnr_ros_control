@@ -48,7 +48,7 @@
 #include <diagnostic_msgs/DiagnosticArray.h>
 #include <diagnostic_updater/DiagnosticStatusWrapper.h>
 #include <cnr_logger/cnr_logger.h>
-#include <cnr_controller_interface/internal/utils.h>
+#include <cnr_controller_interface/utils/utils.h>
 #include <realtime_utilities/time_span_tracker.h>
 #include <subscription_notifier/subscription_notifier.h>
 
@@ -77,30 +77,30 @@ bool                     check_state(const std::string& hw_name,
 template<class SharedPointer> 
 struct Holder 
 {
-    SharedPointer p;
+  SharedPointer p;
 
-    Holder(const SharedPointer &p) : p(p) {}
-    Holder(const Holder &other) : p(other.p) {}
-    Holder(Holder &&other) : p(std::move(other.p)) {}
+  Holder(const SharedPointer &p) : p(p) {}
+  Holder(const Holder &other) : p(other.p) {}
+  Holder(Holder &&other) : p(std::move(other.p)) {}
 
-    void operator () (...) { p.reset(); }
+  void operator () (...) { p.reset(); }
 };
 
 template<class T> 
 std::shared_ptr<T> to_std_ptr(const boost::shared_ptr<T> &p) 
 {
-    typedef Holder<std::shared_ptr<T>>   StandardHolder;
-    typedef Holder<boost::shared_ptr<T>> BoostHolder;
-    
-    StandardHolder *h = boost::get_deleter<StandardHolder>(p);
-    if( h ) 
-    {
-      return h->p;
-    } 
-    else 
-    {
-      return std::shared_ptr<T>(p.get(), BoostHolder(p));
-    }
+  typedef Holder<std::shared_ptr<T>>   StandardHolder;
+  typedef Holder<boost::shared_ptr<T>> BoostHolder;
+  
+  StandardHolder *h = boost::get_deleter<StandardHolder>(p);
+  if( h ) 
+  {
+    return h->p;
+  } 
+  else 
+  {
+    return std::shared_ptr<T>(p.get(), BoostHolder(p));
+  }
 }
 
 
