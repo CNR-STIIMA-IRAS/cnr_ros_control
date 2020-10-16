@@ -284,7 +284,7 @@ bool RobotHW::enterPrepareSwitch(const std::list< hardware_interface::Controller
 
     if(m_active_controllers.end() == stopped_controller)
     {
-      add_diagnostic_message("ERROR", "controller '" + ctrl.name + "' is not active, so I cannot stop it",
+      addDiagnosticsMessage("ERROR", "controller '" + ctrl.name + "' is not active, so I cannot stop it",
                               { {"Transition", "switching"} }, true);  //NOLINT
       dump_state(cnr_hardware_interface::CTRL_ERROR);
       CNR_RETURN_FALSE(*m_logger);
@@ -369,7 +369,7 @@ bool RobotHW::setParamServer(configuration_msgs::SetConfigRequest& req, configur
   return true;
 }
 
-void RobotHW::add_diagnostic_message(const std::string& level
+void RobotHW::addDiagnosticsMessage(const std::string& level
                                      , const std::string& summary
                                      , const std::map<std::string, std::string>& key_values
                                      , const bool verbose)

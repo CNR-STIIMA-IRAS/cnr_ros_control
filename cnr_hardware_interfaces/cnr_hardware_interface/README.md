@@ -50,7 +50,7 @@ protected:
   virtual bool setParamServer(configuration_msgs::SetConfigRequest& req, configuration_msgs::SetConfigResponse& res);
   virtual bool getParamServer(configuration_msgs::GetConfigRequest& req, configuration_msgs::GetConfigResponse& res);
 
-  void add_diagnostic_message(const std::string& level, const std::string& summary, const std::map<std::string, std::string>& key_values, const bool verbose = false);
+  void addDiagnosticsMessage(const std::string& level, const std::string& summary, const std::map<std::string, std::string>& key_values, const bool verbose = false);
   bool dump_state(const cnr_hardware_interface::StatusHw& status) const;
   bool dump_state() const;
 

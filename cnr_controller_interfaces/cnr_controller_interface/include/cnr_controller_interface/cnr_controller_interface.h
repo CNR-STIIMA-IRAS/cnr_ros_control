@@ -49,7 +49,7 @@
 #include <diagnostic_updater/DiagnosticStatusWrapper.h>
 #include <cnr_logger/cnr_logger.h>
 #include <cnr_controller_interface/utils/utils.h>
-#include <realtime_utilities/time_span_tracker.h>
+#include <realtime_utilities/diagnostics_interface.h>
 #include <subscription_notifier/subscription_notifier.h>
 
 namespace cnr_controller_interface
@@ -105,45 +105,44 @@ std::shared_ptr<T> to_std_ptr(const boost::shared_ptr<T> &p)
 
 
 
-class ControllerDiagnostic
-{
-public:
+// class ControllerDiagnostic
+// {
+// public:
 
-  /**
-   * @brief add_diagnostic_message
-   * @param msg
-   * @param name
-   * @param level
-   * @param verbose
-   */
-  virtual void add_diagnostic_message(const std::string& msg,
-                                      const std::string& name,
-                                      const std::string& level,
-                                      const bool&        verbose) {}
+//   /**
+//    * @brief addDiagnosticsMessage
+//    * @param msg
+//    * @param name
+//    * @param level
+//    * @param verbose
+//    */
+//   virtual void addDiagnosticsMessage(const std::string& msg,
+//                                       const std::string& name,
+//                                       const std::string& level,
+//                                       const bool&        verbose) {}
 
-  virtual void diagnostics     (diagnostic_updater::DiagnosticStatusWrapper &stat, int level);
-  virtual void diagnosticsInfo (diagnostic_updater::DiagnosticStatusWrapper &stat)           ;
-  virtual void diagnosticsWarn (diagnostic_updater::DiagnosticStatusWrapper &stat)           ;
-  virtual void diagnosticsError(diagnostic_updater::DiagnosticStatusWrapper &stat)           ;
-  virtual void diagnosticsPerformance(diagnostic_updater::DiagnosticStatusWrapper &stat)     ;
+//   virtual void diagnostics     (diagnostic_updater::DiagnosticStatusWrapper &stat, int level);
+//   virtual void diagnosticsInfo (diagnostic_updater::DiagnosticStatusWrapper &stat)           ;
+//   virtual void diagnosticsWarn (diagnostic_updater::DiagnosticStatusWrapper &stat)           ;
+//   virtual void diagnosticsError(diagnostic_updater::DiagnosticStatusWrapper &stat)           ;
+//   virtual void diagnosticsPerformance(diagnostic_updater::DiagnosticStatusWrapper &stat)     ;
 
-protected:
+//   virtual void addTimeTracker(const std::string& id);
 
-  std::string                                           m_hw_name;
-  std::string                                           m_ctrl_name;
-  mutable std::mutex                                    m_mutex;
-  mutable diagnostic_msgs::DiagnosticArray              m_diagnostic;
-  std::shared_ptr<cnr_logger::TraceLogger>              m_logger;
-  std::vector<std::string>                              m_status_history;
-  std::shared_ptr<realtime_utilities::TimeSpanTracker>  m_time_span_tracker;
-  double                                                m_sampling_period;
-  double                                                m_watchdog;
+// protected:
+//   std::string                                           m_hw_name;
+//   std::string                                           m_ctrl_name;
+//   mutable std::mutex                                    m_mutex;
+//   mutable diagnostic_msgs::DiagnosticArray              m_diagnostic;
+//   std::vector<std::string>                              m_status_history;
+//   std::map<std::string, realtime_utilities::TimeSpanTrackerPtr>  m_time_span_tracker;
+//   double                                                m_sampling_period;
+//   double                                                m_watchdog;
 
-
-};
+// };
 
 template< class T >
-class Controller: public ::controller_interface::Controller< T >, public ControllerDiagnostic
+class Controller: public ::controller_interface::Controller< T >, public realtime_utilities::DiagnosticsInterface
 {
 public:
 
@@ -250,11 +249,6 @@ public:
   std::shared_ptr<ros::Subscriber> getSubscriber(const size_t& id);
   std::shared_ptr<ros::Publisher>  getPublisher(const size_t &id);
 
-  void add_diagnostic_message(const std::string& msg,
-                              const std::string& name,
-                              const std::string& level,
-                              const bool&        verbose) override;
-
 protected:
 
   virtual bool enterInit();
@@ -284,7 +278,7 @@ protected:
 protected:
   T*            m_hw;
   ros::Duration m_dt;
-
+  std::shared_ptr<cnr_logger::TraceLogger>  m_logger;
 private:
   ros::NodeHandle     m_root_nh;
   ros::NodeHandle     m_controller_nh;

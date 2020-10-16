@@ -149,7 +149,7 @@ protected:
   virtual bool setParamServer(configuration_msgs::SetConfigRequest& req, configuration_msgs::SetConfigResponse& res);
   virtual bool getParamServer(configuration_msgs::GetConfigRequest& req, configuration_msgs::GetConfigResponse& res);
 
-  void add_diagnostic_message(const std::string& level,
+  void addDiagnosticsMessage(const std::string& level,
                               const std::string& summary,
                               const std::map<std::string, std::string>& key_values,
                               const bool verbose = false);

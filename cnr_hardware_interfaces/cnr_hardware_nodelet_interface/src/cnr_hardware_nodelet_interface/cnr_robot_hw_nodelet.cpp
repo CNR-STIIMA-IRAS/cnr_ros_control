@@ -128,9 +128,6 @@ std::string to_string(const T a_value, const int n = 5)
   return out.str();
 }
 
-RobotHwNodelet::RobotHwNodelet()
-{
-}
 
 RobotHwNodelet::~RobotHwNodelet()
 {
@@ -469,7 +466,6 @@ void RobotHwNodelet::controlUpdateThread()
       m_time_span_tracker.at("read")->tick();
       m_hw->read(ros::Time::now(), m_period);
       m_time_span_tracker.at("read")->tock();
-
     }
     catch (std::exception& e)
     {

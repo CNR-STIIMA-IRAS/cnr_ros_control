@@ -358,7 +358,7 @@ bool TopicsRobotHW::doRead(const ros::Time& time, const ros::Duration& period)
       }
       all_topics +="]";
 
-      add_diagnostic_message("ERROR","Missing Cycles"+std::to_string(m_missing_messages)+", Topics: "+all_topics,
+      addDiagnosticsMessage("ERROR","Missing Cycles"+std::to_string(m_missing_messages)+", Topics: "+all_topics,
         {{"read", "missing messages"}}, true);
       return false;
     }
@@ -436,7 +436,7 @@ if( m_resources.count( RES ) )\
   assert( res_var );\
   if( res_var->checkForConflict(info) )\
   {\
-    add_diagnostic_message("ERROR", "The resource '" + std::string( #RES ) + "' is in conflict with another controller", {{"Transition","switching"}} , true );\
+    addDiagnosticsMessage("ERROR", "The resource '" + std::string( #RES ) + "' is in conflict with another controller", {{"Transition","switching"}} , true );\
   }\
 }
 

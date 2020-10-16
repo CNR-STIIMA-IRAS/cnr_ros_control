@@ -40,7 +40,7 @@
 #include <atomic>
 #include <string>
 #include <thread>
-
+#include <realtime_utilities/diagnostics_interface.h>
 #include <cnr_controller_interface/cnr_controller_interface.h>
 #include <cnr_controller_manager_interface/cnr_controller_manager_proxy.h>
 
@@ -147,9 +147,9 @@ void ControllerManagerProxy::diagnosticsInfo(diagnostic_updater::DiagnosticStatu
   std::lock_guard<std::mutex> lock(mtx_);
   for ( const auto & ctrl : controllers_)
   {
-    cnr_controller_interface::ControllerDiagnostic* cnr_ctrl =
-                                    dynamic_cast<cnr_controller_interface::ControllerDiagnostic*>(ctrl.second);
-    if( cnr_ctrl )
+    realtime_utilities::DiagnosticsInterface* cnr_ctrl =
+                                    dynamic_cast<realtime_utilities::DiagnosticsInterface*>(ctrl.second);
+    if(cnr_ctrl)
     {
       cnr_ctrl->diagnosticsInfo(stat);
     }
@@ -166,8 +166,8 @@ void ControllerManagerProxy::diagnosticsWarn(diagnostic_updater::DiagnosticStatu
   std::lock_guard<std::mutex> lock(mtx_);
   for ( const auto & ctrl : controllers_)
   {
-    cnr_controller_interface::ControllerDiagnostic* cnr_ctrl =
-                                    dynamic_cast<cnr_controller_interface::ControllerDiagnostic*>(ctrl.second);
+    realtime_utilities::DiagnosticsInterface* cnr_ctrl =
+                                    dynamic_cast<realtime_utilities::DiagnosticsInterface*>(ctrl.second);
     if( cnr_ctrl )
     {
       cnr_ctrl->diagnosticsWarn(stat);
@@ -185,8 +185,8 @@ void ControllerManagerProxy::diagnosticsError(diagnostic_updater::DiagnosticStat
   std::lock_guard<std::mutex> lock(mtx_);
   for ( const auto & ctrl : controllers_)
   {
-    cnr_controller_interface::ControllerDiagnostic* cnr_ctrl =
-                                    dynamic_cast<cnr_controller_interface::ControllerDiagnostic*>(ctrl.second);
+    realtime_utilities::DiagnosticsInterface* cnr_ctrl =
+                                    dynamic_cast<realtime_utilities::DiagnosticsInterface*>(ctrl.second);
     if( cnr_ctrl )
     {
       cnr_ctrl->diagnosticsError(stat);
@@ -199,8 +199,8 @@ void ControllerManagerProxy::diagnosticsPerformance(diagnostic_updater::Diagnost
   std::lock_guard<std::mutex> lock(mtx_);
   for ( const auto & ctrl : controllers_)
   {
-    cnr_controller_interface::ControllerDiagnostic* cnr_ctrl =
-                                    dynamic_cast<cnr_controller_interface::ControllerDiagnostic*>(ctrl.second);
+    realtime_utilities::DiagnosticsInterface* cnr_ctrl =
+                                    dynamic_cast<realtime_utilities::DiagnosticsInterface*>(ctrl.second);
     if( cnr_ctrl )
     {
       cnr_ctrl->diagnosticsPerformance(stat);

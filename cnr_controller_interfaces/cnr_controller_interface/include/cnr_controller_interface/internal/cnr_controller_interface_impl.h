@@ -42,73 +42,27 @@
 #include <ros/console.h>
 #include <ros/time.h>
 #include <cnr_controller_interface/cnr_controller_interface.h>
-#include <boost/date_time/posix_time/posix_time.hpp>
 
 namespace cnr_controller_interface
 {
 
-template <typename T>
-std::string to_string_fix(const T a_value, const int n = 5)
-{
-  std::ostringstream out;
-  out.precision(n);
-  out << std::fixed << a_value;
-  return out.str();
-}
 
-
-template<typename T>
-void Controller< T >::add_diagnostic_message(const std::string& msg, const std::string& name,
-                                             const std::string& level, const bool& verbose)
-{
-  diagnostic_msgs::DiagnosticStatus diag;
-  diag.name       = name;
-  diag.hardware_id = m_hw_name;
-  diag.message    = " [ " + m_hw_name + " ] " + msg;
-
-  if (level == "OK")
-  {
-    diag.level = diagnostic_msgs::DiagnosticStatus::OK;
-    CNR_INFO_COND(m_logger, verbose, "[" << m_hw_name << "] " << msg);
-  }
-  if (level == "WARN")
-  {
-    diag.level = diagnostic_msgs::DiagnosticStatus::WARN;
-    CNR_WARN_COND(m_logger, verbose, "[" << m_hw_name << "] " << msg);
-  }
-  if (level == "ERROR")
-  {
-    diag.level = diagnostic_msgs::DiagnosticStatus::ERROR;
-    CNR_ERROR_COND(m_logger, verbose, "[" << m_hw_name << "] " << msg);
-  }
-  if (level == "STALE")
-  {
-    diag.level = diagnostic_msgs::DiagnosticStatus::STALE;
-    CNR_INFO_COND(m_logger, verbose, "[" << m_hw_name << "] " << msg);
-  }
-
-  std::lock_guard<std::mutex> lock(m_mutex);
-  m_diagnostic.status.push_back(diag);
-}
-
-
-template< class T >
-Controller< T >::~Controller()
+template<class T>
+Controller<T>::~Controller()
 {
   CNR_TRACE_START(m_logger);
   shutdown("UNLOADED");
   CNR_TRACE(m_logger, "[ DONE]");
   m_logger.reset();
 }
-
 /**
 *
 *
 *
 * Base class to log the controller status
 */
-template< class T >
-bool  Controller< T >::init(T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh)
+template<class T>
+bool Controller<T>::init(T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh)
 {
 
   size_t l = __LINE__;
@@ -182,8 +136,8 @@ bool  Controller< T >::init(T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& co
     m_controller_nh.setCallbackQueue(&m_controller_nh_callback_queue);
     m_status_history.clear();
 
-    m_time_span_tracker.reset( new realtime_utilities::TimeSpanTracker(int(10.0/m_sampling_period), m_sampling_period));
-
+    this->addTimeTracker("update");
+    
     l = __LINE__;
     if(!enterInit())
     {
@@ -210,8 +164,8 @@ bool  Controller< T >::init(T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& co
   CNR_RETURN_BOOL(m_logger, dump_state("INITIALIZED"));
 }
 
-template< class T >
-void Controller< T >::starting(const ros::Time& time)
+template<class T>
+void Controller<T>::starting(const ros::Time& time)
 {
   CNR_TRACE_START(m_logger);
   if(enterStarting() && doStarting(time) && exitStarting())
@@ -222,7 +176,7 @@ void Controller< T >::starting(const ros::Time& time)
   else
   {
     CNR_ERROR(m_logger, "The starting of the controller failed. Abort Request to ControllerManager sent.");
-    if(controller_interface::Controller< T >::abortRequest(time))
+    if(controller_interface::Controller<T>::abortRequest(time))
     {
       dump_state("ABORTED");
     }
@@ -234,32 +188,30 @@ void Controller< T >::starting(const ros::Time& time)
   }
 }
 
-template< class T >
-void Controller< T >::update(const ros::Time& time, const ros::Duration& period)
+template<class T>
+void Controller<T>::update(const ros::Time& time, const ros::Duration& period)
 {
-  CNR_TRACE_START_THROTTLE(m_logger, 10.0);
+  CNR_TRACE_START_THROTTLE_DEFAULT(m_logger);
+  m_time_span_tracker["update"]->tick();
+
   bool ok = enterUpdate();
 
   if(ok)
   {
     m_dt = period.toSec() > 1e-4 ? period : ros::Duration(1e-4);
-    m_time_span_tracker->tick();
     ok = doUpdate(time, period);
-    m_time_span_tracker->tock();
-    if( ok )
+    if(ok)
     {
       ok = exitUpdate();
     }
   }
 
-  if(ok)
-  {
-    CNR_RETURN_OK_THROTTLE(m_logger, void(), 10.0);
-  }
-  else
+  m_time_span_tracker["update"]->tock();
+
+  if(!ok)
   {
     CNR_ERROR(m_logger, "Error in update, stop request called to stop the controller quietly.");
-    if(controller_interface::Controller< T >::stopRequest(time))
+    if(controller_interface::Controller<T>::stopRequest(time))
     {
       dump_state("STOPPED");
     }
@@ -269,10 +221,11 @@ void Controller< T >::update(const ros::Time& time, const ros::Duration& period)
     }
     CNR_RETURN_NOTOK_THROTTLE(m_logger, void(), 10.0);
   }
+  CNR_RETURN_OK_THROTTLE_DEFAULT(m_logger, void());
 }
 
-template< class T >
-void Controller< T >::stopping(const ros::Time& time)
+template<class T>
+void Controller<T>::stopping(const ros::Time& time)
 {
   CNR_TRACE_START(m_logger);
   if (enterStopping() && doStopping(time) && exitStopping())
@@ -282,7 +235,7 @@ void Controller< T >::stopping(const ros::Time& time)
   }
   else
   {
-    if(controller_interface::Controller< T >::abortRequest(time))
+    if(controller_interface::Controller<T>::abortRequest(time))
     {
       dump_state("ABORTED");
     }
@@ -294,8 +247,8 @@ void Controller< T >::stopping(const ros::Time& time)
   }
 }
 
-template< class T >
-void Controller< T >::waiting(const ros::Time& time)
+template<class T>
+void Controller<T>::waiting(const ros::Time& time)
 {
   CNR_TRACE_START(m_logger);
 
@@ -305,13 +258,13 @@ void Controller< T >::waiting(const ros::Time& time)
   }
   else
   {
-    controller_interface::Controller< T >::abortRequest(time);
+    controller_interface::Controller<T>::abortRequest(time);
     CNR_RETURN_NOTOK(m_logger, void());
   }
 }
 
-template< class T >
-void Controller< T >::aborting(const ros::Time& time)
+template<class T>
+void Controller<T>::aborting(const ros::Time& time)
 {
   CNR_TRACE_START(m_logger);
   CNR_EXIT_EX(m_logger, enterAborting() && doAborting(time)  && exitAborting());
@@ -319,30 +272,30 @@ void Controller< T >::aborting(const ros::Time& time)
 
 /////////////////////////////////////
 
-template< class T >
-bool Controller< T >::enterInit()
+template<class T>
+bool Controller<T>::enterInit()
 {
   CNR_TRACE_START(m_logger);
   m_dt = ros::Duration(0);
   CNR_RETURN_TRUE(m_logger);
 }
 
-template< class T >
-bool Controller< T >::exitInit()
+template<class T>
+bool Controller<T>::exitInit()
 {
   CNR_TRACE_START(m_logger);
   CNR_RETURN_TRUE(m_logger);
 }
 
-template< class T >
-bool Controller< T >::enterStarting()
+template<class T>
+bool Controller<T>::enterStarting()
 {
   CNR_TRACE_START(m_logger);
   CNR_RETURN_TRUE(m_logger);
 }
 
-template< class T >
-bool Controller< T >::exitStarting()
+template<class T>
+bool Controller<T>::exitStarting()
 {
   CNR_TRACE_START(m_logger);
   if (!callAvailable( ))
@@ -352,8 +305,8 @@ bool Controller< T >::exitStarting()
   CNR_RETURN_TRUE(m_logger);
 }
 
-template< class T >
-bool Controller< T >::enterUpdate()
+template<class T>
+bool Controller<T>::enterUpdate()
 {
   CNR_TRACE_START_THROTTLE_DEFAULT(m_logger);
   if (!callAvailable( ))
@@ -362,8 +315,7 @@ bool Controller< T >::enterUpdate()
     CNR_RETURN_FALSE_THROTTLE(m_logger, 5.0, "Callback Timeout Error");
   }
 
-  std::string status;
-  m_controller_nh.getParam(cnr_controller_interface::last_status_param(m_hw_name, m_ctrl_name), status);
+  std::string status = m_status_history.back();
   if( status != "RUNNING" )
   {
     CNR_RETURN_FALSE_THROTTLE(m_logger, 5.0, "The status is not 'RUNNING' as expected. Abort.");    
@@ -371,22 +323,22 @@ bool Controller< T >::enterUpdate()
   CNR_RETURN_TRUE_THROTTLE_DEFAULT(m_logger);
 }
 
-template< class T >
-bool Controller< T >::exitUpdate()
+template<class T>
+bool Controller<T>::exitUpdate()
 {
   CNR_TRACE_START_THROTTLE_DEFAULT(m_logger);
   CNR_RETURN_TRUE_THROTTLE_DEFAULT(m_logger);
 }
 
-template< class T >
-bool Controller< T >::enterStopping()
+template<class T>
+bool Controller<T>::enterStopping()
 {
   CNR_TRACE_START(m_logger);
   CNR_RETURN_TRUE(m_logger);
 }
 
-template< class T >
-bool Controller< T >::exitStopping()
+template<class T>
+bool Controller<T>::exitStopping()
 {
   CNR_TRACE_START(m_logger);
   bool ret = shutdown("STOPPED");
@@ -397,29 +349,29 @@ bool Controller< T >::exitStopping()
   CNR_RETURN_BOOL(m_logger, ret);
 }
 
-template< class T >
-bool Controller< T >::enterWaiting()
+template<class T>
+bool Controller<T>::enterWaiting()
 {
   CNR_TRACE_START(m_logger);
   CNR_RETURN_TRUE(m_logger);
 }
 
-template< class T >
-bool Controller< T >::exitWaiting()
+template<class T>
+bool Controller<T>::exitWaiting()
 {
   CNR_TRACE_START(m_logger);
   CNR_RETURN_TRUE(m_logger);
 }
 
-template< class T >
-bool Controller< T >::enterAborting()
+template<class T>
+bool Controller<T>::enterAborting()
 {
   CNR_TRACE_START(m_logger);
   CNR_RETURN_TRUE(m_logger);
 }
 
-template< class T >
-bool Controller< T >::exitAborting()
+template<class T>
+bool Controller<T>::exitAborting()
 {
   CNR_TRACE_START(m_logger);
   bool ret = shutdown("ABORTED");
@@ -430,8 +382,8 @@ bool Controller< T >::exitAborting()
   CNR_RETURN_BOOL(m_logger, ret);
 }
 
-template< class T >
-bool Controller< T >::dump_state(const std::string& status)
+template<class T>
+bool Controller<T>::dump_state(const std::string& status)
 {
 
   if (m_status_history.size() == 0)
@@ -452,21 +404,21 @@ bool Controller< T >::dump_state(const std::string& status)
   return true;
 }/*
 
-template< class T >
-bool Controller< T >::dump_state()
+template<class T>
+bool Controller<T>::dump_state()
 {
-  std::string last_status = controller_interface::Controller< T >::isAborted()     ?  "ABORTED"
-                          : controller_interface::Controller< T >::isInitialized() ?  "INITIALIZED"
-                          : controller_interface::Controller< T >::isRunning()     ?  "RUNNING"
-                          : controller_interface::Controller< T >::isWaiting()     ?  "WAITING"
-                          : controller_interface::Controller< T >::isStopped()     ?  "STOPPED"
+  std::string last_status = controller_interface::Controller<T>::isAborted()     ?  "ABORTED"
+                          : controller_interface::Controller<T>::isInitialized() ?  "INITIALIZED"
+                          : controller_interface::Controller<T>::isRunning()     ?  "RUNNING"
+                          : controller_interface::Controller<T>::isWaiting()     ?  "WAITING"
+                          : controller_interface::Controller<T>::isStopped()     ?  "STOPPED"
                           : "CONSTRUCTED";
   return dump_state(last_status);
 }*/
 
 
-template< class T >
-bool Controller< T >::shutdown(const std::string& state_final)
+template<class T>
+bool Controller<T>::shutdown(const std::string& state_final)
 {
   bool ret = false;
   CNR_TRACE_START(m_logger);
@@ -508,7 +460,7 @@ bool Controller< T >::shutdown(const std::string& state_final)
 
 
 template<typename T> template<typename M>
-size_t Controller< T >::add_publisher(const std::string &topic, uint32_t queue_size, bool latch, bool enable_watchdog)
+size_t Controller<T>::add_publisher(const std::string &topic, uint32_t queue_size, bool latch, bool enable_watchdog)
 {
   m_pub.push_back(std::shared_ptr<ros::Publisher>(
       new ros::Publisher(m_controller_nh.advertise< M >(topic, queue_size, latch))) );
@@ -519,7 +471,7 @@ size_t Controller< T >::add_publisher(const std::string &topic, uint32_t queue_s
 }
 
 template<typename T> template<typename M>
-bool Controller< T >::publish(const size_t& idx, const M &message)
+bool Controller<T>::publish(const size_t& idx, const M &message)
 {
   CNR_TRACE_START_THROTTLE_DEFAULT(this->logger());
   if(idx >=m_pub.size())
@@ -576,20 +528,20 @@ size_t Controller<T>::add_subscriber(const std::string &topic,
   return m_sub.size()-1;
 }
 
-template< class T >
-std::shared_ptr<ros::Subscriber> Controller< T >::getSubscriber(const size_t& idx)
+template<class T>
+std::shared_ptr<ros::Subscriber> Controller<T>::getSubscriber(const size_t& idx)
 {
   return m_sub.at(idx);
 }
 
-template< class T >
+template<class T>
 std::shared_ptr<ros::Publisher> Controller<T>::getPublisher(const size_t& idx)
 {
   return m_pub.at(idx);
 }
 
-template< class T >
-bool Controller< T >::callAvailable( )
+template<class T>
+bool Controller<T>::callAvailable( )
 {
   m_controller_nh_callback_queue.callAvailable();
   if (m_sub.size() > 0)

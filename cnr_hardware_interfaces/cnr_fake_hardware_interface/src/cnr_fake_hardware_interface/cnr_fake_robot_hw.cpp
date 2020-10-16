@@ -266,6 +266,7 @@ bool FakeRobotHW::doPrepareSwitch(const std::list< hardware_interface::Controlle
 
 bool FakeRobotHW::doCheckForConflict(const std::list< hardware_interface::ControllerInfo >& info)
 {
+  std::stringstream report;
   CNR_TRACE_START(*m_logger);
   // Each controller can use more than one hardware_interface for a single joint (e.g.: position, velocity, effort).
   // One controller can control more than one joint.
@@ -289,7 +290,8 @@ bool FakeRobotHW::doCheckForConflict(const std::list< hardware_interface::Contro
           {
             if (global_joint_used.at(iJ)) // if already used by another
             {
-              add_diagnostic_message("ERROR", "Joint " + name + " is already used by another controller", {{"Transition", "switching"}}, true);
+              addDiagnosticsMessage("ERROR", "Joint " + name + " is already used by another controller", {{"Transition", "switching"}}, &report);
+              CNR_ERROR(m_logger, report.str());
               CNR_RETURN_TRUE(*m_logger, "Joint " + name + " is already used by another controller");
             }
             else

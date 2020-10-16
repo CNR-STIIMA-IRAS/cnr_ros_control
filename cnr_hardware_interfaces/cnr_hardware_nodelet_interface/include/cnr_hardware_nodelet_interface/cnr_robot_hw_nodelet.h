@@ -58,11 +58,11 @@ class RobotHwNodelet : public nodelet::Nodelet
 public:
   void onInit() final;
 
-  RobotHwNodelet();
+  RobotHwNodelet() = default;
 
 protected:
 
-  ~RobotHwNodelet();
+  virtual ~RobotHwNodelet();
 
   virtual bool doOnInit();
   bool         enterOnInit();

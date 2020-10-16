@@ -32,6 +32,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sstream>
 #include <mutex>
 #include <cnr_topic_hardware_interface/cnr_topic_robot_hw.h>
 
@@ -71,7 +72,7 @@ TopicRobotHW::~TopicRobotHW()
 
 bool TopicRobotHW::doInit()
 {
-  CNR_TRACE_START(*m_logger);
+  std::stringstream report;
 
   CNR_TRACE_START(*m_logger);
   if (!m_robothw_nh.getParam("joint_names", m_resource_names))
@@ -85,7 +86,9 @@ bool TopicRobotHW::doInit()
   std::string read_js_topic;
   if (!m_robothw_nh.getParam("feedback_joint_state_topic", read_js_topic))
   {
-    add_diagnostic_message("ERROR", "feedback_joint_state_topic not defined", {{"Transition", "switching"}}, true);
+    addDiagnosticsMessage("ERROR", "feedback_joint_state_topic not defined", {{"Transition", "switching"}}, &report);
+    CNR_ERROR(m_logger, report.str() );
+
     m_status = cnr_hardware_interface::ERROR;
     CNR_RETURN_FALSE(*m_logger);
   }
@@ -93,7 +96,9 @@ bool TopicRobotHW::doInit()
   std::string write_js_topic;
   if (!m_robothw_nh.getParam("command_joint_state_topic", write_js_topic))
   {
-    add_diagnostic_message("ERROR", "command_joint_state_topic not defined", {{"Transition", "switching"}}, true);
+    addDiagnosticsMessage("ERROR", "command_joint_state_topic not defined", {{"Transition", "switching"}}, &report);
+    CNR_ERROR(m_logger, report.str() );
+
     m_status = cnr_hardware_interface::ERROR;
     CNR_RETURN_FALSE(*m_logger);
   }
@@ -101,7 +106,8 @@ bool TopicRobotHW::doInit()
   int tmp;
   if (!m_robothw_nh.getParam("maximum_missing_cycles", tmp))
   {
-    add_diagnostic_message("WARN", "maximum_missing_cycles not defined, set equal to 50", {{"Transition", "switching"}}, true);
+    addDiagnosticsMessage("WARN", "maximum_missing_cycles not defined, set equal to 50", {{"Transition", "switching"}}, &report);
+    CNR_WARN(m_logger, report.str() );
     tmp = 50;
   }
   m_max_missing_messages = tmp;
@@ -127,7 +133,9 @@ bool TopicRobotHW::doInit()
   double timeout = 10;
   if (!m_robothw_nh.getParam("feedback_joint_state_timeout", timeout))
   {
-    add_diagnostic_message("WARN", "feedback_joint_state_timeout not defined, set equal to 10", {{"Transition", "switching"}}, true);
+    addDiagnosticsMessage("WARN", "feedback_joint_state_timeout not defined, set equal to 10", {{"Transition", "switching"}}, &report);
+    CNR_WARN(m_logger, report.str() );
+
     timeout = 10;
   }
 
@@ -221,7 +229,7 @@ void TopicRobotHW::jointStateCallback(const sensor_msgs::JointStateConstPtr& msg
 
 bool TopicRobotHW::doRead(const ros::Time& time, const ros::Duration& period)
 {
-
+  std::stringstream report;
   if ((!m_topic_received) && ((time - m_start_time).toSec() > 0.1))
   {
     m_missing_messages++;
@@ -236,7 +244,8 @@ bool TopicRobotHW::doRead(const ros::Time& time, const ros::Duration& period)
   {
     if (getStatus() == cnr_hardware_interface::RUNNING)
     {
-      add_diagnostic_message("ERROR", "maximum_missing_cycles " + std::to_string(m_missing_messages) + "s ", {{"read", "missing messages"}}, true);
+      addDiagnosticsMessage("ERROR", "maximum_missing_cycles " + std::to_string(m_missing_messages) + "s ", {{"read", "missing messages"}}, &report);
+      CNR_ERROR(m_logger, report.str() );
       return false;
     }
   }
