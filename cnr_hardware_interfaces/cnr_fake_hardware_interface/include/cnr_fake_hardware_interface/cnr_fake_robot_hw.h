@@ -86,7 +86,6 @@ protected:
   std::vector<double> m_cmd_eff; //target effort
 
   friend void setParam(FakeRobotHW* hw, const std::string& ns);
-
 };
 
 void setParam(FakeRobotHW* hw, const std::string& ns);

@@ -279,6 +279,7 @@ protected:
   T*            m_hw;
   ros::Duration m_dt;
   std::shared_ptr<cnr_logger::TraceLogger>  m_logger;
+  
 private:
   ros::NodeHandle     m_root_nh;
   ros::NodeHandle     m_controller_nh;

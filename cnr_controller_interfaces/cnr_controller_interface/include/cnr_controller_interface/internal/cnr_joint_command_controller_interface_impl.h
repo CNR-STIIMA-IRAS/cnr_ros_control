@@ -38,7 +38,7 @@
 #include <std_msgs/Int64.h>
 #include <ros/ros.h>
 #include <cnr_logger/cnr_logger.h>
-#include <rosdyn_core/chain_state.h>
+#include <rosdyn_utilities/chain_state.h>
 #include <cnr_controller_interface/internal/cnr_handles.h>
 #include <cnr_controller_interface/cnr_joint_command_controller_interface.h>
 
@@ -133,7 +133,7 @@ bool JointCommandController<H,T>::enterStarting()
 
   m_target->setZero();
   m_target->q() = this->m_rstate->q();
-  m_target->updateTransformation();
+  m_target->updateTransformations();
   
   CNR_RETURN_TRUE(this->m_logger);
 }

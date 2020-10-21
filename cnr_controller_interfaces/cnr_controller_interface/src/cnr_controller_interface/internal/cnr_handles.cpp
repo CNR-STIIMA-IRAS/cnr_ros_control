@@ -8,7 +8,7 @@
 #include <hardware_interface/posvelacc_command_interface.h>
 #include <cnr_hardware_interface/veleff_command_interface.h>
 #include <cnr_hardware_interface/posveleff_command_interface.h>
-#include <rosdyn_core/chain_state.h>
+#include <rosdyn_utilities/chain_state.h>
 #include <cnr_controller_interface/internal/cnr_handles.h>
 
 namespace cnr_controller_interface

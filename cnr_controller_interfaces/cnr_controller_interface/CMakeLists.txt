@@ -9,7 +9,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(catkin REQUIRED COMPONENTS
   realtime_utilities cnr_hardware_interface controller_interface diagnostic_msgs cnr_logger urdf
-  rosdyn_core subscription_notifier
+  rosdyn_core rosdyn_utilities subscription_notifier
 )
 
 find_package (Eigen3 3.3 REQUIRED NO_MODULE)
@@ -24,7 +24,7 @@ endif()
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
-  CATKIN_DEPENDS urdf realtime_utilities cnr_hardware_interface controller_interface cnr_logger rosdyn_core subscription_notifier
+  CATKIN_DEPENDS urdf realtime_utilities cnr_hardware_interface controller_interface cnr_logger rosdyn_core rosdyn_utilities subscription_notifier
 )
 
 include_directories(

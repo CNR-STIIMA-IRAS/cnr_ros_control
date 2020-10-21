@@ -41,7 +41,7 @@
 #include <cnr_logger/cnr_logger.h>
 #include <cnr_controller_interface/cnr_controller_interface.h>
 #include <cnr_controller_interface/internal/cnr_handles.h>
-#include <rosdyn_core/chain_state.h>
+#include <rosdyn_utilities/chain_state.h>
 
 namespace cnr_controller_interface
 {
@@ -101,12 +101,12 @@ public:
   const std::string& linkName      (size_t iAx) const { return m_rkin->linkNames        (iAx);} 
 protected:
   
-  Handler<H,T>        m_handler; 
+  Handler<H,T>              m_handler; 
   rosdyn::ChainInterfacePtr m_rkin;
-  rosdyn::ChainStatePtr  m_rstate;
+  rosdyn::ChainStatePtr     m_rstate;
 
-  std::mutex m_mtx;
-  Eigen::IOFormat m_cfrmt;
+  std::mutex                m_mtx;
+  Eigen::IOFormat           m_cfrmt;
 };
 
 } // cnr_controller_interface

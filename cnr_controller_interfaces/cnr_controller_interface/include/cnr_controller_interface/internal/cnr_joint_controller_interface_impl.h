@@ -38,10 +38,11 @@
 #include <sstream>
 #include <ros/ros.h>
 #include <cnr_logger/cnr_logger.h>
-#include <rosdyn_core/chain_state.h>
+#include <rosdyn_utilities/chain_state.h>
 #include <cnr_controller_interface/internal/cnr_handles.h>
 #include <cnr_controller_interface/cnr_joint_controller_interface.h>
 #include <rosdyn_core/primitives.h>
+#include <rosdyn_utilities/chain_state.h>
 #include <urdf_model/model.h>
 #include <urdf_parser/urdf_parser.h>
 
@@ -95,14 +96,48 @@ template<class H, class T>
 bool JointController<H,T>::enterInit()
 {
   m_cfrmt = Eigen::IOFormat(Eigen::StreamPrecision, 0, ", ", "\n", "[", "]");
-  CNR_TRACE_START(this->m_logger);
+  CNR_TRACE_START(this->logger());
   if (!Controller<T>::enterInit())
   {
-    CNR_RETURN_FALSE(this->m_logger);
+    CNR_RETURN_FALSE(this->logger());
   }
+
+  std::vector<std::string> joint_names;
+  rosdyn::get_joint_names(this->getControllerNh(),joint_names);
+  if(joint_names.size()==1 && joint_names.front() == "all")
+  {
+    rosdyn::get_joint_names(this->getRootNh(), joint_names);
+  }
+
+  if(joint_names.size()==0)
+  {
+    CNR_RETURN_FALSE(this->logger(), "Neither '" +  this->getControllerNamespace() + "/controlled_joint(s)' nor '"
+                        + this->getControllerNamespace() + "/controlled_resources(s)' are specified. Abort" );
+  }
+
+  std::string base_link;
+  if (!this->getControllerNh().getParam("base_link", base_link ) )
+  {
+    if (!this->getRootNh().getParam("base_link", base_link ) )
+    {
+      CNR_RETURN_FALSE(this->logger(), "'Neither '" + this->getControllerNamespace() + "/base_link' " +
+                  "nor '"      + this->getRootNamespace() + "/base_link' are not in rosparam server.");
+    }
+  }
+
+  std::string tool_link;
+  if (!this->getControllerNh().getParam("tool_link", tool_link ) )
+  {
+    if (!this->getRootNh().getParam("tool_link", tool_link ) )
+    {
+      CNR_RETURN_FALSE(this->logger(), "'Neither '" + this->getControllerNamespace() + "/tool_link' " +
+                "nor '"      + this->getRootNamespace() + "/tool_link' are not in rosparam server.");
+    }
+  }
+
   m_rkin.reset(new rosdyn::ChainInterface());
   std::stringstream report;
-  if(m_rkin->init(Controller<T>::getRootNh(), Controller<T>::getControllerNh(),report))
+  if(m_rkin->init(Controller<T>::getControllerNh(),joint_names, base_link, tool_link, report))
   {
     if(report.str().length()>0)
     {
@@ -128,45 +163,45 @@ bool JointController<H,T>::enterInit()
     }
     catch (...)
     {
-      CNR_RETURN_FALSE(this->m_logger,
+      CNR_RETURN_FALSE(this->logger(),
         "Controller '" + Controller<T>::getControllerNamespace() + "' failed in init. " + std::string("")
         + "The controlled joint named '" + m_rkin->jointName(iAx) + "' is not managed by hardware_interface");
     }
-    CNR_DEBUG(this->m_logger,
+    CNR_DEBUG(this->logger(),
       "Controller '" + Controller<T>::getControllerNamespace() + std::string("'")
       + "The controlled joint named '" + m_rkin->jointName(iAx) + "' is managed by hardware_interface");
   }
 
-  CNR_RETURN_TRUE(this->m_logger);
+  CNR_RETURN_TRUE(this->logger());
 }
 
 template<class H, class T>
 bool JointController<H,T>::enterStarting()
 {
-  CNR_TRACE_START(this->m_logger);
+  CNR_TRACE_START(this->logger());
   if (!Controller<T>::enterStarting())
   {
-    CNR_RETURN_FALSE(this->m_logger);
+    CNR_RETURN_FALSE(this->logger());
   }
   m_handler >> m_rstate;
   
-  m_rstate->updateTransformation();
+  m_rstate->updateTransformations();
 
-  CNR_RETURN_TRUE(this->m_logger);
+  CNR_RETURN_TRUE(this->logger());
 }
 
 template<class H, class T>
 bool JointController<H,T>::enterUpdate()
 {
-  CNR_TRACE_START_THROTTLE(this->m_logger, 20.0);
+  CNR_TRACE_START_THROTTLE(this->logger(), 20.0);
   if (!Controller<T>::enterUpdate())
   {
-    CNR_RETURN_FALSE(this->m_logger);
+    CNR_RETURN_FALSE(this->logger());
   }
   this->m_handler >> m_rstate;
-  m_rstate->updateTransformation();
+  m_rstate->updateTransformations();
 
-  CNR_RETURN_TRUE_THROTTLE(this->m_logger, 20.0);
+  CNR_RETURN_TRUE_THROTTLE(this->logger(), 20.0);
 }
 
 

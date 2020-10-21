@@ -79,14 +79,13 @@ void FakeRobotHW::initialJointStateCallback(const sensor_msgs::JointState::Const
 bool FakeRobotHW::doInit()
 {
   CNR_TRACE_START(*m_logger);
+//   if (!m_robothw_nh.getParam("joint_names", m_resource_names))
+//   {
+//     CNR_FATAL(*m_logger, m_robothw_nh.getNamespace() + "/joint_names' does not exist");
+//     CNR_RETURN_FALSE(*m_logger, "doInit FAILED");
+//   }
 
-  if (!m_robothw_nh.getParam("joint_names", m_resource_names))
-  {
-    CNR_FATAL(*m_logger, m_robothw_nh.getNamespace() + "/joint_names' does not exist");
-    CNR_RETURN_FALSE(*m_logger, "doInit FAILED");
-  }
-
-  CNR_DEBUG(*m_logger, "Resources (" << m_resource_names.size() << "): " << cnr_controller_interface::to_string(m_resource_names));
+  // CNR_DEBUG(*m_logger, "Resources (" << m_resource_names.size() << "): " << cnr_controller_interface::to_string(m_resource_names));
   m_pos.resize(m_resource_names.size());
   m_vel.resize(m_resource_names.size());
   m_eff.resize(m_resource_names.size());

@@ -40,7 +40,7 @@
 #include <ros/ros.h>
 #include <std_msgs/Int64.h>
 #include <cnr_logger/cnr_logger.h>
-#include <rosdyn_core/chain_state.h>
+#include <rosdyn_utilities/chain_state.h>
 #include <cnr_controller_interface/cnr_joint_controller_interface.h>
 
 #include <urdf_model/model.h>
@@ -106,9 +106,9 @@ protected:
   
 private:
   
-  InputType             m_priority;
-  rosdyn::ChainStatePtr    m_target;
-  rosdyn::ChainStatePtr    m_last_target;
+  InputType               m_priority;
+  rosdyn::ChainStatePtr   m_target;
+  rosdyn::ChainStatePtr   m_last_target;
 
   double m_override;
   double m_safe_override_1;

@@ -2,7 +2,7 @@
 #define CNR_CONTROLLER_INTERFACE__CNR_HANDLES__H
 
 #include <map>
-#include <rosdyn_core/chain_state.h>
+#include <rosdyn_utilities/chain_state.h>
 #include <hardware_interface/joint_state_interface.h>
 #include <hardware_interface/joint_command_interface.h>
 #include <cnr_hardware_interface/veleff_command_interface.h>
