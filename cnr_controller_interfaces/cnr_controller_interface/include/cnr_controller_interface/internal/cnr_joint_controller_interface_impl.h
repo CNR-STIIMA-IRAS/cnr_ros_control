@@ -137,19 +137,22 @@ bool JointController<H,T>::enterInit()
 
   m_rkin.reset(new rosdyn::ChainInterface());
   std::stringstream report;
-  if(m_rkin->init(Controller<T>::getControllerNh(),joint_names, base_link, tool_link, report))
+  int res = m_rkin->init(Controller<T>::getControllerNh(),joint_names, base_link, tool_link, report); 
+  if(res==1)
   {
-    if(report.str().length()>0)
-    {
-      CNR_INFO(this->logger(), report.str() );
-    }
+    CNR_INFO_COND(this->logger(),(report.str().length()>0), report.str() );
   }
+  else if(res==0)
+  {
+    if(m_rkin->init(Controller<T>::getRootNh(),joint_names, base_link, tool_link, report) != 1)
+    {
+      CNR_ERROR_COND(this->logger(), (report.str().length()>0), report.str() );
+      CNR_RETURN_FALSE(this->logger());
+    }
+  } 
   else
   {
-    if(report.str().length()>0)
-    {
-      CNR_ERROR(this->logger(), report.str() );
-    }
+    CNR_ERROR_COND(this->logger(), (report.str().length()>0), report.str() );
     CNR_RETURN_FALSE(this->logger());
   }
   

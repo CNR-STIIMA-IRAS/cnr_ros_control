@@ -443,6 +443,33 @@ bool ConfigurationManager::callback(const ConfigurationStruct& next_configuratio
   CNR_DEBUG(*m_logger, "HW NAMES - TO LOAD         : " << to_string(hw_to_load_names));
   CNR_DEBUG(*m_logger, "HW NAMES - TO UNLOAD       : " << to_string(hw_to_unload_names));
 
+  CNR_INFO(*m_logger, "Check rosparam availability"); 
+  for( const auto & hw_name : hw_next_names)
+  {
+    if(!ros::param::has("/" + hw_name))
+    {
+      CNR_ERROR(m_logger, "The hw '" + hw_name + "' is expected to store the parameters under '/" + hw_name + "' that seems it does not exist. Abort.");
+      CNR_RETURN_FALSE(m_logger);
+    }
+  }
+
+  for( const auto & component : next_configuration.components)
+  {
+    std::string hw_name = component.first;
+    std::vector<std::string> ctrls_names = component.second; 
+    for(auto const & ctrl_name : ctrls_names)
+    {
+      if(!ros::param::has("/" + hw_name + "/" + ctrl_name))
+      {
+        CNR_ERROR(m_logger, "The ctrl '" + hw_name + "/" + ctrl_name + "' is expected to store the parameters under '/" 
+                      + hw_name + "/" + ctrl_name + "' that seems it does not exist. Abort.");
+        CNR_RETURN_FALSE(m_logger);
+      }
+    }
+  }
+
+  
+
   CNR_INFO(*m_logger, "Check coherence between nodelet status and configuration manager status");
   if (!equal(hw_active_names, hw_names_from_nodelet))
   {
