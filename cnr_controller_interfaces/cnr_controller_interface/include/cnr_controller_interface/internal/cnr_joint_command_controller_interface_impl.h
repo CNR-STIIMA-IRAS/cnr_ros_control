@@ -192,6 +192,7 @@ bool JointCommandController<H,T>::exitUpdate()
       }
     }
     report << "Nominal command qd (input)  : " << TP(nominal_qd.transpose()) << "\n";
+    report << "----------\n";
     // ============================== ==============================
 
 
