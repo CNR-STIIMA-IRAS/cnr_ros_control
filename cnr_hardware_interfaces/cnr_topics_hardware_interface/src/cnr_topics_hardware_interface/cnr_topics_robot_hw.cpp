@@ -33,11 +33,10 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <hardware_interface/joint_command_interface.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <trajectory_msgs/JointTrajectoryPoint.h>
 #include <name_sorting/name_sorting.h>
-
-
 #include <cnr_topics_hardware_interface/cnr_topics_robot_hw.h>
 
 #include <pluginlib/class_list_macros.h>
@@ -84,6 +83,7 @@ std::vector<std::string> getResourceNames(const std::map< cnr_hardware_interface
 TopicsRobotHW::TopicsRobotHW()
 {
   m_set_status_param = boost::bind(setParam, this, _1);
+  m_warmup = 0;
 }
 
 bool TopicsRobotHW::doInit()
@@ -335,6 +335,9 @@ bool TopicsRobotHW::doInit()
 
 bool TopicsRobotHW::doRead(const ros::Time& time, const ros::Duration& period)
 {
+  CNR_TRACE_START_THROTTLE_DEFAULT(m_logger);
+  std::stringstream report;
+  m_warmup++;
   if (!topicsReceived())
   {
     m_missing_messages++;
@@ -346,7 +349,11 @@ bool TopicsRobotHW::doRead(const ros::Time& time, const ros::Duration& period)
 
   resetTopicsReceived();
 
-  if (m_missing_messages > m_max_missing_messages)
+  if(m_warmup < m_max_missing_messages * 1000000 )
+  {
+    CNR_RETURN_TRUE_THROTTLE_DEFAULT(m_logger);
+  }
+  else if(m_missing_messages > m_max_missing_messages)
   {
     if (getStatus() == cnr_hardware_interface::RUNNING)
     {
@@ -359,11 +366,13 @@ bool TopicsRobotHW::doRead(const ros::Time& time, const ros::Duration& period)
       all_topics +="]";
 
       addDiagnosticsMessage("ERROR","Missing Cycles"+std::to_string(m_missing_messages)+", Topics: "+all_topics,
-        {{"read", "missing messages"}}, true);
-      return false;
+        {{"read", "missing messages"}}, &report);
+      
+      CNR_ERROR_THROTTLE(m_logger, 5.0, report.str());
+      CNR_RETURN_FALSE_THROTTLE(m_logger, 5.0);
     }
   }
-  return true;
+  CNR_RETURN_TRUE_THROTTLE_DEFAULT(m_logger);
 }
 
 bool TopicsRobotHW::doWrite(const ros::Time& time, const ros::Duration& period)
@@ -436,7 +445,12 @@ if( m_resources.count( RES ) )\
   assert( res_var );\
   if( res_var->checkForConflict(info) )\
   {\
-    addDiagnosticsMessage("ERROR", "The resource '" + std::string( #RES ) + "' is in conflict with another controller", {{"Transition","switching"}} , true );\
+    std::stringstream report;\
+    addDiagnosticsMessage("ERROR",\
+                          "The resource '" + std::string( #RES ) + "' is in conflict with another controller",\
+                          {{"Transition","switching"}},\
+                          &report );\
+    CNR_ERROR_COND(m_logger, report.str().size(), report.str() );\
   }\
 }
 
@@ -505,7 +519,6 @@ bool TopicsRobotHW::initJointClaimedResource()
     ret = false;
   }
 
-
   CNR_RETURN_BOOL(*m_logger, ret);
 }
 
@@ -520,7 +533,6 @@ bool TopicsRobotHW::initAnalogClaimedResource()
     registerInterface(&m_analog_resource->m_a_h);
     registerInterface(&m_analog_resource->m_a_sh);
   }
-
   return ret;
 }
 

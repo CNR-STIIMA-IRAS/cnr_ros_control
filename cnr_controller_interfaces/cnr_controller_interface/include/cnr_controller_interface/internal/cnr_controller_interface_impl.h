@@ -68,7 +68,6 @@ bool Controller<T>::init(T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& contr
   size_t l = __LINE__;
   try
   {
-
     m_hw_name     = root_nh.getNamespace();
     m_ctrl_name   = controller_nh.getNamespace();
     if (m_ctrl_name.find(m_hw_name) != std::string::npos)
@@ -136,7 +135,8 @@ bool Controller<T>::init(T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& contr
     m_controller_nh.setCallbackQueue(&m_controller_nh_callback_queue);
     m_status_history.clear();
 
-    this->addTimeTracker("update");
+    realtime_utilities::DiagnosticsInterface::init( m_hw_name, "Ctrl", m_ctrl_name );
+    realtime_utilities::DiagnosticsInterface::addTimeTracker("update", m_sampling_period);
     
     l = __LINE__;
     if(!enterInit())
@@ -192,7 +192,7 @@ template<class T>
 void Controller<T>::update(const ros::Time& time, const ros::Duration& period)
 {
   CNR_TRACE_START_THROTTLE_DEFAULT(m_logger);
-  m_time_span_tracker["update"]->tick();
+  timeSpanStrakcer("update")->tick();
 
   bool ok = enterUpdate();
 
@@ -206,7 +206,7 @@ void Controller<T>::update(const ros::Time& time, const ros::Duration& period)
     }
   }
 
-  m_time_span_tracker["update"]->tock();
+  timeSpanStrakcer("update")->tock();
 
   if(!ok)
   {

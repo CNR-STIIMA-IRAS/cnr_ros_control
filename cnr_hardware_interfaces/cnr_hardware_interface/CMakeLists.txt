@@ -2,7 +2,11 @@ cmake_minimum_required(VERSION 3.1)
 
 project(cnr_hardware_interface)
 
-set(CMAKE_BUILD_TYPE Debug)
+
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
+
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -43,10 +47,11 @@ catkin_package(
                 pluginlib
 )
 
-include_directories  (include include/internal ${catkin_INCLUDE_DIRS} )
-add_library          (${PROJECT_NAME} src/${PROJECT_NAME}/cnr_robot_hw.cpp )
-add_dependencies     (${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
+include_directories   (include include/internal ${catkin_INCLUDE_DIRS} )
+add_library           (${PROJECT_NAME} src/${PROJECT_NAME}/cnr_robot_hw.cpp )
+add_dependencies      (${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries (${PROJECT_NAME} ${catkin_LIBRARIES})
+target_compile_options(${PROJECT_NAME} PUBLIC -Wall -Werror $<$<CONFIG:RELEASE>:-Ofast> )
 
 set(ROSLINT_CPP_OPTS "--filter=-runtime/references,-runtime/int,-build/header_guard --linelength=150")
 roslint_cpp(src/${PROJECT_NAME}/cnr_robot_hw.cpp include/${PROJECT_NAME}/cnr_robot_hw.h)

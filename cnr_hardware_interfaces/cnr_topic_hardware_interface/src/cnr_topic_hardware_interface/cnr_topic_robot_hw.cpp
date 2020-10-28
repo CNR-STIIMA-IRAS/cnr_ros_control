@@ -240,7 +240,11 @@ bool TopicRobotHW::doRead(const ros::Time& time, const ros::Duration& period)
   }
 
   m_topic_received = false;
-  if (m_missing_messages > m_max_missing_messages)
+  if(m_warmup < m_max_missing_messages*100)
+  {
+
+  }
+  else if (m_missing_messages > m_max_missing_messages)
   {
     if (getStatus() == cnr_hardware_interface::RUNNING)
     {

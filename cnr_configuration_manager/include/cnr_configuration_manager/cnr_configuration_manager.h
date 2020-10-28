@@ -84,22 +84,22 @@ public:
   bool isOk(bool nodelet_check);
 
 private:
-  ros::NodeHandle                                  m_nh;
-  std::shared_ptr<cnr_logger::TraceLogger>         m_logger;
-  std::mutex                                       m_callback_mutex;
-  std::string                                      m_active_configuration_name;
-  ConfigurationStruct                              m_active_configuration;
-  std::map<std::string, ConfigurationStruct>       m_configurations;
+  ros::NodeHandle                             m_nh;
+  std::shared_ptr<cnr_logger::TraceLogger>    m_logger;
+  std::mutex                                  m_callback_mutex;
+  std::string                                 m_active_configuration_name;
+  ConfigurationStruct                         m_active_configuration;
+  std::map<std::string, ConfigurationStruct>  m_configurations;
 
-  ConfigurationLoader                              m_conf_loader;
+  ConfigurationLoader                         m_conf_loader;
 
-  ros::ServiceServer                               m_load_configuration      ;
-  ros::ServiceServer                               m_unload_configuration    ;
-  ros::ServiceServer                               m_list_controller_service ;
+  ros::ServiceServer                          m_load_configuration;
+  ros::ServiceServer                          m_unload_configuration;
+  ros::ServiceServer                          m_list_controller_service;
 
-  SignalHandler                                    m_signal_handler;
+  SignalHandler                               m_signal_handler;
 
-  bool checkRobotHwState(const std::string& hw, cnr_hardware_interface::StatusHw target = cnr_hardware_interface::RUNNING);
+  bool checkRobotHwState(const std::string& hw, cnr_hardware_interface::StatusHw target = cnr_hardware_interface::INITIALIZED);
   bool callback(const ConfigurationStruct& next_configuration, const int &strictness, const ros::Duration& watchdog);
   bool getAvailableConfigurationsFromParam();
 };

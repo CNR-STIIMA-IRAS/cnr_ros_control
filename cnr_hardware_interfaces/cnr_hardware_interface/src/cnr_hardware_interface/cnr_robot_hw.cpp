@@ -104,7 +104,7 @@ void get_resource_names(ros::NodeHandle& nh, std::vector<std::string>& names)
 }
   
 RobotHW::RobotHW()
-  : m_status(cnr_hardware_interface::CREATED), m_shutted_down(false), m_is_first_read(true), m_set_status_param(nullptr)
+  : m_set_status_param(nullptr), m_is_first_read(true), m_status(cnr_hardware_interface::CREATED), m_shutted_down(false)
 {
   dump_state(cnr_hardware_interface::CREATED);
 }
@@ -149,15 +149,7 @@ bool RobotHW::init(ros::NodeHandle& root_nh, ros::NodeHandle &robothw_nh)
 
 void RobotHW::read(const ros::Time& time, const ros::Duration& period)
 {
-  CNR_TRACE_START_THROTTLE(m_logger, 5.0);
-
-  m_robot_hw_queue.callAvailable();
-
-  if(!doRead(time, period))
-  {
-    dump_state(cnr_hardware_interface::ERROR);
-    CNR_RETURN_NOTOK_THROTTLE(m_logger, void(), 5.0);
-  }
+  CNR_TRACE_START_THROTTLE_DEFAULT(m_logger);
 
   if(m_is_first_read)
   {
@@ -169,17 +161,24 @@ void RobotHW::read(const ros::Time& time, const ros::Duration& period)
     }
   }
 
-  CNR_RETURN_OK_THROTTLE(m_logger, void(), 5.0);
+  m_robot_hw_queue.callAvailable();
+
+  if(!doRead(time, period))
+  {
+    dump_state(cnr_hardware_interface::ERROR);
+    CNR_RETURN_NOTOK_THROTTLE(m_logger, void(), 5.0);
+  }
+
+  CNR_RETURN_OK_THROTTLE_DEFAULT(m_logger, void());
 }
 
 void RobotHW::write(const ros::Time& time, const ros::Duration& period)
 {
-  CNR_TRACE_START_THROTTLE(m_logger, 5.0);
+  CNR_TRACE_START_THROTTLE_DEFAULT(m_logger);
   if(enterWrite() && doWrite(time, period) && exitWrite())
   {
-    CNR_RETURN_OK_THROTTLE(m_logger, void(), 5.0);
+    CNR_RETURN_OK_THROTTLE_DEFAULT(m_logger, void());
   }
-
   dump_state(cnr_hardware_interface::ERROR);
   CNR_RETURN_NOTOK_THROTTLE(m_logger, void(), 5.0, "Error in writing...");
 }
@@ -298,6 +297,8 @@ bool RobotHW::enterInit(ros::NodeHandle& root_nh, ros::NodeHandle& robothw_nh)
   m_get_param   = m_robothw_nh.advertiseService("readParams", &cnr_hardware_interface::RobotHW::getParamServer, this);
 
   m_robot_hw_queue.callAvailable();
+
+  realtime_utilities::DiagnosticsInterface::init(m_robot_name, "RobotHW", m_robot_name );
   
   get_resource_names(m_robothw_nh,m_resource_names);
   if(m_resource_names.size()==0)
@@ -308,6 +309,11 @@ bool RobotHW::enterInit(ros::NodeHandle& root_nh, ros::NodeHandle& robothw_nh)
   }
   CNR_DEBUG(*m_logger, "Resources (" << m_resource_names.size() << "): " << cnr_hardware_interface::to_string(m_resource_names));
 
+  if(!m_robothw_nh.getParam("sampling_period", m_sampling_period))
+  {
+    m_sampling_period = 1e-3;
+    CNR_WARN(m_logger, "Sampling period not found");
+  }
   CNR_RETURN_TRUE(m_logger);
 }
 
@@ -329,6 +335,7 @@ bool RobotHW::enterPrepareSwitch(const std::list< hardware_interface::Controller
                                  const std::list< hardware_interface::ControllerInfo >& stop_list)
 {
   CNR_TRACE_START(m_logger);
+  std::stringstream report;
   for (const hardware_interface::ControllerInfo& ctrl : stop_list)
   {
     std::list<hardware_interface::ControllerInfo>::iterator stopped_controller =
@@ -341,9 +348,9 @@ bool RobotHW::enterPrepareSwitch(const std::list< hardware_interface::Controller
     if(m_active_controllers.end() == stopped_controller)
     {
       addDiagnosticsMessage("ERROR", "controller '" + ctrl.name + "' is not active, so I cannot stop it",
-                              { {"Transition", "switching"} }, true);  //NOLINT
+                              { {"Transition", "switching"} }, &report);  //NOLINT
       dump_state(cnr_hardware_interface::CTRL_ERROR);
-      CNR_RETURN_FALSE(m_logger);
+      CNR_RETURN_FALSE(m_logger, report.str());
     }
     m_active_controllers.erase(stopped_controller);
   }
@@ -369,7 +376,7 @@ bool RobotHW::enterPrepareSwitch(const std::list< hardware_interface::Controller
 
 bool RobotHW::exitPrepareSwitch()
 {
-  return dump_state(cnr_hardware_interface::READY);
+  return dump_state(cnr_hardware_interface::RUNNING);
 }
 
 bool RobotHW::enterCheckForConflict(const std::list< hardware_interface::ControllerInfo >& info) const
@@ -423,112 +430,6 @@ bool RobotHW::getParamServer(configuration_msgs::GetConfigRequest& req, configur
 bool RobotHW::setParamServer(configuration_msgs::SetConfigRequest& req, configuration_msgs::SetConfigResponse& res)
 {
   return true;
-}
-
-void RobotHW::addDiagnosticsMessage(const std::string& level
-                                     , const std::string& summary
-                                     , const std::map<std::string, std::string>& key_values
-                                     , const bool verbose)
-{
-  diagnostic_msgs::DiagnosticStatus diag;
-  diag.name        = m_robot_name;
-  diag.hardware_id = m_robot_name;
-  diag.message     = summary;
-
-  if(level == "OK")
-  {
-    diag.level = diagnostic_msgs::DiagnosticStatus::OK;
-    CNR_INFO_COND(m_logger, verbose, "[" << m_robot_name << " ] " << summary);
-  }
-  if(level == "WARN")
-  {
-    diag.level = diagnostic_msgs::DiagnosticStatus::WARN;
-    CNR_WARN_COND(m_logger, verbose, "[" << m_robot_name << " ] " << summary);
-  }
-  if(level == "ERROR")
-  {
-    diag.level = diagnostic_msgs::DiagnosticStatus::ERROR;
-    CNR_ERROR_COND(m_logger, verbose, "[" << m_robot_name << " ] " << summary);
-  }
-  if(level == "STALE")
-  {
-    diag.level = diagnostic_msgs::DiagnosticStatus::STALE;
-    CNR_INFO_COND(m_logger, verbose, "[" << m_robot_name << " ] " << summary);
-  }
-
-  for (const auto & key_value : key_values)
-  {
-    diagnostic_msgs::KeyValue kv;
-    kv.key = key_value.first;
-    kv.value = key_value.second;
-    diag.values.push_back(kv);
-  }
-  std::lock_guard<std::mutex> lock(m_mutex);
-  m_diagnostic.status.push_back(diag);
-}
-
-
-void RobotHW::diagnostics(diagnostic_updater::DiagnosticStatusWrapper &stat, int level)
-{
-  boost::posix_time::ptime my_posix_time = ros::Time::now().toBoost();
-
-  std::lock_guard<std::mutex> lock(m_mutex);
-  stat.hardware_id = m_robot_name;
-  stat.name        = "RobotHW ["
-                   + ( level == (int)diagnostic_msgs::DiagnosticStatus::OK  ? std::string("Info")
-                     : level == (int)diagnostic_msgs::DiagnosticStatus::WARN ? std::string("Warn")
-                     : std::string("Error") )
-                   +"]";
-  bool something_to_add = false;
-  for (  const diagnostic_msgs::DiagnosticStatus & s : m_diagnostic.status )
-  {
-    something_to_add |= static_cast<int>( s.level ) == level;
-  }
-  if( something_to_add )
-  {
-    stat.level       = level == (int)diagnostic_msgs::DiagnosticStatus::OK ? diagnostic_msgs::DiagnosticStatus::OK
-                     : level == (int)diagnostic_msgs::DiagnosticStatus::WARN ? diagnostic_msgs::DiagnosticStatus::WARN
-                     : level == (int)diagnostic_msgs::DiagnosticStatus::ERROR ? diagnostic_msgs::DiagnosticStatus::ERROR
-                     : diagnostic_msgs::DiagnosticStatus::STALE;
-    stat.message     = "Log of the status [" + boost::posix_time::to_iso_string(my_posix_time) + "]";
-    for ( const diagnostic_msgs::DiagnosticStatus & s : m_diagnostic.status )
-    {
-      diagnostic_msgs::KeyValue k;
-      k.key = s.name;
-      k.value = s.message;
-      stat.add(k.key, k.value);
-    }
-    m_diagnostic.status.erase(
-        std::remove_if(
-            m_diagnostic.status.begin(),
-            m_diagnostic.status.end(),
-            [&](diagnostic_msgs::DiagnosticStatus const & p) { return p.level == level; }
-        ),
-        m_diagnostic.status.end()
-    );
-  }
-  else
-  {
-    stat.summary(diagnostic_msgs::DiagnosticStatus::OK, "None Error in the queue ["
-                 + boost::posix_time::to_iso_string(my_posix_time) + "]");
-  }
-
-
-}
-
-void RobotHW::diagnosticsInfo(diagnostic_updater::DiagnosticStatusWrapper &stat)
-{
-  diagnostics(stat,diagnostic_msgs::DiagnosticStatus::OK);
-}
-
-void RobotHW::diagnosticsWarn(diagnostic_updater::DiagnosticStatusWrapper &stat)
-{
-  diagnostics(stat,diagnostic_msgs::DiagnosticStatus::WARN);
-}
-
-void RobotHW::diagnosticsError(diagnostic_updater::DiagnosticStatusWrapper &stat)
-{
-  diagnostics(stat,diagnostic_msgs::DiagnosticStatus::ERROR);
 }
 
 bool RobotHW::dump_state() const

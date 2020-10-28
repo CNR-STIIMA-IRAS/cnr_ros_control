@@ -83,7 +83,7 @@ bool get_configuration_component_no_dependencies(XmlRpc::XmlRpcValue& configurat
   configuration.data.type   = "unknown";
   configuration.components.clear();
 
-  size_t jdx = 0;
+  int jdx = 0;
   for (jdx = 0; jdx < configuration_component["components"].size(); jdx++)
   {
     XmlRpc::XmlRpcValue& c = configuration_component["components"][jdx];
@@ -128,7 +128,7 @@ bool get_configuration_component_dependencies(XmlRpc::XmlRpcValue&      configur
     return true;
   }
   
-  for (size_t jdx = 0; jdx < configuration_component["depends"].size(); jdx++)
+  for (int jdx = 0; jdx < configuration_component["depends"].size(); jdx++)
   {
     std::string d = configuration_component["depends"][jdx];
     dependencies.push_back(d);
@@ -152,7 +152,7 @@ inline bool get_configuration_components(XmlRpc::XmlRpcValue&                   
   configurations.clear();
   std::map<std::string, size_t> name_to_index;
   std::map<std::string, std::vector< std::string > > name_to_dep_names;
-  for (size_t i = 0; i < configuration_components.size(); i++)
+  for(int i=0; i<configuration_components.size(); i++)
   {
     std::string         what;
     ConfigurationStruct configuration;

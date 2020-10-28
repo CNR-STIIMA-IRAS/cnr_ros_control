@@ -34,6 +34,8 @@
  */
 #include <atomic>
 #include <mutex>
+#include <thread>
+#include <vector>
 
 #include <ros/ros.h>
 
@@ -44,6 +46,7 @@
 #include <nodelet/NodeletUnload.h>
 
 #include <cnr_logger/cnr_logger.h>
+#include <realtime_utilities/parallel_computing.h> 
 
 #include <controller_manager_msgs/ControllerState.h>
 
@@ -137,6 +140,12 @@ bool ConfigurationManager::startCallback(configuration_msgs::StartConfiguration:
         m_active_configuration      = m_configurations.at(req.start_configuration);
         m_active_configuration_name = req.start_configuration;
         m_nh.setParam("status/active_configuration", m_active_configuration_name);
+      }
+      else
+      {
+        CNR_ERROR(*m_logger, "************************** ******************************* *******************************");
+        CNR_ERROR(*m_logger, "************************** Failed Configuration: '" << req.start_configuration << "'  " << n_transition << "#" );
+        CNR_ERROR(*m_logger, "************************** ******************************* *******************************");
       }
     }
   }
@@ -279,7 +288,7 @@ bool ConfigurationManager::run()
       }
       else
       {
-        CNR_WARN_THROTTLE(*m_logger, 20.0, "Waiting for a new callback, or some change in the cofiguration state");
+        CNR_WARN_THROTTLE(*m_logger, 60.0, "Waiting for a new callback, or some change in the cofiguration state");
       }
 
       if (m_signal_handler.gotExitSignal())
@@ -404,12 +413,12 @@ bool ConfigurationManager::checkRobotHwState(const std::string& hw, cnr_hardware
   std::string error;
   if (!cnr_hardware_interface::get_state(n, hw, hw_status, ros::Duration(10), error))
   {
-    CNR_FATAL(*m_logger, "The HW " << hw << " has not any valid state: " << error);
+    CNR_FATAL_THROTTLE(*m_logger, 5.0, "The HW " << hw << " has not any valid state: " << error);
     return false;
   }
   if (hw_status != target)
   {
-    CNR_FATAL(*m_logger, "The status of the HW '" << hw << "' is " << cnr_hardware_interface::to_string(hw_status)
+    CNR_FATAL_THROTTLE(*m_logger, 5.0, "The status of the HW '" << hw << "' is " << cnr_hardware_interface::to_string(hw_status)
                       << " while it should be " << cnr_hardware_interface::to_string(target));
     return false;
   }
@@ -490,12 +499,50 @@ bool ConfigurationManager::callback(const ConfigurationStruct& next_configuratio
       CNR_RETURN_FALSE(*m_logger,
                        "Loading of the RobotHW '" + hw_to_load_name + "' failed. Error:\n\t=>" + m_conf_loader.error());
     }
-
-    if (!checkRobotHwState(hw_to_load_name))
-    {
-      CNR_RETURN_FALSE(*m_logger);
-    }
   }
+
+  auto check = [&](const std::string& hw_to_load_name) -> bool
+  {
+    ros::Rate r(250);
+    ros::Time st=ros::Time::now();
+    while(ros::ok())
+    {
+      if(checkRobotHwState(hw_to_load_name, cnr_hardware_interface::INITIALIZED))
+      {
+        CNR_INFO(m_logger, "The '" + hw_to_load_name + "' is INITIALIZED. Good!");
+        return true;
+      }
+      else if(checkRobotHwState(hw_to_load_name, cnr_hardware_interface::RUNNING))
+      {
+        CNR_INFO(m_logger, "The '" + hw_to_load_name + "' is RUNNING. Good!");
+        return true;
+      }
+      if((ros::Time::now()-st).toSec() > 4.0)
+      {
+        CNR_ERROR(m_logger, "Timeout in loading and activating the '" + hw_to_load_name + "'");
+        return false;
+      }
+      r.sleep();
+    }
+  };
+
+  std::vector<std::future<bool>> oks; 
+  realtime_utilities::tasks checkers;
+  for(size_t i=0; i< hw_to_load_names.size();i++)
+  {
+    auto f = std::bind(check, hw_to_load_names.at(i));
+    oks.push_back( checkers.queue(f) );
+  }
+  checkers.start(hw_to_load_names.size());
+  checkers.finish();
+  bool ok = true;
+  std::for_each(oks.begin(), oks.end(), [&](auto & o){ ok &= o.get(); });
+  if(!ok)
+  {
+    CNR_ERROR(m_logger, "Configuring HW Failed");
+    CNR_RETURN_FALSE(m_logger, "Configuring HW Failed");
+  }
+  
   CNR_INFO(*m_logger, cnr_logger::BM() << "<<<<<<<<<<<< Configuring HW "
                    << cnr_logger::BG() << "[ DONE ]" << cnr_logger::RST());
 

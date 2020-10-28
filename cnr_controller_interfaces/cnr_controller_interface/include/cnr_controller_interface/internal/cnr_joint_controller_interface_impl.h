@@ -196,7 +196,7 @@ bool JointController<H,T>::enterStarting()
 template<class H, class T>
 bool JointController<H,T>::enterUpdate()
 {
-  CNR_TRACE_START_THROTTLE(this->logger(), 20.0);
+  CNR_TRACE_START_THROTTLE_DEFAULT(this->logger());
   if (!Controller<T>::enterUpdate())
   {
     CNR_RETURN_FALSE(this->logger());
@@ -204,7 +204,7 @@ bool JointController<H,T>::enterUpdate()
   this->m_handler >> m_rstate;
   m_rstate->updateTransformations();
 
-  CNR_RETURN_TRUE_THROTTLE(this->logger(), 20.0);
+  CNR_RETURN_TRUE_THROTTLE_DEFAULT(this->logger());
 }
 
 

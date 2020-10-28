@@ -93,6 +93,7 @@ protected:
   std::vector<double> m_cmd_vel; //target velocity
   std::vector<double> m_cmd_eff; //target effort
 
+  unsigned int  m_warmup;
   unsigned int  m_missing_messages;
   unsigned int  m_max_missing_messages;
   bool          m_first_topic_received;

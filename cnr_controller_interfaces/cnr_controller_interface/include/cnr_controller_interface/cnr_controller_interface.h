@@ -74,73 +74,6 @@ bool                     check_state(const std::string& hw_name,
                                      std::string& error,
                                      const ros::Duration& watchdog = ros::Duration(0.0));
 
-template<class SharedPointer> 
-struct Holder 
-{
-  SharedPointer p;
-
-  Holder(const SharedPointer &p) : p(p) {}
-  Holder(const Holder &other) : p(other.p) {}
-  Holder(Holder &&other) : p(std::move(other.p)) {}
-
-  void operator () (...) { p.reset(); }
-};
-
-template<class T> 
-std::shared_ptr<T> to_std_ptr(const boost::shared_ptr<T> &p) 
-{
-  typedef Holder<std::shared_ptr<T>>   StandardHolder;
-  typedef Holder<boost::shared_ptr<T>> BoostHolder;
-  
-  StandardHolder *h = boost::get_deleter<StandardHolder>(p);
-  if( h ) 
-  {
-    return h->p;
-  } 
-  else 
-  {
-    return std::shared_ptr<T>(p.get(), BoostHolder(p));
-  }
-}
-
-
-
-// class ControllerDiagnostic
-// {
-// public:
-
-//   /**
-//    * @brief addDiagnosticsMessage
-//    * @param msg
-//    * @param name
-//    * @param level
-//    * @param verbose
-//    */
-//   virtual void addDiagnosticsMessage(const std::string& msg,
-//                                       const std::string& name,
-//                                       const std::string& level,
-//                                       const bool&        verbose) {}
-
-//   virtual void diagnostics     (diagnostic_updater::DiagnosticStatusWrapper &stat, int level);
-//   virtual void diagnosticsInfo (diagnostic_updater::DiagnosticStatusWrapper &stat)           ;
-//   virtual void diagnosticsWarn (diagnostic_updater::DiagnosticStatusWrapper &stat)           ;
-//   virtual void diagnosticsError(diagnostic_updater::DiagnosticStatusWrapper &stat)           ;
-//   virtual void diagnosticsPerformance(diagnostic_updater::DiagnosticStatusWrapper &stat)     ;
-
-//   virtual void addTimeTracker(const std::string& id);
-
-// protected:
-//   std::string                                           m_hw_name;
-//   std::string                                           m_ctrl_name;
-//   mutable std::mutex                                    m_mutex;
-//   mutable diagnostic_msgs::DiagnosticArray              m_diagnostic;
-//   std::vector<std::string>                              m_status_history;
-//   std::map<std::string, realtime_utilities::TimeSpanTrackerPtr>  m_time_span_tracker;
-//   double                                                m_sampling_period;
-//   double                                                m_watchdog;
-
-// };
-
 template< class T >
 class Controller: public ::controller_interface::Controller< T >, public realtime_utilities::DiagnosticsInterface
 {
@@ -279,6 +212,12 @@ protected:
   T*            m_hw;
   ros::Duration m_dt;
   std::shared_ptr<cnr_logger::TraceLogger>  m_logger;
+  std::string               m_hw_name;
+  std::string               m_ctrl_name;
+  double                    m_sampling_period;
+  double                    m_watchdog;
+  std::vector<std::string>  m_status_history;
+
   
 private:
   ros::NodeHandle     m_root_nh;
@@ -295,6 +234,7 @@ private:
   std::vector<ros_helper::WallTimeMTPtr>        m_sub_time;
   std::vector<bool>                             m_sub_time_track;
 
+  
   bool callAvailable( );
 
 };

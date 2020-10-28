@@ -46,15 +46,12 @@
 
 #include <ros/ros.h>
 #include <ros/callback_queue.h>
-#include <diagnostic_updater/diagnostic_updater.h>
+#include <realtime_utilities/diagnostics_interface.h>
 #include <cnr_logger/cnr_logger.h>
 
 #include <hardware_interface/robot_hw.h>
-#include <diagnostic_msgs/DiagnosticArray.h>
 #include <configuration_msgs/SetConfig.h>
 #include <configuration_msgs/GetConfig.h>
-//#include <cnr_controller_interface/cnr_controller_interface.h>
-//#include <cnr_controller_manager_interface/cnr_controller_manager_interface.h>
 #include <cnr_hardware_interface/internal/cnr_robot_hw_status.h>
 #include <cnr_hardware_interface/internal/cnr_robot_hw_utils.h>
 
@@ -75,13 +72,23 @@ inline std::string extractRobotName(const std::string& hw_namespace)
 /**
  * @brief The RobotHW class
  */
-class RobotHW: public hardware_interface::RobotHW
+class RobotHW: public hardware_interface::RobotHW, public realtime_utilities::DiagnosticsInterface
 {
 public:
   RobotHW();
   ~RobotHW();
 
   // ======================================================= final methods (cannot be overriden by the derived clases
+  /**
+   * @return true if ok
+   * @brief If the cnr_hardware_nodelet_interface::RobotHwNodelet is used, this function is called by the onInit of
+   * the nodelet that  stores the RobotHw.
+   * In the onInit function of the cnr_hardware_nodelet_interface::RobotHwNodelet, the RobotHW::init() is called, 
+   * and then a rt-thread is launched with an infinite loop standard  read - controller_manager::update - write.
+   * Therefore, the RobotHW::init() is called before the creation of the thread. If some initialization needs to be 
+   * timely close to the first read, you have to implement also the initRT() function that is called in the rt-thread
+   * before the infinite loop.
+   */
   bool init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw_nh) final;
   void read(const ros::Time& time, const ros::Duration& period) final;
   void write(const ros::Time& time, const ros::Duration& period) final;
@@ -91,7 +98,20 @@ public:
   bool shutdown();
   // ======================================================= End - final methods
 
-
+  // ======================================================= RT init
+    /**
+   * @return true if ok
+   * @brief If the cnr_hardware_nodelet_interface::RobotHwNodelet is used, this function is called by the onInit of
+   * the nodelet that  stores the RobotHw.
+   * In the onInit function of the cnr_hardware_nodelet_interface::RobotHwNodelet, the RobotHW::init() is called, 
+   * and then a rt-thread is launched with an infinite loop standard  read - controller_manager::update - write.
+   * Therefore, the RobotHW::init() is called before the creation of the thread. The initRT() is called at the begin of the 
+   * RT_thread, just before the infinite loop, and timely very close to the first read().
+   */
+  virtual bool initRT()
+  {
+    return true;
+  }
 
   // ======================================================= Method to override inthe derived classes
   virtual bool doInit()
@@ -130,11 +150,7 @@ public:
   // =======================================================
 
   // ======================================================= utils
-  void diagnostics     (diagnostic_updater::DiagnosticStatusWrapper &stat, int level);
-  void diagnosticsInfo (diagnostic_updater::DiagnosticStatusWrapper &stat);
-  void diagnosticsWarn (diagnostic_updater::DiagnosticStatusWrapper &stat);
-  void diagnosticsError(diagnostic_updater::DiagnosticStatusWrapper &stat);
-
+ 
   const cnr_hardware_interface::StatusHw&  getStatus() const
   {
     return m_status;
@@ -149,10 +165,6 @@ protected:
   virtual bool setParamServer(configuration_msgs::SetConfigRequest& req, configuration_msgs::SetConfigResponse& res);
   virtual bool getParamServer(configuration_msgs::GetConfigRequest& req, configuration_msgs::GetConfigResponse& res);
 
-  void addDiagnosticsMessage(const std::string& level,
-                              const std::string& summary,
-                              const std::map<std::string, std::string>& key_values,
-                              const bool verbose = false);
   bool dump_state(const cnr_hardware_interface::StatusHw& status) const;
   bool dump_state() const;
 
@@ -174,6 +186,8 @@ private:
   }
 
 protected:
+
+  double                                           m_sampling_period;
   std::string                                      m_robot_name;
   ros::NodeHandle                                  m_root_nh;
   ros::NodeHandle                                  m_robothw_nh;
@@ -190,7 +204,6 @@ protected:
   bool                                             m_is_first_read;
   mutable cnr_hardware_interface::StatusHw         m_status;
   mutable std::vector<std::string>                 m_status_history;
-  mutable diagnostic_msgs::DiagnosticArray         m_diagnostic;
   
   std::list< hardware_interface::ControllerInfo >  m_active_controllers;
   std::vector< std::string >                       m_resource_names;
