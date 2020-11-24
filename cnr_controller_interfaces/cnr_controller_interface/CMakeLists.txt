@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.1)
 project(cnr_controller_interface)
 
 set(CMAKE_BUILD_TYPE Debug)
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -37,7 +37,7 @@ include_directories(
 add_library(${PROJECT_NAME} src/cnr_controller_interface/cnr_controller_interface.cpp
                             src/cnr_controller_interface/internal/cnr_handles.cpp )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_SYSTEM_LIBRARY} Eigen3::Eigen)
-
+##target_compile_definitions(${PROJECT_NAME} PUBLIC -DEIGEN_DONT_VECTORIZE=1)
 
 #############
 ## Install ##

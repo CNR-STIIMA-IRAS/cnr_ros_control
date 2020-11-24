@@ -5,7 +5,7 @@ project(cnr_configuration_manager)
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -70,6 +70,27 @@ add_executable            (${PROJECT_NAME}_node src/configuration_manager_node.c
 add_dependencies          (${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries     (${PROJECT_NAME}_node ${PROJECT_NAME} ${catkin_LIBRARIES} )
 target_compile_options    (${PROJECT_NAME}_node PUBLIC -Wall $<$<CONFIG:RELEASE>:-Ofast> )
+if(${CMAKE_VERSION} VERSION_GREATER "3.16.0") 
+	target_precompile_headers (${PROJECT_NAME} PUBLIC <ros/ros.h>
+													  <controller_manager_msgs/LoadController.h>
+													  <controller_manager_msgs/UnloadController.h>
+													  <controller_manager_msgs/SwitchController.h>
+													  <controller_manager_msgs/ListControllers.h>
+													  <nodelet/nodelet.h>
+													  <nodelet/loader.h>
+													  <nodelet/NodeletLoadRequest.h>
+													  <nodelet/NodeletLoad.h>
+													  <nodelet/NodeletUnload.h>
+													  <nodelet/NodeletList.h>
+													  <std_srvs/Trigger.h>
+													  <boost/graph/graph_concepts.hpp>
+													  <actionlib/client/simple_action_client.h>
+													  <control_msgs/FollowJointTrajectoryAction.h>
+													  <bondcpp/bond.h>
+													  <mutex>
+													  <string> 
+													  <stdexcept>)
+endif()
 #target_compile_definitions(${PROJECT_NAME}_node PUBLIC  $<$<CONFIG:RELEASE>:NDEBUG> -fpermissive)
 
 add_executable(configuration_user_interface src/ui_configuration_manager.cpp)

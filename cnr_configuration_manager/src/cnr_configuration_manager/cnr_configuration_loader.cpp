@@ -461,6 +461,20 @@ bool ConfigurationLoader::stopAndUnloadAllControllers( const std::vector<std::st
   auto stopper=[&](const std::string & hw, cnr_controller_manager_interface::ControllerManagerInterfacePtr ctrl, 
                    bool& ok, std::string& error)
   {
+    if (mail_senders_.find(hw) == mail_senders_.end())
+    {
+      mail_senders_[hw] = root_nh_.serviceClient<configuration_msgs::SendMessage>("/"+hw+"/mail");
+    }
+    configuration_msgs::SendMessage srv;
+    srv.request.message.data = "========= ======== UnLoad and Stop Controllers ========";
+    if(!mail_senders_[hw].exists())
+    {
+      CNR_ERROR(*logger_, "The service '" +mail_senders_[hw].getService() +"' does not exist... ?!?");
+    }
+    else
+    {
+      mail_senders_[hw].call(srv);
+    }
     try
     {
       ok = ctrl->stopUnloadAllControllers(watchdog);

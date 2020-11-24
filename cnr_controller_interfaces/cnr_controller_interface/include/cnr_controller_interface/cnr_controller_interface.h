@@ -39,7 +39,6 @@
 #include <ctime>
 #include <chrono>
 #include <algorithm>
-#include <mutex>
 
 #include <ros/ros.h>
 #include <ros/callback_queue.h>
@@ -218,7 +217,6 @@ protected:
   double                    m_watchdog;
   std::vector<std::string>  m_status_history;
 
-  
 private:
   ros::NodeHandle     m_root_nh;
   ros::NodeHandle     m_controller_nh;
@@ -233,10 +231,8 @@ private:
   std::vector<std::shared_ptr<ros::Subscriber>> m_sub;
   std::vector<ros_helper::WallTimeMTPtr>        m_sub_time;
   std::vector<bool>                             m_sub_time_track;
-
   
   bool callAvailable( );
-
 };
 
 }  // namespace cnr_controller_interface

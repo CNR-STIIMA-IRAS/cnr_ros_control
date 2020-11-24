@@ -44,13 +44,13 @@
   #define USE_WALLRATE
 #endif
 
-
 #include <cstring>
 #include <sstream>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <pluginlib/class_list_macros.h>
 #include <diagnostic_msgs/DiagnosticArray.h>
+
 #include <realtime_utilities/realtime_utilities.h>
 #include <cnr_controller_interface/cnr_controller_interface.h>
 #include <cnr_hardware_interface/cnr_robot_hw.h>
@@ -432,7 +432,7 @@ void RobotHwNodelet::controlUpdateThread()
 
 #if PREEMPTIVE_RT
   realtime_utilities::period_info  pinfo;
-  if(!realtime_utilities::rt_init_thread(RT_STACK_SIZE, sched_get_priority_max(SCHED_RR), SCHED_RR, &pinfo, m_period.toNSec()) )
+  if(!realtime_utilities::rt_init_thread(RT_STACK_SIZE, sched_get_priority_max(SCHED_RR)-2, SCHED_RR, &pinfo, m_period.toNSec()) )
   {
     CNR_ERROR(m_logger, "Failed in setting thread rt properties. Exit. ");
     std::raise(SIGINT);

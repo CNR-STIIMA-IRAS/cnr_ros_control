@@ -53,6 +53,9 @@ template<class H, class T>
 JointController<H,T>::~JointController()
 {
   m_rkin.reset();
+  m_stop_update_transformations = true;
+  if(m_update_transformations.joinable())
+    m_update_transformations.join();
   m_rstate.reset();
   CNR_TRACE_START(*cnr_controller_interface::Controller< T >::m_logger);
 }
@@ -77,6 +80,9 @@ bool JointController<H,T>::doUpdate(const ros::Time& /*time*/, const ros::Durati
 template<class H, class T>
 bool JointController<H,T>::doStopping(const ros::Time& /*time*/)
 {
+  m_stop_update_transformations = true;
+  if(m_update_transformations.joinable())
+    m_update_transformations.join();
   return true;
 }
 
@@ -97,7 +103,7 @@ bool JointController<H,T>::enterInit()
 {
   m_cfrmt = Eigen::IOFormat(Eigen::StreamPrecision, 0, ", ", "\n", "[", "]");
   CNR_TRACE_START(this->logger());
-  if (!Controller<T>::enterInit())
+  if(!Controller<T>::enterInit())
   {
     CNR_RETURN_FALSE(this->logger());
   }
@@ -116,9 +122,9 @@ bool JointController<H,T>::enterInit()
   }
 
   std::string base_link;
-  if (!this->getControllerNh().getParam("base_link", base_link ) )
+  if(!this->getControllerNh().getParam("base_link", base_link ) )
   {
-    if (!this->getRootNh().getParam("base_link", base_link ) )
+    if(!this->getRootNh().getParam("base_link", base_link ) )
     {
       CNR_RETURN_FALSE(this->logger(), "'Neither '" + this->getControllerNamespace() + "/base_link' " +
                   "nor '"      + this->getRootNamespace() + "/base_link' are not in rosparam server.");
@@ -126,9 +132,9 @@ bool JointController<H,T>::enterInit()
   }
 
   std::string tool_link;
-  if (!this->getControllerNh().getParam("tool_link", tool_link ) )
+  if(!this->getControllerNh().getParam("tool_link", tool_link ) )
   {
-    if (!this->getRootNh().getParam("tool_link", tool_link ) )
+    if(!this->getRootNh().getParam("tool_link", tool_link ) )
     {
       CNR_RETURN_FALSE(this->logger(), "'Neither '" + this->getControllerNamespace() + "/tool_link' " +
                 "nor '"      + this->getRootNamespace() + "/tool_link' are not in rosparam server.");
@@ -182,14 +188,15 @@ template<class H, class T>
 bool JointController<H,T>::enterStarting()
 {
   CNR_TRACE_START(this->logger());
-  if (!Controller<T>::enterStarting())
+  if(!Controller<T>::enterStarting())
   {
     CNR_RETURN_FALSE(this->logger());
   }
   m_handler >> m_rstate;
-  
-  m_rstate->updateTransformations();
 
+  m_stop_update_transformations = false;
+  m_update_transformations = std::thread(&JointController<H,T>::updateTransformations, this);
+  
   CNR_RETURN_TRUE(this->logger());
 }
 
@@ -197,18 +204,47 @@ template<class H, class T>
 bool JointController<H,T>::enterUpdate()
 {
   CNR_TRACE_START_THROTTLE_DEFAULT(this->logger());
-  if (!Controller<T>::enterUpdate())
+  if(!Controller<T>::enterUpdate())
   {
     CNR_RETURN_FALSE(this->logger());
   }
+
+  std::lock_guard<std::mutex> lock(m_mtx);
   this->m_handler >> m_rstate;
-  m_rstate->updateTransformations();
+  // NOTE: the transformations may take time, especially due the pseudo inversion of the Jacobian, to estimate the external wrench.
+  // Therefore, they are executed in parallel 
+  //m_rstate->updateTransformations();
 
   CNR_RETURN_TRUE_THROTTLE_DEFAULT(this->logger());
 }
 
+template<class H, class T>
+bool JointController<H,T>::updateTransformations()
+{
+  Eigen::VectorXd q(this->m_rkin->nAx());
+  Eigen::VectorXd qd(this->m_rkin->nAx());
+  Eigen::VectorXd qdd(this->m_rkin->nAx());
+  Eigen::VectorXd external_effort(this->m_rkin->nAx());
 
+  CNR_TRACE_START_THROTTLE_DEFAULT(this->logger());
+  ros::Rate rt(1.0/this->m_sampling_period);
+  while(!m_stop_update_transformations && ros::ok())
+  {
+    {
+      std::lock_guard<std::mutex> lock(m_mtx);
+      q = m_rstate->q();
+      qd = m_rstate->qd();
+      qdd = m_rstate->qdd();
+      external_effort = m_rstate->external_effort();
+    }
 
+    m_rstate->updateTransformations(q, qd, qdd, external_effort);
+
+    rt.sleep();
+  }
+
+  CNR_RETURN_TRUE_THROTTLE_DEFAULT(this->logger());
+}
 
 } // cnr_controller_interface
 #endif

@@ -35,11 +35,12 @@
 #ifndef __cnr_configuration_manager_xmlrpc__
 #define __cnr_configuration_manager_xmlrpc__
 
-#include <ros/ros.h>
 #include <string>
 
-#include <configuration_msgs/ConfigurationComponent.h>
+#include <ros/ros.h>
 #include <nodelet/NodeletLoadRequest.h>
+
+#include <configuration_msgs/ConfigurationComponent.h>
 #include <cnr_configuration_manager/internal/cnr_configuration_manager_utils.h>
 
 namespace cnr_configuration_manager

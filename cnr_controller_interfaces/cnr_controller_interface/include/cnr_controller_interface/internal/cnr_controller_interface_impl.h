@@ -70,7 +70,7 @@ bool Controller<T>::init(T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& contr
   {
     m_hw_name     = root_nh.getNamespace();
     m_ctrl_name   = controller_nh.getNamespace();
-    if (m_ctrl_name.find(m_hw_name) != std::string::npos)
+    if(m_ctrl_name.find(m_hw_name) != std::string::npos)
     {
       m_ctrl_name.erase(m_ctrl_name.find(m_hw_name), m_hw_name.length());
     }
@@ -81,14 +81,14 @@ bool Controller<T>::init(T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& contr
     }
 
     std::replace(m_hw_name.begin(), m_hw_name.end(), '/', '_');
-    if (m_hw_name  .at(0) == '_') m_hw_name  .erase(0, 1);
+    if(m_hw_name  .at(0) == '_') m_hw_name  .erase(0, 1);
     std::replace(m_ctrl_name.begin(), m_ctrl_name.end(), '/', '_');
-    if (m_ctrl_name.at(0) == '_') m_ctrl_name.erase(0, 1);
+    if(m_ctrl_name.at(0) == '_') m_ctrl_name.erase(0, 1);
 
     m_logger.reset(new cnr_logger::TraceLogger(m_hw_name + "-" + m_ctrl_name));
-    if (!m_logger->init(controller_nh.getNamespace(), false, false))
+    if(!m_logger->init(controller_nh.getNamespace(), false, false))
     {
-      if (!m_logger->init(root_nh.getNamespace(), false, false))
+      if(!m_logger->init(root_nh.getNamespace(), false, false))
       {
         return false;
       }
@@ -100,19 +100,19 @@ bool Controller<T>::init(T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& contr
     m_controller_nh = controller_nh; // handle to callback and remapping
     m_hw            = hw;
 
-    if (!m_root_nh.getParam("sampling_period", m_sampling_period))
+    if(!m_root_nh.getParam("sampling_period", m_sampling_period))
     {
       CNR_RETURN_FALSE(m_logger, "The parameter '" + m_root_nh.getNamespace() + "/sampling_period' is not set. Abort");
     }
 
     int maximum_missing_cycles = 10;
-    if (!m_controller_nh.getParam("watchdog", m_watchdog))
+    if(!m_controller_nh.getParam("watchdog", m_watchdog))
     {
-      if (!m_controller_nh.getParam("maximum_missing_cycles", maximum_missing_cycles))
+      if(!m_controller_nh.getParam("maximum_missing_cycles", maximum_missing_cycles))
       {
-        if (!m_root_nh.getParam("watchdog", m_watchdog))
+        if(!m_root_nh.getParam("watchdog", m_watchdog))
         {
-          if (!m_root_nh.getParam("maximum_missing_cycles", maximum_missing_cycles))
+          if(!m_root_nh.getParam("maximum_missing_cycles", maximum_missing_cycles))
           {
             m_watchdog = maximum_missing_cycles * m_sampling_period;
             CNR_WARN(m_logger, "Neither 'watchdog' and 'maximum_missing_cycles' are in the param server"
@@ -137,6 +137,9 @@ bool Controller<T>::init(T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& contr
 
     realtime_utilities::DiagnosticsInterface::init( m_hw_name, "Ctrl", m_ctrl_name );
     realtime_utilities::DiagnosticsInterface::addTimeTracker("update", m_sampling_period);
+    realtime_utilities::DiagnosticsInterface::addTimeTracker("enterUpdate", m_sampling_period);
+    realtime_utilities::DiagnosticsInterface::addTimeTracker("doUpdate", m_sampling_period);
+    realtime_utilities::DiagnosticsInterface::addTimeTracker("exitUpdate", m_sampling_period);
     
     l = __LINE__;
     if(!enterInit())
@@ -194,15 +197,21 @@ void Controller<T>::update(const ros::Time& time, const ros::Duration& period)
   CNR_TRACE_START_THROTTLE_DEFAULT(m_logger);
   timeSpanStrakcer("update")->tick();
 
+  timeSpanStrakcer("enterUpdate")->tick();
   bool ok = enterUpdate();
+  timeSpanStrakcer("enterUpdate")->tock();
 
   if(ok)
   {
     m_dt = period.toSec() > 1e-4 ? period : ros::Duration(1e-4);
+    timeSpanStrakcer("doUpdate")->tick();
     ok = doUpdate(time, period);
+    timeSpanStrakcer("doUpdate")->tock();
     if(ok)
     {
+      timeSpanStrakcer("exitUpdate")->tick();
       ok = exitUpdate();
+      timeSpanStrakcer("exitUpdate")->tick();
     }
   }
 
@@ -228,7 +237,7 @@ template<class T>
 void Controller<T>::stopping(const ros::Time& time)
 {
   CNR_TRACE_START(m_logger);
-  if (enterStopping() && doStopping(time) && exitStopping())
+  if(enterStopping() && doStopping(time) && exitStopping())
   {
     dump_state("STOPPED");
     CNR_RETURN_OK(m_logger, void());
@@ -252,7 +261,7 @@ void Controller<T>::waiting(const ros::Time& time)
 {
   CNR_TRACE_START(m_logger);
 
-  if (enterWaiting() && doWaiting(time) && exitWaiting())
+  if(enterWaiting() && doWaiting(time) && exitWaiting())
   {
     CNR_RETURN_OK(m_logger, void());
   }
@@ -297,8 +306,9 @@ bool Controller<T>::enterStarting()
 template<class T>
 bool Controller<T>::exitStarting()
 {
+
   CNR_TRACE_START(m_logger);
-  if (!callAvailable( ))
+  if(!callAvailable( ))
   {
     CNR_WARN(m_logger, "The callback is still not available...");
   }
@@ -309,7 +319,7 @@ template<class T>
 bool Controller<T>::enterUpdate()
 {
   CNR_TRACE_START_THROTTLE_DEFAULT(m_logger);
-  if (!callAvailable( ))
+  if(!callAvailable( ))
   {
     dump_state("CALLBACK_TIMEOUT_ERROR");
     CNR_RETURN_FALSE_THROTTLE(m_logger, 5.0, "Callback Timeout Error");
@@ -327,6 +337,32 @@ template<class T>
 bool Controller<T>::exitUpdate()
 {
   CNR_TRACE_START_THROTTLE_DEFAULT(m_logger);
+  if(m_sub.size() > 0)
+  {
+    ros::WallTime now = ros::WallTime::now();
+    ros::WallTime last_message_time;
+    for(size_t idx=0; idx<m_sub.size(); idx++)
+    {
+      if(m_sub_time.at(idx) == nullptr)
+      {
+        CNR_WARN_THROTTLE(m_logger, 5.0, "The topic '" + m_sub.at(idx)->getTopic() + "' seems not yet published..");
+      }
+      else
+      {
+        if(m_sub_time_track.at(idx))
+        {
+          m_sub_time.at(idx)->get(last_message_time);
+          ros::WallDuration time_span = (now - last_message_time);
+          if(time_span.toSec() > m_watchdog)
+          {
+            CNR_ERROR_THROTTLE(m_logger, 5.0, "Watchdog on subscribed topic '" + m_sub.at(idx)->getTopic()+ "' " +
+                                               std::string("time span: ")+std::to_string(time_span.toSec())+
+                                               std::string(" watchdog: ")+std::to_string(m_watchdog));
+          }
+        }
+      }
+    }
+  }
   CNR_RETURN_TRUE_THROTTLE_DEFAULT(m_logger);
 }
 
@@ -386,14 +422,14 @@ template<class T>
 bool Controller<T>::dump_state(const std::string& status)
 {
 
-  if (m_status_history.size() == 0)
+  if(m_status_history.size() == 0)
   {
     m_status_history.push_back(status);
     m_controller_nh.setParam(cnr_controller_interface::last_status_param(m_hw_name, m_ctrl_name), status);
     m_controller_nh.setParam(cnr_controller_interface::status_param(m_hw_name, m_ctrl_name), m_status_history);  }
   else
   {
-    if (m_status_history.back() != status)
+    if(m_status_history.back() != status)
     {
       m_status_history.push_back(status);
       m_controller_nh.setParam(cnr_controller_interface::last_status_param(m_hw_name, m_ctrl_name), status);
@@ -422,11 +458,11 @@ bool Controller<T>::shutdown(const std::string& state_final)
 {
   bool ret = false;
   CNR_TRACE_START(m_logger);
-  for (auto & t : m_sub)
+  for(auto & t : m_sub)
   {
     t->shutdown();
   }
-  for (auto & t : m_pub)
+  for(auto & t : m_pub)
   {
     t->shutdown();
   }
@@ -490,7 +526,7 @@ bool Controller<T>::publish(const size_t& idx, const M &message)
   if(m_pub_time_track.at(idx))
   {
     auto n = std::chrono::high_resolution_clock::now();
-    if (m_pub_start.at(idx) == nullptr)
+    if(m_pub_start.at(idx) == nullptr)
     {
       m_pub_start.at(idx) = new std::chrono::high_resolution_clock::time_point();
       *m_pub_start.at(idx) = n;
@@ -499,7 +535,7 @@ bool Controller<T>::publish(const size_t& idx, const M &message)
     }
     std::chrono::duration<double> time_span = (n -  *m_pub_last.at(idx));
     *m_pub_last.at(idx)  = n;
-    if (time_span.count() > m_watchdog)
+    if(time_span.count() > m_watchdog)
     {
       CNR_RETURN_FALSE(this->logger(), "The publisher has not been called within the foreseen watchdog."
                 +std::string("Time span: ") + std::to_string(time_span.count()) + ", "
@@ -544,34 +580,10 @@ template<class T>
 bool Controller<T>::callAvailable( )
 {
   m_controller_nh_callback_queue.callAvailable();
-  if (m_sub.size() > 0)
-  {
-    for (size_t idx=0; idx<m_sub.size(); idx++)
-    {
-      if (m_sub_time.at(idx) == nullptr)
-      {
-        CNR_WARN_THROTTLE(m_logger, 5.0, "The topic '" + m_sub.at(idx)->getTopic() + "' seems not yet published..");
-      }
-      else
-      {
-        if(m_sub_time_track.at(idx))
-        {
-          ros::WallTime now = ros::WallTime::now();
-          ros::WallTime last_message_time;
-          m_sub_time.at(idx)->get(last_message_time);
-          ros::WallDuration time_span = (now - last_message_time);
-          if (time_span.toSec() > m_watchdog)
-          {
-            CNR_ERROR_THROTTLE(m_logger, 5.0, "Watchdog on subscribed topic '" + m_sub.at(idx)->getTopic()+ "' " +
-                                               std::string("time span: ")+std::to_string(time_span.toSec())+
-                                               std::string(" watchdog: ")+std::to_string(m_watchdog));
-          }
-        }
-      }
-    }
-  }
   return true;
 }
+
+
 
 
 }  // namespace cnr_controller_interface 

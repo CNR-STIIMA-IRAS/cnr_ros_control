@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.1)
 project(cnr_hardware_nodelet_interface)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -46,11 +46,29 @@ include_directories(include ${catkin_INCLUDE_DIRS} )
 ## Declare a C++ library
 add_library(${PROJECT_NAME} src/${PROJECT_NAME}/cnr_robot_hw_nodelet.cpp )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} )
-target_compile_options(${PROJECT_NAME} PUBLIC -Wall -Werror $<$<CONFIG:RELEASE>:-Ofast>  )
+target_compile_options(${PROJECT_NAME} PUBLIC -Wall -faligned-new $<$<CONFIG:RELEASE>:-Ofast>  )
 if(PREEMPTIVE_RT)
   target_compile_definitions(${PROJECT_NAME} PUBLIC -DPREEMPTIVE_RT=1)
 else()
   target_compile_definitions(${PROJECT_NAME} PUBLIC -DPREEMPTIVE_RT=0)
+endif()
+if(${CMAKE_VERSION} VERSION_GREATER "3.16.0")
+target_precompile_headers(${PROJECT_NAME} PUBLIC  <cstring>
+                                                  <sstream>
+                                                  <thread>
+                                                  <memory>
+                                                  <map>
+                                                  <string>
+                                                  <boost/date_time/posix_time/posix_time.hpp>
+                                                  <ros/ros.h>
+                                                  <nodelet/nodelet.h>
+                                                  <nodelet/NodeletLoad.h>
+                                                  <nodelet/NodeletUnload.h>
+                                                  <nodelet/NodeletList.h>
+                                                  <pluginlib/class_loader.h>
+                                                  <pluginlib/class_list_macros.h>
+                                                  <diagnostic_updater/diagnostic_updater.h>
+                                                  <diagnostic_msgs/DiagnosticArray.h>)
 endif()
 
 #############

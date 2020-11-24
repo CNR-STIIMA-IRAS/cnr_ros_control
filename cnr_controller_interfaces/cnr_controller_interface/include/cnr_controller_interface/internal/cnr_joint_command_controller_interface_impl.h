@@ -146,7 +146,7 @@ bool JointCommandController<H,T>::enterUpdate()
   {
     CNR_RETURN_FALSE(this->m_logger);
   }
-  *m_last_target = *m_target;
+  m_last_target->copy(*m_target, false);
   CNR_RETURN_TRUE_THROTTLE_DEFAULT(*this->m_logger);
 }
 
@@ -251,7 +251,7 @@ bool JointCommandController<H,T>::exitStopping()
   {
     CNR_RETURN_FALSE(this->m_logger);
   }
-  m_last_target = m_target;
+  m_last_target->copy(*m_target,false);
 
   CNR_RETURN_TRUE(this->m_logger);
 }

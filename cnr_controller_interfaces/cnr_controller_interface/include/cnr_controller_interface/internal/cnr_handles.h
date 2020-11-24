@@ -33,7 +33,7 @@ struct HandlerBase
   void init(const std::map<std::string, H>& resources, rosdyn::ChainInterfacePtr ks) 
   { 
     std::vector<std::string> names(resources.size());
-    std::transform(resources.begin(), resources.end(), names.begin(), [](auto & p) { return p.first; });
+    std::transform(resources.begin(), resources.end(), names.begin(), [](const std::pair<std::string, H>& p) { return p.first; });
     indexes_ = get_index_map(names,ks);
     initialized_ = true;
   }
@@ -41,7 +41,7 @@ struct HandlerBase
   void init(const std::map<std::string, H>& resources, rosdyn::ChainStateConstPtr ks) 
   { 
     std::vector<std::string> names(resources.size());
-    std::transform(resources.begin(), resources.end(), names.begin(), [](auto & p) { return p.first; });
+    std::transform(resources.begin(), resources.end(), names.begin(), [](const std::pair<std::string, H>& p) { return p.first; });
     indexes_ = get_index_map(names,ks);
     initialized_ = true;
   }
