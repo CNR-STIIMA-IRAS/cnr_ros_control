@@ -14,23 +14,23 @@
 namespace cnr_controller_interface
 {
   
-const rosdyn::ChainState * const getPtr( const rosdyn::ChainStateConstPtr& in)
+const rosdyn::ChainStateX * const getPtr( const rosdyn::ChainStateXConstPtr& in)
 {
   return in.get();
 }
 
-const rosdyn::ChainState * const getPtr( const rosdyn::ChainState& in)
+const rosdyn::ChainStateX * const getPtr( const rosdyn::ChainStateX& in)
 {
   return &in;
 }
 
 
-rosdyn::ChainState* getPtr(rosdyn::ChainStatePtr& in)
+rosdyn::ChainStateX* getPtr(rosdyn::ChainStateXPtr& in)
 {
   return in.get();
 }
 
-rosdyn::ChainState* getPtr( rosdyn::ChainState& in)
+rosdyn::ChainStateX* getPtr( rosdyn::ChainStateX& in)
 {
   return &in;
 }
@@ -63,7 +63,7 @@ HandleIndexes get_index_map(const std::vector<std::string>& names, rosdyn::Chain
 
 
 
-HandleIndexes get_index_map(const std::vector<std::string>& names, rosdyn::ChainStateConstPtr ks)
+HandleIndexes get_index_map(const std::vector<std::string>& names, rosdyn::ChainStateXConstPtr ks)
 { 
   HandleIndexes ret;
   try

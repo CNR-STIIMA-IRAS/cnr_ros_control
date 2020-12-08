@@ -107,7 +107,7 @@ public:
 protected:
   Handler<H,T>              m_handler; 
   rosdyn::ChainInterfacePtr m_rkin;
-  rosdyn::ChainStatePtr     m_rstate;
+  rosdyn::ChainStateXPtr    m_rstate;
 
   Eigen::IOFormat           m_cfrmt;
 
