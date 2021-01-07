@@ -14,17 +14,17 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>cnr_hardware_interface</build_depend>
-  <build_depend>cnr_hardware_nodelet_interface</build_depend>
+  <build_depend>cnr_controller_interface_params</build_depend>
   <build_depend>nodelet</build_depend>
   <build_depend>roscpp</build_depend>
   <build_export_depend>cnr_hardware_interface</build_export_depend>
-  <build_export_depend>cnr_hardware_nodelet_interface</build_export_depend>
+  <build_export_depend>cnr_controller_interface_params</build_export_depend>
   <build_export_depend>nodelet</build_export_depend>
   <build_export_depend>roscpp</build_export_depend>
   <exec_depend>nodelet</exec_depend>
   <exec_depend>roscpp</exec_depend>
   <exec_depend>cnr_hardware_interface</exec_depend>
-  <exec_depend>cnr_hardware_nodelet_interface</exec_depend>
+  <exec_depend>cnr_controller_interface_params</exec_depend>
 
   <build_depend>code_coverage</build_depend>
   <build_depend>rostest</build_depend>

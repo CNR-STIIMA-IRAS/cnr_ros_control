@@ -33,17 +33,23 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CNR_CONTROLLER_INFERFACE_CNR_CONTROLLER_INFERFACE_IMPL_H
-#define CNR_CONTROLLER_INFERFACE_CNR_CONTROLLER_INFERFACE_IMPL_H
+#pragma once  //workoround for bug of https://bugreports.qt.io/browse/QTCREATORBUG-20883
+
+#ifndef CNR_CONTROLLER_INTFERFACE_CNR_CONTROLLER_INTFERFACE_IMPL_H
+#define CNR_CONTROLLER_INTFERFACE_CNR_CONTROLLER_INTFERFACE_IMPL_H
 
 #include <stdexcept>
 #include <mutex>
 #include <ros/ros.h>
 #include <ros/console.h>
 #include <ros/time.h>
-#include <cnr_controller_interface/cnr_controller_interface.h>
 
-namespace cnr_controller_interface
+#include <cnr_controller_interface/cnr_controller_interface.h>
+#include <cnr_controller_interface_params/cnr_controller_interface_params.h>
+
+namespace cnr
+{
+namespace control
 {
 
 
@@ -53,8 +59,9 @@ Controller<T>::~Controller()
   CNR_TRACE_START(m_logger);
   shutdown("UNLOADED");
   CNR_TRACE(m_logger, "[ DONE]");
-  m_logger.reset();
+
 }
+
 /**
 *
 *
@@ -64,12 +71,11 @@ Controller<T>::~Controller()
 template<class T>
 bool Controller<T>::init(T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh)
 {
-
   size_t l = __LINE__;
   try
   {
-    m_hw_name     = root_nh.getNamespace();
-    m_ctrl_name   = controller_nh.getNamespace();
+    m_hw_name   = root_nh.getNamespace();
+    m_ctrl_name = controller_nh.getNamespace();
     if(m_ctrl_name.find(m_hw_name) != std::string::npos)
     {
       m_ctrl_name.erase(m_ctrl_name.find(m_hw_name), m_hw_name.length());
@@ -85,10 +91,9 @@ bool Controller<T>::init(T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& contr
     std::replace(m_ctrl_name.begin(), m_ctrl_name.end(), '/', '_');
     if(m_ctrl_name.at(0) == '_') m_ctrl_name.erase(0, 1);
 
-    m_logger.reset(new cnr_logger::TraceLogger(m_hw_name + "-" + m_ctrl_name));
-    if(!m_logger->init(controller_nh.getNamespace(), false, false))
+    if(!m_logger.init(m_hw_name + "-" + m_ctrl_name, controller_nh.getNamespace(), false, false))
     {
-      if(!m_logger->init(root_nh.getNamespace(), false, false))
+      if(!m_logger.init(m_hw_name + "-" + m_ctrl_name, root_nh.getNamespace(), false, false))
       {
         return false;
       }
@@ -140,7 +145,7 @@ bool Controller<T>::init(T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& contr
     realtime_utilities::DiagnosticsInterface::addTimeTracker("enterUpdate", m_sampling_period);
     realtime_utilities::DiagnosticsInterface::addTimeTracker("doUpdate", m_sampling_period);
     realtime_utilities::DiagnosticsInterface::addTimeTracker("exitUpdate", m_sampling_period);
-    
+
     l = __LINE__;
     if(!enterInit())
     {
@@ -328,7 +333,7 @@ bool Controller<T>::enterUpdate()
   std::string status = m_status_history.back();
   if( status != "RUNNING" )
   {
-    CNR_RETURN_FALSE_THROTTLE(m_logger, 5.0, "The status is not 'RUNNING' as expected. Abort.");    
+    CNR_RETURN_FALSE_THROTTLE(m_logger, 5.0, "The status is not 'RUNNING' as expected. Abort.");
   }
   CNR_RETURN_TRUE_THROTTLE_DEFAULT(m_logger);
 }
@@ -425,15 +430,15 @@ bool Controller<T>::dump_state(const std::string& status)
   if(m_status_history.size() == 0)
   {
     m_status_history.push_back(status);
-    m_controller_nh.setParam(cnr_controller_interface::last_status_param(m_hw_name, m_ctrl_name), status);
-    m_controller_nh.setParam(cnr_controller_interface::status_param(m_hw_name, m_ctrl_name), m_status_history);  }
+    m_controller_nh.setParam(cnr::control::last_status_param(m_hw_name, m_ctrl_name), status);
+    m_controller_nh.setParam(cnr::control::status_param(m_hw_name, m_ctrl_name), m_status_history);  }
   else
   {
     if(m_status_history.back() != status)
     {
       m_status_history.push_back(status);
-      m_controller_nh.setParam(cnr_controller_interface::last_status_param(m_hw_name, m_ctrl_name), status);
-      m_controller_nh.setParam(cnr_controller_interface::status_param(m_hw_name, m_ctrl_name), m_status_history);
+      m_controller_nh.setParam(cnr::control::last_status_param(m_hw_name, m_ctrl_name), status);
+      m_controller_nh.setParam(cnr::control::status_param(m_hw_name, m_ctrl_name), m_status_history);
     }
   }
 
@@ -509,16 +514,16 @@ size_t Controller<T>::add_publisher(const std::string &topic, uint32_t queue_siz
 template<typename T> template<typename M>
 bool Controller<T>::publish(const size_t& idx, const M &message)
 {
-  CNR_TRACE_START_THROTTLE_DEFAULT(this->logger());
+  CNR_TRACE_START_THROTTLE_DEFAULT(this->m_logger);
   if(idx >=m_pub.size())
   {
-    CNR_RETURN_FALSE(this->logger(),
+    CNR_RETURN_FALSE(this->m_logger,
           "The index is out of range (idx:" +std::to_string(idx) + " size: " + std::to_string(m_pub.size()) +")" );
   }
 
   if(!m_pub.at(idx))
   {
-    CNR_RETURN_FALSE(this->logger(), "The publisher is bad configured, it is a nullptr?!");
+    CNR_RETURN_FALSE(this->m_logger, "The publisher is bad configured, it is a nullptr?!");
   }
 
   m_pub.at(idx)->publish(message);
@@ -537,12 +542,12 @@ bool Controller<T>::publish(const size_t& idx, const M &message)
     *m_pub_last.at(idx)  = n;
     if(time_span.count() > m_watchdog)
     {
-      CNR_RETURN_FALSE(this->logger(), "The publisher has not been called within the foreseen watchdog."
+      CNR_RETURN_FALSE(this->m_logger, "The publisher has not been called within the foreseen watchdog."
                 +std::string("Time span: ") + std::to_string(time_span.count()) + ", "
                 +std::string("watchdog: " ) + std::to_string(m_watchdog));
     }
   }
-  CNR_RETURN_TRUE_THROTTLE_DEFAULT(this->logger());
+  CNR_RETURN_TRUE_THROTTLE_DEFAULT(this->m_logger);
 }
 
 template<typename T> template<typename M>
@@ -585,8 +590,7 @@ bool Controller<T>::callAvailable( )
 
 
 
+}  // namespace control
+}  // namespace cnr
 
-}  // namespace cnr_controller_interface 
-
-#endif  // CNR_CONTROLLER_INFERFACE_CNR_CONTROLLER_INFERFACE_IMPL_H
-
+#endif  // CNR_CONTROLLER_INTFERFACE_CNR_CONTROLLER_INTFERFACE_IMPL_H

@@ -32,6 +32,8 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
+#pragma once // workaround clang-tidy qtcreator
+
 #ifndef CNR_CONTOLLER_INTERFACE__CNR_JOINT_CONTROLLER_INTERFACE_IMPL_H
 #define CNR_CONTOLLER_INTERFACE__CNR_JOINT_CONTROLLER_INTERFACE_IMPL_H
 
@@ -46,66 +48,66 @@
 #include <urdf_model/model.h>
 #include <urdf_parser/urdf_parser.h>
 
-namespace cnr_controller_interface
+namespace cnr
+{
+namespace control
 {
 
-template<class H, class T>
-JointController<H,T>::~JointController()
-{
-  m_rkin.reset();
-  m_stop_update_transformations = true;
-  if(m_update_transformations.joinable())
-    m_update_transformations.join();
-  m_rstate.reset();
-  CNR_TRACE_START(*cnr_controller_interface::Controller< T >::m_logger);
-}
-
-template<class H, class T>
-bool JointController<H,T>::doInit()
-{
-  return true;
-}
-template<class H, class T>
-bool JointController<H,T>::doStarting(const ros::Time& /*time*/)
-{
-  return true;
-}
-
-template<class H, class T>
-bool JointController<H,T>::doUpdate(const ros::Time& /*time*/, const ros::Duration& /*period*/)
-{
-  return true;
-}
-
-template<class H, class T>
-bool JointController<H,T>::doStopping(const ros::Time& /*time*/)
+template<int N,int MaxN,class H,class T>
+JointController<N,MaxN,H,T>::~JointController()
 {
   m_stop_update_transformations = true;
   if(m_update_transformations.joinable())
     m_update_transformations.join();
-  return true;
+  CNR_TRACE_START(this->m_logger);
 }
 
-template<class H, class T>
-bool JointController<H,T>::doWaiting(const ros::Time& /*time*/)
+template<int N,int MaxN,class H,class T>
+bool JointController<N,MaxN,H,T>::doInit()
+{
+  return true;
+}
+template<int N,int MaxN,class H,class T>
+bool JointController<N,MaxN,H,T>::doStarting(const ros::Time& /*time*/)
 {
   return true;
 }
 
-template<class H, class T>
-bool JointController<H,T>::doAborting(const ros::Time& /*time*/)
+template<int N,int MaxN,class H,class T>
+bool JointController<N,MaxN,H,T>::doUpdate(const ros::Time& /*time*/, const ros::Duration& /*period*/)
 {
   return true;
 }
 
-template<class H, class T>
-bool JointController<H,T>::enterInit()
+template<int N,int MaxN,class H,class T>
+bool JointController<N,MaxN,H,T>::doStopping(const ros::Time& /*time*/)
+{
+  m_stop_update_transformations = true;
+  if(m_update_transformations.joinable())
+    m_update_transformations.join();
+  return true;
+}
+
+template<int N,int MaxN,class H,class T>
+bool JointController<N,MaxN,H,T>::doWaiting(const ros::Time& /*time*/)
+{
+  return true;
+}
+
+template<int N,int MaxN,class H,class T>
+bool JointController<N,MaxN,H,T>::doAborting(const ros::Time& /*time*/)
+{
+  return true;
+}
+
+template<int N,int MaxN,class H,class T>
+bool JointController<N,MaxN,H,T>::enterInit()
 {
   m_cfrmt = Eigen::IOFormat(Eigen::StreamPrecision, 0, ", ", "\n", "[", "]");
-  CNR_TRACE_START(this->logger());
+  CNR_TRACE_START(this->m_logger);
   if(!Controller<T>::enterInit())
   {
-    CNR_RETURN_FALSE(this->logger());
+    CNR_RETURN_FALSE(this->m_logger);
   }
 
   std::vector<std::string> joint_names;
@@ -117,7 +119,7 @@ bool JointController<H,T>::enterInit()
 
   if(joint_names.size()==0)
   {
-    CNR_RETURN_FALSE(this->logger(), "Neither '" +  this->getControllerNamespace() + "/controlled_joint(s)' nor '"
+    CNR_RETURN_FALSE(this->m_logger, "Neither '" +  this->getControllerNamespace() + "/controlled_joint(s)' nor '"
                         + this->getControllerNamespace() + "/controlled_resources(s)' are specified. Abort" );
   }
 
@@ -126,7 +128,7 @@ bool JointController<H,T>::enterInit()
   {
     if(!this->getRootNh().getParam("base_link", base_link ) )
     {
-      CNR_RETURN_FALSE(this->logger(), "'Neither '" + this->getControllerNamespace() + "/base_link' " +
+      CNR_RETURN_FALSE(this->m_logger, "'Neither '" + this->getControllerNamespace() + "/base_link' " +
                   "nor '"      + this->getRootNamespace() + "/base_link' are not in rosparam server.");
     }
   }
@@ -136,34 +138,34 @@ bool JointController<H,T>::enterInit()
   {
     if(!this->getRootNh().getParam("tool_link", tool_link ) )
     {
-      CNR_RETURN_FALSE(this->logger(), "'Neither '" + this->getControllerNamespace() + "/tool_link' " +
+      CNR_RETURN_FALSE(this->m_logger, "'Neither '" + this->getControllerNamespace() + "/tool_link' " +
                 "nor '"      + this->getRootNamespace() + "/tool_link' are not in rosparam server.");
     }
   }
 
   m_rkin.reset(new rosdyn::ChainInterface());
   std::stringstream report;
-  int res = m_rkin->init(Controller<T>::getControllerNh(),joint_names, base_link, tool_link, report); 
+  int res = m_rkin->init(Controller<T>::getControllerNh(),joint_names, base_link, tool_link, report);
   if(res==1)
   {
-    CNR_INFO_COND(this->logger(),(report.str().length()>0), report.str() );
+    CNR_INFO_COND(this->m_logger,(report.str().length()>0), report.str() );
   }
   else if(res==0)
   {
     if(m_rkin->init(Controller<T>::getRootNh(),joint_names, base_link, tool_link, report) != 1)
     {
-      CNR_ERROR_COND(this->logger(), (report.str().length()>0), report.str() );
-      CNR_RETURN_FALSE(this->logger());
+      CNR_ERROR_COND(this->m_logger, (report.str().length()>0), report.str() );
+      CNR_RETURN_FALSE(this->m_logger);
     }
-  } 
+  }
   else
   {
-    CNR_ERROR_COND(this->logger(), (report.str().length()>0), report.str() );
-    CNR_RETURN_FALSE(this->logger());
+    CNR_ERROR_COND(this->m_logger, (report.str().length()>0), report.str() );
+    CNR_RETURN_FALSE(this->m_logger);
   }
-  
 
-  m_rstate.reset(new rosdyn::ChainState(m_rkin));
+
+  m_rstate.init(m_rkin);
   for (unsigned int iAx=0; iAx<m_rkin->nAx(); iAx++)
   {
     try
@@ -172,79 +174,80 @@ bool JointController<H,T>::enterInit()
     }
     catch (...)
     {
-      CNR_RETURN_FALSE(this->logger(),
+      CNR_RETURN_FALSE(this->m_logger,
         "Controller '" + Controller<T>::getControllerNamespace() + "' failed in init. " + std::string("")
         + "The controlled joint named '" + m_rkin->jointName(iAx) + "' is not managed by hardware_interface");
     }
-    CNR_DEBUG(this->logger(),
+    CNR_DEBUG(this->m_logger,
       "Controller '" + Controller<T>::getControllerNamespace() + std::string("'")
       + "The controlled joint named '" + m_rkin->jointName(iAx) + "' is managed by hardware_interface");
   }
 
-  CNR_RETURN_TRUE(this->logger());
+  CNR_RETURN_TRUE(this->m_logger);
 }
 
-template<class H, class T>
-bool JointController<H,T>::enterStarting()
+template<int N,int MaxN,class H,class T>
+bool JointController<N,MaxN,H,T>::enterStarting()
 {
-  CNR_TRACE_START(this->logger());
+  CNR_TRACE_START(this->m_logger);
   if(!Controller<T>::enterStarting())
   {
-    CNR_RETURN_FALSE(this->logger());
+    CNR_RETURN_FALSE(this->m_logger);
   }
   m_handler >> m_rstate;
 
   m_stop_update_transformations = false;
-  m_update_transformations = std::thread(&JointController<H,T>::updateTransformations, this);
-  
-  CNR_RETURN_TRUE(this->logger());
+  m_update_transformations = std::thread(&JointController<N,MaxN,H,T>::updateTransformations, this);
+
+  CNR_RETURN_TRUE(this->m_logger);
 }
 
-template<class H, class T>
-bool JointController<H,T>::enterUpdate()
+template<int N,int MaxN,class H,class T>
+bool JointController<N,MaxN,H,T>::enterUpdate()
 {
-  CNR_TRACE_START_THROTTLE_DEFAULT(this->logger());
+  CNR_TRACE_START_THROTTLE_DEFAULT(this->m_logger);
   if(!Controller<T>::enterUpdate())
   {
-    CNR_RETURN_FALSE(this->logger());
+    CNR_RETURN_FALSE(this->m_logger);
   }
 
   std::lock_guard<std::mutex> lock(m_mtx);
   this->m_handler >> m_rstate;
   // NOTE: the transformations may take time, especially due the pseudo inversion of the Jacobian, to estimate the external wrench.
-  // Therefore, they are executed in parallel 
-  //m_rstate->updateTransformations();
+  // Therefore, they are executed in parallel
+  //m_rstate.updateTransformations();
 
-  CNR_RETURN_TRUE_THROTTLE_DEFAULT(this->logger());
+  CNR_RETURN_TRUE_THROTTLE_DEFAULT(this->m_logger);
 }
 
-template<class H, class T>
-bool JointController<H,T>::updateTransformations()
+template<int N,int MaxN,class H,class T>
+bool JointController<N,MaxN,H,T>::updateTransformations()
 {
-  Eigen::VectorXd q(this->m_rkin->nAx());
-  Eigen::VectorXd qd(this->m_rkin->nAx());
-  Eigen::VectorXd qdd(this->m_rkin->nAx());
-  Eigen::VectorXd external_effort(this->m_rkin->nAx());
+  auto q = m_rstate.q();
+  auto qd = m_rstate.qd();
+  auto qdd = m_rstate.qdd();
+  auto external_effort = m_rstate.external_effort();
 
-  CNR_TRACE_START_THROTTLE_DEFAULT(this->logger());
+  CNR_TRACE_START_THROTTLE_DEFAULT(this->m_logger);
   ros::Rate rt(1.0/this->m_sampling_period);
   while(!m_stop_update_transformations && ros::ok())
   {
     {
       std::lock_guard<std::mutex> lock(m_mtx);
-      q = m_rstate->q();
-      qd = m_rstate->qd();
-      qdd = m_rstate->qdd();
-      external_effort = m_rstate->external_effort();
+      q = m_rstate.q();
+      qd = m_rstate.qd();
+      qdd = m_rstate.qdd();
+      external_effort = m_rstate.external_effort();
     }
 
-    m_rstate->updateTransformations(q, qd, qdd, external_effort);
+    m_rstate.updateTransformations(&q, &qd, &qdd, &external_effort);
 
     rt.sleep();
   }
 
-  CNR_RETURN_TRUE_THROTTLE_DEFAULT(this->logger());
+  CNR_RETURN_TRUE_THROTTLE_DEFAULT(this->m_logger);
 }
 
-} // cnr_controller_interface
+}  // cnr_controller_interface
+}  // namespace cnr
 #endif

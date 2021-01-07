@@ -105,8 +105,9 @@ public:
    * the nodelet that  stores the RobotHw.
    * In the onInit function of the cnr_hardware_nodelet_interface::RobotHwNodelet, the RobotHW::init() is called, 
    * and then a rt-thread is launched with an infinite loop standard  read - controller_manager::update - write.
-   * Therefore, the RobotHW::init() is called before the creation of the thread. The initRT() is called at the begin of the 
-   * RT_thread, just before the infinite loop, and timely very close to the first read().
+   * Therefore, the RobotHW::init() is called before the creation of the thread.
+   * The initRT() is called at the begin of the RT_thread, just before the infinite loop, and timely very close to
+   * the first read().
    */
   virtual bool initRT()
   {
@@ -122,20 +123,20 @@ public:
   {
     return true;
   }
-  virtual bool doRead(const ros::Time& time, const ros::Duration& period)
+  virtual bool doRead(const ros::Time& time, const ros::Duration& /*period*/)
   {
     return true;
   }
-  virtual bool doWrite(const ros::Time& time, const ros::Duration& period)
+  virtual bool doWrite(const ros::Time& time, const ros::Duration& /*period*/)
   {
     return true;
   }
-  virtual bool doPrepareSwitch(const std::list< hardware_interface::ControllerInfo >& start_list,
-                               const std::list< hardware_interface::ControllerInfo >& stop_list)
+  virtual bool doPrepareSwitch(const std::list< hardware_interface::ControllerInfo >& /*start_list*/,
+                               const std::list< hardware_interface::ControllerInfo >& /*stop_list*/)
   {
     return true;
   }
-  virtual bool doCheckForConflict(const std::list< hardware_interface::ControllerInfo >& info) const
+  virtual bool doCheckForConflict(const std::list< hardware_interface::ControllerInfo >& /*info*/) const
   {
     return false;
   }
@@ -192,7 +193,7 @@ protected:
   ros::NodeHandle                                  m_root_nh;
   ros::NodeHandle                                  m_robothw_nh;
   ros::CallbackQueue                               m_robot_hw_queue;
-  std::shared_ptr<cnr_logger::TraceLogger>         m_logger;
+  mutable cnr_logger::TraceLogger                  m_logger;
 
   SetStatusParamFcn                                m_set_status_param;
 

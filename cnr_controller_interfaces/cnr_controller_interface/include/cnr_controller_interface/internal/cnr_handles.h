@@ -8,21 +8,31 @@
 #include <cnr_hardware_interface/veleff_command_interface.h>
 #include <cnr_hardware_interface/posveleff_command_interface.h>
 
-namespace cnr_controller_interface
+namespace cnr
+{
+namespace control
 {
 
-const rosdyn::ChainStateX * const getPtr( const rosdyn::ChainStateXConstPtr& in);
-const rosdyn::ChainStateX * const getPtr( const rosdyn::ChainStateX& in);
-rosdyn::ChainStateX* getPtr( rosdyn::ChainStateXPtr& in);
-rosdyn::ChainStateX* getPtr( rosdyn::ChainStateX& in);
+template<int N, int MaxN>
+const rosdyn::ChainState<N,MaxN> * const getPtr(const rosdyn::ChainState<N,MaxN>& in)
+{
+  return &in;
+}
 
+template<int N, int MaxN>
+rosdyn::ChainState<N,MaxN>* getPtr( rosdyn::ChainState<N,MaxN>& in)
+{
+  return &in;
+}
 
 typedef std::map<std::string, size_t> HandleIndexes;
 typedef std::shared_ptr<HandleIndexes> HandleIndexesPtr;
 typedef const std::shared_ptr<HandleIndexes const> HandleIndexesConstPtr;
 
 HandleIndexes get_index_map(const std::vector<std::string>& names, rosdyn::ChainInterfaceConstPtr ks);
-HandleIndexes get_index_map(const std::vector<std::string>& names, rosdyn::ChainStateXConstPtr ks);
+
+template<int N, int MaxN>
+HandleIndexes get_index_map(const std::vector<std::string>& names, const rosdyn::ChainState<N,MaxN>& ks);
 
 struct HandlerBase
 {
@@ -30,16 +40,17 @@ struct HandlerBase
   HandleIndexes indexes_;
 
   template<class H>
-  void init(const std::map<std::string, H>& resources, rosdyn::ChainInterfacePtr ks) 
-  { 
+  void init(const std::map<std::string, H>& resources, rosdyn::ChainInterfacePtr ks)
+  {
     std::vector<std::string> names(resources.size());
     std::transform(resources.begin(), resources.end(), names.begin(), [](const std::pair<std::string, H>& p) { return p.first; });
     indexes_ = get_index_map(names,ks);
     initialized_ = true;
   }
-  template<class H>
-  void init(const std::map<std::string, H>& resources, rosdyn::ChainStateXConstPtr ks) 
-  { 
+
+  template<int N, int MaxN, class H>
+  void init(const std::map<std::string, H>& resources, const rosdyn::ChainState<N,MaxN>& ks)
+  {
     std::vector<std::string> names(resources.size());
     std::transform(resources.begin(), resources.end(), names.begin(), [](const std::pair<std::string, H>& p) { return p.first; });
     indexes_ = get_index_map(names,ks);
@@ -52,9 +63,12 @@ template<class Handle, class HardwareInterface>
 struct Handler : public HandlerBase
 {
   std::map<std::string, Handle> handles_;
-    
-  virtual void operator>>(rosdyn::ChainStateXPtr ks)  {};
-  virtual void operator<<(rosdyn::ChainStateXConstPtr ks) {};
+
+  template<int N, int MaxN>
+  void operator>>(rosdyn::ChainState<N,MaxN>& ks)  {};
+
+  template<int N, int MaxN>
+  void operator<<(const rosdyn::ChainState<N,MaxN>& ks) {};
 };
 
 
@@ -66,19 +80,22 @@ template<>
 struct Handler<hardware_interface::JointStateHandle, hardware_interface::JointStateInterface> : public HandlerBase
 {
   std::map<std::string, hardware_interface::JointStateHandle> handles_;
-    
-  virtual void operator>>(rosdyn::ChainStateXPtr ks) 
+
+  template<int N, int MaxN>
+  void operator>>(rosdyn::ChainState<N,MaxN>& ks)
   {
     if(!initialized_) init(handles_, ks);
     for(auto const & ax : indexes_)
     {
-      ks->q(ax.second) = handles_.at(ax.first).getPosition();
-      ks->qd(ax.second) = handles_.at(ax.first).getVelocity();
-      ks->qdd(ax.second) = 0.0;
-      ks->effort(ax.second) = handles_.at(ax.first).getEffort();
+      ks.q(ax.second) = handles_.at(ax.first).getPosition();
+      ks.qd(ax.second) = handles_.at(ax.first).getVelocity();
+      ks.qdd(ax.second) = 0.0;
+      ks.effort(ax.second) = handles_.at(ax.first).getEffort();
     }
   }
-  virtual void operator<<(rosdyn::ChainStateXConstPtr ks)
+
+  template<int N, int MaxN>
+  void operator<<(const rosdyn::ChainState<N,MaxN>& ks)
   {
   }
 };
@@ -91,25 +108,28 @@ template<>
 struct Handler<hardware_interface::VelEffJointHandle, hardware_interface::VelEffJointInterface> : public HandlerBase
 {
   std::map<std::string, hardware_interface::VelEffJointHandle> handles_;
-    
-  virtual void operator>>(rosdyn::ChainStateXPtr ks) 
+
+  template<int N, int MaxN>
+  void operator>>(rosdyn::ChainState<N,MaxN>& ks)
   {
     if(!initialized_) init(handles_, ks);
     for(auto const ax : indexes_)
     {
-      ks->q(ax.second) = handles_.at(ax.first).getPosition();
-      ks->qd(ax.second) = handles_.at(ax.first).getVelocity();
-      ks->qdd(ax.second) = 0.0;
-      ks->effort(ax.second) = handles_.at(ax.first).getEffort();
+      ks.q(ax.second) = handles_.at(ax.first).getPosition();
+      ks.qd(ax.second) = handles_.at(ax.first).getVelocity();
+      ks.qdd(ax.second) = 0.0;
+      ks.effort(ax.second) = handles_.at(ax.first).getEffort();
     }
   }
-  virtual void operator<<(rosdyn::ChainStateXConstPtr ks)
+
+  template<int N, int MaxN>
+  void operator<<(const rosdyn::ChainState<N,MaxN>& ks)
   {
     if(!initialized_) init(handles_, ks);
     for(auto const & ax : indexes_)
     {
-      handles_.at(ax.first).setCommandVelocity(ks->qd(ax.second));
-      handles_.at(ax.first).setCommandEffort(ks->effort(ax.second));
+      handles_.at(ax.first).setCommandVelocity(ks.qd(ax.second));
+      handles_.at(ax.first).setCommandEffort(ks.effort(ax.second));
     }
   }
 };
@@ -121,26 +141,29 @@ template<>
 struct Handler<hardware_interface::PosVelEffJointHandle, hardware_interface::PosVelEffJointInterface> : public HandlerBase
 {
   std::map<std::string, hardware_interface::PosVelEffJointHandle> handles_;
-    
-  virtual void operator>>(rosdyn::ChainStateXPtr ks) 
+
+  template<int N, int MaxN>
+  void operator>>(rosdyn::ChainState<N,MaxN>& ks)
   {
     if(!initialized_) init(handles_, ks);
     for(auto const & ax : indexes_)
     {
-      ks->q(ax.second) = handles_.at(ax.first).getPosition();
-      ks->qd(ax.second) = handles_.at(ax.first).getVelocity();
-      ks->qdd(ax.second) = 0.0;
-      ks->effort(ax.second) = handles_.at(ax.first).getEffort();
+      ks.q(ax.second) = handles_.at(ax.first).getPosition();
+      ks.qd(ax.second) = handles_.at(ax.first).getVelocity();
+      ks.qdd(ax.second) = 0.0;
+      ks.effort(ax.second) = handles_.at(ax.first).getEffort();
     }
   }
-  virtual void operator<<(rosdyn::ChainStateXConstPtr ks)
+
+  template<int N, int MaxN>
+  void operator<<(const rosdyn::ChainState<N,MaxN>& ks)
   {
     if(!initialized_) init(handles_, ks);
     for(auto const & ax : indexes_)
     {
-      handles_.at(ax.first).setCommandPosition(ks->q(ax.second));
-      handles_.at(ax.first).setCommandVelocity(ks->qd(ax.second));
-      handles_.at(ax.first).setCommandEffort  (ks->effort(ax.second));
+      handles_.at(ax.first).setCommandPosition(ks.q(ax.second));
+      handles_.at(ax.first).setCommandVelocity(ks.qd(ax.second));
+      handles_.at(ax.first).setCommandEffort  (ks.effort(ax.second));
     }
   }
 };
@@ -152,24 +175,27 @@ template<>
 struct Handler<hardware_interface::JointHandle, hardware_interface::JointCommandInterface> : public HandlerBase
 {
   std::map<std::string, hardware_interface::JointHandle> handles_;
-    
-  virtual void operator>>(rosdyn::ChainStateXPtr ks) 
+
+  template<int N, int MaxN>
+  void operator>>(rosdyn::ChainState<N,MaxN>& ks)
   {
     if(!initialized_) init(handles_, ks);
     for(auto const & ax : indexes_)
     {
-      ks->q(ax.second) = handles_.at(ax.first).getPosition();
-      ks->qd(ax.second) = handles_.at(ax.first).getVelocity();
-      ks->qdd(ax.second) = 0.0;
-      ks->effort(ax.second) = handles_.at(ax.first).getEffort();
+      ks.q(ax.second) = handles_.at(ax.first).getPosition();
+      ks.qd(ax.second) = handles_.at(ax.first).getVelocity();
+      ks.qdd(ax.second) = 0.0;
+      ks.effort(ax.second) = handles_.at(ax.first).getEffort();
     }
   }
-  virtual void operator<<(rosdyn::ChainStateXConstPtr ks)
+
+  template<int N, int MaxN>
+  void operator<<(const rosdyn::ChainState<N,MaxN>& ks)
   {
     if(!initialized_) init(handles_, ks);
     for(auto const & ax : indexes_)
     {
-      handles_.at(ax.first).setCommand(ks->q(ax.second));
+      handles_.at(ax.first).setCommand(ks.q(ax.second));
     }
   }
 };
@@ -181,24 +207,27 @@ template<>
 struct Handler<hardware_interface::JointHandle, hardware_interface::EffortJointInterface> : public HandlerBase
 {
   std::map<std::string, hardware_interface::JointHandle> handles_;
-    
-  virtual void operator>>(rosdyn::ChainStateXPtr ks) 
+
+  template<int N, int MaxN>
+  void operator>>(rosdyn::ChainState<N,MaxN>& ks)
   {
     if(!initialized_) init(handles_, ks);
     for(auto const & ax : indexes_)
     {
-      ks->q(ax.second) = handles_.at(ax.first).getPosition();
-      ks->qd(ax.second) = handles_.at(ax.first).getVelocity();
-      ks->qdd(ax.second) = 0.0;
-      ks->effort(ax.second) = handles_.at(ax.first).getEffort();
+      ks.q(ax.second) = handles_.at(ax.first).getPosition();
+      ks.qd(ax.second) = handles_.at(ax.first).getVelocity();
+      ks.qdd(ax.second) = 0.0;
+      ks.effort(ax.second) = handles_.at(ax.first).getEffort();
     }
   }
-  virtual void operator<<(rosdyn::ChainStateXConstPtr ks)
+
+  template<int N, int MaxN>
+  void operator<<(const rosdyn::ChainState<N,MaxN>& ks)
   {
     if(!initialized_) init(handles_, ks);
     for(auto const & ax : indexes_)
     {
-      handles_.at(ax.first).setCommand(ks->effort(ax.second));
+      handles_.at(ax.first).setCommand(ks.effort(ax.second));
     }
   }
 };
@@ -210,24 +239,27 @@ template<>
 struct Handler<hardware_interface::JointHandle, hardware_interface::VelocityJointInterface> : public HandlerBase
 {
   std::map<std::string, hardware_interface::JointHandle> handles_;
-    
-  virtual void operator>>(rosdyn::ChainStateXPtr ks) 
+
+  template<int N, int MaxN>
+  void operator>>(rosdyn::ChainState<N,MaxN>& ks)
   {
     if(!initialized_) init(handles_, ks);
     for(auto const & ax : indexes_)
     {
-      ks->q(ax.second) = handles_.at(ax.first).getPosition();
-      ks->qd(ax.second) = handles_.at(ax.first).getVelocity();
-      ks->qdd(ax.second) = 0.0;
-      ks->effort(ax.second) = handles_.at(ax.first).getEffort();
+      ks.q(ax.second) = handles_.at(ax.first).getPosition();
+      ks.qd(ax.second) = handles_.at(ax.first).getVelocity();
+      ks.qdd(ax.second) = 0.0;
+      ks.effort(ax.second) = handles_.at(ax.first).getEffort();
     }
   }
-  virtual void operator<<(rosdyn::ChainStateXConstPtr ks)
+
+  template<int N, int MaxN>
+  void operator<<(const rosdyn::ChainState<N,MaxN>& ks)
   {
     if(!initialized_) init(handles_, ks);
     for(auto const & ax : indexes_)
     {
-      handles_.at(ax.first).setCommand(ks->qd(ax.second));
+      handles_.at(ax.first).setCommand(ks.qd(ax.second));
     }
   }
 };
@@ -239,30 +271,33 @@ template<>
 struct Handler<hardware_interface::JointHandle, hardware_interface::PositionJointInterface> : public HandlerBase
 {
   std::map<std::string, hardware_interface::JointHandle> handles_;
-    
-  virtual void operator>>(rosdyn::ChainStateXPtr ks) 
+
+  template<int N, int MaxN>
+  void operator>>(rosdyn::ChainState<N,MaxN>& ks)
   {
     if(!initialized_) init(handles_, ks);
     for(auto const & ax : indexes_)
     {
-      ks->q(ax.second) = handles_.at(ax.first).getPosition();
-      ks->qd(ax.second) = handles_.at(ax.first).getVelocity();
-      ks->qdd(ax.second) = 0.0;
-      ks->effort(ax.second) = handles_.at(ax.first).getEffort();
+      ks.q(ax.second) = handles_.at(ax.first).getPosition();
+      ks.qd(ax.second) = handles_.at(ax.first).getVelocity();
+      ks.qdd(ax.second) = 0.0;
+      ks.effort(ax.second) = handles_.at(ax.first).getEffort();
     }
   }
-  virtual void operator<<(rosdyn::ChainStateXConstPtr ks)
+
+  template<int N, int MaxN>
+  void operator<<(const rosdyn::ChainState<N,MaxN>& ks)
   {
     if(!initialized_) init(handles_, ks);
     for(auto const & ax : indexes_)
     {
-      handles_.at(ax.first).setCommand(ks->q(ax.second));
+      handles_.at(ax.first).setCommand(ks.q(ax.second));
     }
   }
 };
 
-}  // namespace hardware_interface
-
+}  // namespace control
+}  // namespace ros
 
 // streaming status of the handle (by reference)
 std::ostream& operator<<(std::ostream& os, hardware_interface::JointHandle& rhs);

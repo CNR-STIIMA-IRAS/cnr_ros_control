@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.1)
 project(cnr_hardware_nodelet_interface)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 execute_process(COMMAND uname -r OUTPUT_VARIABLE UNAME_RESULT OUTPUT_STRIP_TRAILING_WHITESPACE)
 message(-- " Kernel version: " ${UNAME_RESULT})
@@ -19,7 +19,7 @@ endif()
 
 find_package(catkin REQUIRED COMPONENTS
   configuration_msgs
-  cnr_controller_interface
+  cnr_controller_interface_params
   cnr_controller_manager_interface
   cnr_hardware_interface
   cnr_logger
@@ -37,7 +37,8 @@ endif()
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES cnr_hardware_nodelet_interface
-  CATKIN_DEPENDS configuration_msgs cnr_controller_interface cnr_controller_manager_interface cnr_hardware_interface cnr_logger realtime_utilities nodelet roscpp
+  CATKIN_DEPENDS configuration_msgs cnr_controller_interface_params cnr_controller_manager_interface
+    cnr_hardware_interface cnr_logger realtime_utilities nodelet roscpp
 #  DEPENDS system_lib
 )
 

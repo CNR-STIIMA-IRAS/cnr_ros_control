@@ -39,6 +39,8 @@
 #include <Eigen/Core>
 #include <ros/ros.h>
 #include <std_msgs/Int64.h>
+#include <sensor_msgs/JointState.h>
+
 #include <cnr_logger/cnr_logger.h>
 #include <rosdyn_utilities/chain_state.h>
 #include <cnr_controller_interface/cnr_joint_controller_interface.h>
@@ -47,7 +49,9 @@
 #include <urdf_parser/urdf_parser.h>
 
 
-namespace cnr_controller_interface
+namespace cnr
+{
+namespace control
 {
 
 /**
@@ -56,20 +60,24 @@ namespace cnr_controller_interface
  *
  * Base class to log the controller status
  */
-template<class H, class T>
-class JointCommandController: public cnr_controller_interface::JointController<H,T>
+template<int N, int MaxN, class H, class T>
+class JointCommandController: public cnr::control::JointController<N,MaxN,H,T>
 {
 public:
-
-  enum InputType { Q_PRIORITY, QD_PRIORITY };
-  ~JointCommandController();
+  enum InputType {Q_PRIORITY, QD_PRIORITY};
+  JointCommandController() = default;
+  virtual ~JointCommandController();
 
   virtual bool doInit() override;
-  virtual bool doStarting(const ros::Time& /*time*/) override;
-  virtual bool doUpdate(const ros::Time& /*time*/, const ros::Duration& /*period*/) override;
-  virtual bool doStopping(const ros::Time& /*time*/) override;
-  virtual bool doWaiting(const ros::Time& /*time*/) override;
-  virtual bool doAborting(const ros::Time& /*time*/) override;
+  virtual bool doStarting(const ros::Time& time) override;
+  virtual bool doUpdate(const ros::Time& time, const ros::Duration& period) override;
+  virtual bool doStopping(const ros::Time& time) override;
+  virtual bool doWaiting(const ros::Time& time) override;
+  virtual bool doAborting(const ros::Time& time) override;
+
+protected:
+
+  using Value = typename rosdyn::ChainState<N,MaxN>::Value;
 
   virtual bool enterInit() override;
   virtual bool enterStarting() override;
@@ -77,51 +85,49 @@ public:
   virtual bool exitUpdate() override;
   virtual bool exitStopping() override;
 
-  const Eigen::VectorXd& getCommandPosition    ( ) { std::lock_guard<std::mutex> lock( m_mtx); return m_target->q(); }
-  const Eigen::VectorXd& getCommandVelocity    ( ) { std::lock_guard<std::mutex> lock( m_mtx); return m_target->qd(); }
-  const Eigen::VectorXd& getCommandAcceleration( ) { std::lock_guard<std::mutex> lock( m_mtx); return m_target->qdd(); }
-  const Eigen::VectorXd& getCommandEffort      ( ) { std::lock_guard<std::mutex> lock( m_mtx); return m_target->effort();}
+  const Value& getCommandPosition    ( ) const;
+  const Value& getCommandVelocity    ( ) const;
+  const Value& getCommandAcceleration( ) const;
+  const Value& getCommandEffort      ( ) const;
 
-  double getCommandPosition    (size_t idx) { std::lock_guard<std::mutex> lock( m_mtx); return m_target->q     (idx);}
-  double getCommandVelocity    (size_t idx) { std::lock_guard<std::mutex> lock( m_mtx); return m_target->qd    (idx);}
-  double getCommandAcceleration(size_t idx) { std::lock_guard<std::mutex> lock( m_mtx); return m_target->qdd   (idx);}
-  double getCommandEffort      (size_t idx) { std::lock_guard<std::mutex> lock( m_mtx); return m_target->effort(idx);}
+  double getCommandPosition    (size_t idx) const;
+  double getCommandVelocity    (size_t idx) const;
+  double getCommandAcceleration(size_t idx) const;
+  double getCommandEffort      (size_t idx) const;
 
-  void setCommandPosition     (const Eigen::VectorXd& in) { std::lock_guard<std::mutex> lock( m_mtx); m_target->q()      = in; }
-  void setCommandVelocity     (const Eigen::VectorXd& in) { std::lock_guard<std::mutex> lock( m_mtx); m_target->qd()     = in; }
-  void setCommandAcceleration (const Eigen::VectorXd& in) { std::lock_guard<std::mutex> lock( m_mtx); m_target->qdd()    = in; }
-  void setCommandEffort       (const Eigen::VectorXd& in) { std::lock_guard<std::mutex> lock( m_mtx); m_target->effort() = in; }
+  void setCommandPosition     (const Value& in);
+  void setCommandVelocity     (const Value& in);
+  void setCommandAcceleration (const Value& in);
+  void setCommandEffort       (const Value& in);
 
-  void setCommandPosition     (const double& in, size_t idx) { std::lock_guard<std::mutex> lock( m_mtx); m_target->q      (idx) = in; }
-  void setCommandVelocity     (const double& in, size_t idx) { std::lock_guard<std::mutex> lock( m_mtx); m_target->qd     (idx) = in; }
-  void setCommandAcceleration (const double& in, size_t idx) { std::lock_guard<std::mutex> lock( m_mtx); m_target->qdd    (idx) = in; }
-  void setCommandEffort       (const double& in, size_t idx) { std::lock_guard<std::mutex> lock( m_mtx); m_target->effort (idx) = in; }
+  void setCommandPosition     (const double& in, size_t idx);
+  void setCommandVelocity     (const double& in, size_t idx);
+  void setCommandAcceleration (const double& in, size_t idx);
+  void setCommandEffort       (const double& in, size_t idx);
 
   virtual double getTargetOverride() const;
 
   void setPriority( const InputType& priority ) { m_priority = priority; }
-  
-protected:
-  std::mutex      m_mtx;
-  
+
+  mutable std::mutex m_mtx;
+
 private:
-  
-  InputType               m_priority;
-  rosdyn::ChainStatePtr   m_target;
-  rosdyn::ChainStatePtr   m_last_target;
+  InputType                  m_priority;
+  rosdyn::ChainState<N,MaxN> m_target;
+  rosdyn::ChainState<N,MaxN> m_last_target;
 
   double m_override;
+  void overrideCallback(const std_msgs::Int64ConstPtr& msg);
+
   double m_safe_override_1;
   double m_safe_override_2;
   double m_max_velocity_multiplier;
-
-  void overrideCallback(const std_msgs::Int64ConstPtr& msg);
   void safeOverrideCallback_1(const std_msgs::Int64ConstPtr& msg);
   void safeOverrideCallback_2(const std_msgs::Int64ConstPtr& msg);
-
 };
 
-} // cnr_controller_interface
+}  // namespace control
+}  // namespace cnr
 
 #include <cnr_controller_interface/internal/cnr_joint_command_controller_interface_impl.h>
 

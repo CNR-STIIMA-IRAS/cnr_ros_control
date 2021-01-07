@@ -39,6 +39,7 @@
 #include <ctime>
 #include <chrono>
 #include <algorithm>
+#include <string>
 
 #include <ros/ros.h>
 #include <ros/callback_queue.h>
@@ -47,38 +48,23 @@
 #include <diagnostic_msgs/DiagnosticArray.h>
 #include <diagnostic_updater/DiagnosticStatusWrapper.h>
 #include <cnr_logger/cnr_logger.h>
-#include <cnr_controller_interface/utils/utils.h>
 #include <realtime_utilities/diagnostics_interface.h>
 #include <subscription_notifier/subscription_notifier.h>
 
-namespace cnr_controller_interface
+#include <cnr_controller_interface/utils/utils.h>
+
+namespace cnr
+{
+namespace control
 {
 
-//============ FUNCTIONS TO DEFINE THE PARAMETERS WHERE THE CTRL STATUS IS LOADED
-std::vector<std::string> get_names(const std::vector< controller_manager_msgs::ControllerState >& controllers);
-std::string              ctrl_list_param(const std::string& hw_name);
-std::string              last_status_param(const std::string& hw_name,
-                                           const std::string& ctrl_name);
-std::string              status_param(const std::string& hw_name,
-                                      const std::string& ctrl_name);
-bool                     get_state(const std::string& hw_name,
-                                   const std::string& ctrl_name,
-                                   std::string& status,
-                                   std::string& error,
-                                   const ros::Duration& watchdog = ros::Duration(0.0));
-
-bool                     check_state(const std::string& hw_name,
-                                     const std::string& ctrl_name,
-                                     const std::string& status,
-                                     std::string& error,
-                                     const ros::Duration& watchdog = ros::Duration(0.0));
 
 template< class T >
 class Controller: public ::controller_interface::Controller< T >, public realtime_utilities::DiagnosticsInterface
 {
 public:
 
-  ~Controller();
+  virtual ~Controller();
 
   bool init(T*, ros::NodeHandle&)                                            final
   {
@@ -91,7 +77,7 @@ public:
   void waiting(const ros::Time& time)                                        final;
   void aborting(const ros::Time& time)                                       final;
 
-  std::shared_ptr<cnr_logger::TraceLogger>& logger() { return m_logger; }
+  cnr_logger::TraceLogger& logger() { return m_logger; }
 
 public:
   virtual bool doInit()
@@ -141,7 +127,7 @@ public:
    * @return
    */
   bool shutdown(const std::string& state_final);
-  
+
   /**
    * @brief add_publisher
    * @param id
@@ -210,7 +196,7 @@ protected:
 protected:
   T*            m_hw;
   ros::Duration m_dt;
-  std::shared_ptr<cnr_logger::TraceLogger>  m_logger;
+  cnr_logger::TraceLogger   m_logger;
   std::string               m_hw_name;
   std::string               m_ctrl_name;
   double                    m_sampling_period;
@@ -231,12 +217,12 @@ private:
   std::vector<std::shared_ptr<ros::Subscriber>> m_sub;
   std::vector<ros_helper::WallTimeMTPtr>        m_sub_time;
   std::vector<bool>                             m_sub_time_track;
-  
+
   bool callAvailable( );
 };
 
-}  // namespace cnr_controller_interface
-
+}   // namespace cnr
+}   // namespace control
 
 #include <cnr_controller_interface/internal/cnr_controller_interface_impl.h>
 

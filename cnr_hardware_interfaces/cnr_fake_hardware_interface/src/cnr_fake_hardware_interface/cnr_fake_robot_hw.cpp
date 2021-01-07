@@ -34,7 +34,7 @@
  */
 #include <pluginlib/class_list_macros.h>
 
-#include <cnr_controller_interface/utils/utils.h>
+#include <cnr_controller_interface_params/cnr_controller_interface_params.h>
 #include <cnr_hardware_interface/cnr_robot_hw.h>
 #include <cnr_fake_hardware_interface/cnr_fake_robot_hw.h>
 
@@ -78,14 +78,14 @@ void FakeRobotHW::initialJointStateCallback(const sensor_msgs::JointState::Const
 
 bool FakeRobotHW::doInit()
 {
-  CNR_TRACE_START(*m_logger);
+  CNR_TRACE_START(m_logger);
 //   if (!m_robothw_nh.getParam("joint_names", m_resource_names))
 //   {
-//     CNR_FATAL(*m_logger, m_robothw_nh.getNamespace() + "/joint_names' does not exist");
-//     CNR_RETURN_FALSE(*m_logger, "doInit FAILED");
+//     CNR_FATAL(m_logger, m_robothw_nh.getNamespace() + "/joint_names' does not exist");
+//     CNR_RETURN_FALSE(m_logger, "doInit FAILED");
 //   }
 
-  // CNR_DEBUG(*m_logger, "Resources (" << m_resource_names.size() << "): " << cnr_controller_interface::to_string(m_resource_names));
+  // CNR_DEBUG(m_logger, "Resources (" << m_resource_names.size() << "): " << cnr::control::to_string(m_resource_names));
   m_pos.resize(m_resource_names.size());
   m_vel.resize(m_resource_names.size());
   m_eff.resize(m_resource_names.size());
@@ -99,29 +99,29 @@ bool FakeRobotHW::doInit()
     m_robothw_nh.getParam("initial_position", m_pos);
     std::string ss;
     for (auto const & p : m_pos) ss += std::to_string(p) + ", ";
-    CNR_DEBUG(*m_logger, "Initial Position: <" << ss << ">");
+    CNR_DEBUG(m_logger, "Initial Position: <" << ss << ">");
   }
   else if (m_robothw_nh.hasParam("initial_position_from"))
   {
     std::string position_from;
     m_robothw_nh.getParam("position_from", position_from);
 
-    CNR_DEBUG(*m_logger, "Position From: '" << position_from << "'");
+    CNR_DEBUG(m_logger, "Position From: '" << position_from << "'");
     std::string position_ns = "/" + position_from + "/status/shutdown_configuration/position";
     if (!m_robothw_nh.hasParam(position_ns))
     {
-      CNR_ERROR(*m_logger, "The param '" + position_ns + "' does not exit. pos superimposed to zero");
+      CNR_ERROR(m_logger, "The param '" + position_ns + "' does not exit. pos superimposed to zero");
     }
     m_robothw_nh.getParam(position_ns, m_pos);
     std::string ss;
     for (auto const & p : m_pos) ss += std::to_string(p) + ", ";
-    CNR_DEBUG(*m_logger, "Initial Position: <" << ss << ">");
+    CNR_DEBUG(m_logger, "Initial Position: <" << ss << ">");
   }
 
   double timeout = 10;
   if (!m_robothw_nh.getParam("feedback_joint_state_timeout", timeout))
   {
-    CNR_WARN(*m_logger, "The param '" << m_robothw_nh.getNamespace() << "/feedback_joint_state_timeout' not defined, set equal to 10");
+    CNR_WARN(m_logger, "The param '" << m_robothw_nh.getNamespace() << "/feedback_joint_state_timeout' not defined, set equal to 10");
     timeout = 10;
   }
 
@@ -158,12 +158,12 @@ bool FakeRobotHW::doInit()
   registerInterface(&m_ve_jh);
 
   m_p_jh_active = m_v_jh_active = m_e_jh_active = false;
-  CNR_RETURN_TRUE(*m_logger);
+  CNR_RETURN_TRUE(m_logger);
 }
 
-bool FakeRobotHW::doWrite(const ros::Time& time, const ros::Duration& period)
+bool FakeRobotHW::doWrite(const ros::Time& /*time*/, const ros::Duration& period)
 {
-  CNR_TRACE_START_THROTTLE_DEFAULT(*m_logger);
+  CNR_TRACE_START_THROTTLE_DEFAULT(m_logger);
   if(m_p_jh_active)
   {
     m_pos = m_cmd_pos;
@@ -195,13 +195,13 @@ bool FakeRobotHW::doWrite(const ros::Time& time, const ros::Duration& period)
     m_eff.resize(m_resource_names.size());
     std::fill(m_eff.begin(), m_eff.end(), 0.0);
   }
-  CNR_RETURN_TRUE_THROTTLE_DEFAULT(*m_logger);
+  CNR_RETURN_TRUE_THROTTLE_DEFAULT(m_logger);
 }
 
 bool FakeRobotHW::doPrepareSwitch(const std::list< hardware_interface::ControllerInfo >& start_list,
                                   const std::list< hardware_interface::ControllerInfo >& stop_list)
 {
-  CNR_TRACE_START(*m_logger);
+  CNR_TRACE_START(m_logger);
   bool p_jh_active, v_jh_active, e_jh_active;
 
   p_jh_active = m_p_jh_active;
@@ -256,17 +256,17 @@ bool FakeRobotHW::doPrepareSwitch(const std::list< hardware_interface::Controlle
   m_p_jh_active = p_jh_active;
   m_v_jh_active = v_jh_active;
   m_e_jh_active = e_jh_active;
-  CNR_DEBUG(*m_logger, " Pos joint handle active? " << m_p_jh_active);
-  CNR_DEBUG(*m_logger, " Vel joint handle active? " << m_v_jh_active);
-  CNR_DEBUG(*m_logger, " Eff joint handle active? " << m_e_jh_active);
-  CNR_RETURN_TRUE(*m_logger, "Active hardware interfaces: " + cnr_controller_interface::to_string(resources));
+  CNR_DEBUG(m_logger, " Pos joint handle active? " << m_p_jh_active);
+  CNR_DEBUG(m_logger, " Vel joint handle active? " << m_v_jh_active);
+  CNR_DEBUG(m_logger, " Eff joint handle active? " << m_e_jh_active);
+  CNR_RETURN_TRUE(m_logger, "Active hardware interfaces: " + cnr::control::to_string(resources));
 
 }
 
 bool FakeRobotHW::doCheckForConflict(const std::list< hardware_interface::ControllerInfo >& info)
 {
   std::stringstream report;
-  CNR_TRACE_START(*m_logger);
+  CNR_TRACE_START(m_logger);
   // Each controller can use more than one hardware_interface for a single joint (e.g.: position, velocity, effort).
   // One controller can control more than one joint.
   // A joint can be used only by a controller.
@@ -291,7 +291,7 @@ bool FakeRobotHW::doCheckForConflict(const std::list< hardware_interface::Contro
             {
               addDiagnosticsMessage("ERROR", "Joint " + name + " is already used by another controller", {{"Transition", "switching"}}, &report);
               CNR_ERROR(m_logger, report.str());
-              CNR_RETURN_TRUE(*m_logger, "Joint " + name + " is already used by another controller");
+              CNR_RETURN_TRUE(m_logger, "Joint " + name + " is already used by another controller");
             }
             else
             {
@@ -307,7 +307,7 @@ bool FakeRobotHW::doCheckForConflict(const std::list< hardware_interface::Contro
     }
 
   }
-  CNR_RETURN_FALSE(*m_logger);
+  CNR_RETURN_FALSE(m_logger);
 }
 
 

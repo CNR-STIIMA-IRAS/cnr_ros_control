@@ -42,7 +42,8 @@
 #include <thread>
 #include <exception>
 
-#include <cnr_controller_interface/cnr_controller_interface.h>
+#include <controller_manager_msgs/ListControllers.h>
+#include <cnr_controller_interface_params/cnr_controller_interface_params.h>
 #include <cnr_controller_manager_interface/internal/cnr_controller_manager_base.h>
 
 namespace cnr_controller_manager_interface
@@ -113,8 +114,8 @@ bool ControllerManagerBase::matchControllers(const std::vector<std::string>& ctr
     error_ = "Failed in getting the controllers info: " + error_;
     CNR_RETURN_FALSE(*logger_, "HW: " + getHwName());
   }
-  std::vector<std::string> running_names = cnr_controller_interface::get_names(running);
-  std::vector<std::string> stopped_names = cnr_controller_interface::get_names(stopped);
+  std::vector<std::string> running_names = cnr::control::get_names(running);
+  std::vector<std::string> stopped_names = cnr::control::get_names(stopped);
   running_names.insert(running_names.end(), stopped_names.begin(), stopped_names.end());
 
   if (ctrl_names.size() != running_names.size())
@@ -203,8 +204,8 @@ bool ControllerManagerBase::switchControllers(const int strictness,
       CNR_RETURN_FALSE(*logger_, "HW: " + getHwName() + " Getting the controller info failed: " + error_);
     }
 
-    std::vector<std::string> ctrl_running_names = cnr_controller_interface::get_names(ctrl_running);
-    std::vector<std::string> ctrl_stopped_names = cnr_controller_interface::get_names(ctrl_stopped);
+    std::vector<std::string> ctrl_running_names = cnr::control::get_names(ctrl_running);
+    std::vector<std::string> ctrl_stopped_names = cnr::control::get_names(ctrl_stopped);
     std::vector<std::string> ctrl_loaded_names  = ctrl_running_names;
     ctrl_loaded_names.insert(ctrl_loaded_names.end(), ctrl_stopped_names.begin(), ctrl_stopped_names.end());
     std::vector<std::string> to_load_and_start_names;
@@ -299,8 +300,8 @@ bool ControllerManagerBase::unloadControllers(const std::vector<std::string>& ct
     CNR_RETURN_FALSE(*logger_, "HW: " + getHwName()+ ", "+ error());
   }
 
-  std::vector< std::string > rr = cnr_controller_interface::get_names(running);
-  std::vector< std::string > ss = cnr_controller_interface::get_names(stopped);
+  std::vector< std::string > rr = cnr::control::get_names(running);
+  std::vector< std::string > ss = cnr::control::get_names(stopped);
   if (rr.size() > 0)
   {
     std::vector<std::string> to_be_stopped;
@@ -378,7 +379,7 @@ bool ControllerManagerBase::stopUnloadAllControllers(const ros::Duration&  watch
 
     if( running.size() > 0 )
     {
-      std::vector<std::string> ctrls_running = cnr_controller_interface::get_names(running);
+      std::vector<std::string> ctrls_running = cnr::control::get_names(running);
       CNR_DEBUG(*logger_, "HW: " << getHwName() << " Try to stop " << to_string(ctrls_running));
       if(!switchController(1, vs_empty, vs_empty, ctrls_running, watchdog) )
       {
@@ -391,7 +392,7 @@ bool ControllerManagerBase::stopUnloadAllControllers(const ros::Duration&  watch
     }
   } while( ros::ok() );
 
-  std::vector<std::string> ctrls_stopped = cnr_controller_interface::get_names(stopped);
+  std::vector<std::string> ctrls_stopped = cnr::control::get_names(stopped);
 
   CNR_DEBUG(*logger_, "HW: " << getHwName() << " Try to stop " << to_string(ctrls_stopped));
   bool ret = unloadControllers(ctrls_stopped, watchdog);

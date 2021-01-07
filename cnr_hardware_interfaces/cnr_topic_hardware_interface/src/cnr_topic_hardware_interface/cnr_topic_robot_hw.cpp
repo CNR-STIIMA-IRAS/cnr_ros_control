@@ -74,14 +74,14 @@ bool TopicRobotHW::doInit()
 {
   std::stringstream report;
 
-  CNR_TRACE_START(*m_logger);
+  CNR_TRACE_START(m_logger);
   if (!m_robothw_nh.getParam("joint_names", m_resource_names))
   {
-    CNR_FATAL(*m_logger, m_robothw_nh.getNamespace() + "/joint_names' does not exist");
-    CNR_FATAL(*m_logger, "ERROR DURING STARTING HARDWARE INTERFACE '" << m_robothw_nh.getNamespace() << "'");
-    CNR_RETURN_FALSE(*m_logger);
+    CNR_FATAL(m_logger, m_robothw_nh.getNamespace() + "/joint_names' does not exist");
+    CNR_FATAL(m_logger, "ERROR DURING STARTING HARDWARE INTERFACE '" << m_robothw_nh.getNamespace() << "'");
+    CNR_RETURN_FALSE(m_logger);
   }
-  CNR_DEBUG(*m_logger, "Create the TopicRobotHW (joint names: " << m_resource_names.size() << ")");
+  CNR_DEBUG(m_logger, "Create the TopicRobotHW (joint names: " << m_resource_names.size() << ")");
 
   std::string read_js_topic;
   if (!m_robothw_nh.getParam("feedback_joint_state_topic", read_js_topic))
@@ -90,7 +90,7 @@ bool TopicRobotHW::doInit()
     CNR_ERROR(m_logger, report.str() );
 
     m_status = cnr_hardware_interface::ERROR;
-    CNR_RETURN_FALSE(*m_logger);
+    CNR_RETURN_FALSE(m_logger);
   }
 
   std::string write_js_topic;
@@ -100,7 +100,7 @@ bool TopicRobotHW::doInit()
     CNR_ERROR(m_logger, report.str() );
 
     m_status = cnr_hardware_interface::ERROR;
-    CNR_RETURN_FALSE(*m_logger);
+    CNR_RETURN_FALSE(m_logger);
   }
 
   int tmp;
@@ -181,7 +181,7 @@ bool TopicRobotHW::doInit()
 
   m_start_time = ros::Time::now();
 
-  CNR_RETURN_TRUE(*m_logger);
+  CNR_RETURN_TRUE(m_logger);
 }
 
 void TopicRobotHW::jointStateCallback(const sensor_msgs::JointStateConstPtr& msg)
@@ -199,7 +199,7 @@ void TopicRobotHW::jointStateCallback(const sensor_msgs::JointStateConstPtr& msg
     s += " [Num publisher: " + std::to_string(m_js_pub.getNumSubscribers()) + "]' ";
     s += "Mismatch in msg size: p:" + std::to_string((int)(pos.size())) + ", v:"  + std::to_string((int)(vel.size()))
       + ", e:"  + std::to_string((int)(eff.size())) + ", names:" + std::to_string((int)(m_resource_names.size()));
-    CNR_ERROR_THROTTLE(*m_logger, 5.0, s);
+    CNR_ERROR_THROTTLE(m_logger, 5.0, s);
     m_topic_received = false;
     return;
   }
@@ -207,7 +207,7 @@ void TopicRobotHW::jointStateCallback(const sensor_msgs::JointStateConstPtr& msg
   if (!name_sorting::permutationName(m_resource_names, names, pos, vel, eff, "ITIA TOPIC HW - jointStateCallback"))
   {
     m_topic_received = false;
-    CNR_WARN_THROTTLE(*m_logger, 0.1, m_robot_name << "Feedback joint states names are wrong!");
+    CNR_WARN_THROTTLE(m_logger, 0.1, m_robot_name << "Feedback joint states names are wrong!");
     return;
   }
   m_topic_received = true;
@@ -258,10 +258,10 @@ bool TopicRobotHW::doRead(const ros::Time& time, const ros::Duration& period)
 
 bool TopicRobotHW::doWrite(const ros::Time& time, const ros::Duration& period)
 {
-  CNR_TRACE_START_THROTTLE_DEFAULT(*m_logger);
+  CNR_TRACE_START_THROTTLE_DEFAULT(m_logger);
   if (!m_p_jh_active && !m_v_jh_active && !m_e_jh_active)
   {
-    CNR_RETURN_TRUE_THROTTLE(*m_logger, 5.0);
+    CNR_RETURN_TRUE_THROTTLE(m_logger, 5.0);
   }
 
   if(m_first_topic_received)
@@ -298,13 +298,13 @@ bool TopicRobotHW::doWrite(const ros::Time& time, const ros::Duration& period)
     sensor_msgs::JointStatePtr msg(new sensor_msgs::JointState());
     m_msg.swap(msg);
   }
-  CNR_RETURN_TRUE_THROTTLE_DEFAULT(*m_logger);
+  CNR_RETURN_TRUE_THROTTLE_DEFAULT(m_logger);
 }
 
 bool TopicRobotHW::doPrepareSwitch(const std::list< hardware_interface::ControllerInfo >& start_list,
                                    const std::list< hardware_interface::ControllerInfo >& stop_list)
 {
-  CNR_TRACE_START(*m_logger);
+  CNR_TRACE_START(m_logger);
   bool p_jh_active, v_jh_active, e_jh_active;
 
   p_jh_active = m_p_jh_active;
@@ -362,7 +362,7 @@ bool TopicRobotHW::doPrepareSwitch(const std::list< hardware_interface::Controll
   m_p_jh_active = p_jh_active;
   m_v_jh_active = v_jh_active;
   m_e_jh_active = e_jh_active;
-  CNR_RETURN_TRUE(*m_logger);
+  CNR_RETURN_TRUE(m_logger);
 }
 
 bool TopicRobotHW::doShutdown()

@@ -16,20 +16,20 @@ void RobotHwNodelet::onInit()
 
   try
   {
-    CNR_TRACE_START(*m_logger);
+    CNR_TRACE_START(m_logger);
     if (enterOnInit() && doOnInit() && exitOnInit())
     {
       m_stop_update_thread = m_stop_diagnostic_thread = false;
-      CNR_RETURN_OK(*m_logger, void());
+      CNR_RETURN_OK(m_logger, void());
     }
   }
   catch (std::exception& e)
   {
-    CNR_RETURN_NOTOK(*m_logger, void(), m_hw_name + ": ExitOnInit failed. Exception caught: " + std::string(e.what()));
+    CNR_RETURN_NOTOK(m_logger, void(), m_hw_name + ": ExitOnInit failed. Exception caught: " + std::string(e.what()));
   }
   catch (...)
   {
-    CNR_RETURN_NOTOK(*m_logger, void(), m_hw_name + ": ExitOnInit failed. UNhandled Exception");
+    CNR_RETURN_NOTOK(m_logger, void(), m_hw_name + ": ExitOnInit failed. UNhandled Exception");
   }
 }
 ```
@@ -41,7 +41,7 @@ The `RobotHwNodelet::enterOnInit()` prepares the classes, the diagnosis module, 
 ```cpp
 bool RobotHwNodelet::enterOnInit()
 {
-  CNR_TRACE_START(*m_logger);
+  CNR_TRACE_START(m_logger);
   m_stop_update_thread = m_stop_diagnostic_thread = false;
 
   // getNodeHandle(), parent nodelet handle (typically "/")  --- getPrivateNodeHandle() -> /nodelet_name/
@@ -51,7 +51,7 @@ bool RobotHwNodelet::enterOnInit()
   double sampling_period = 0.001;
   if (!m_hw_nh.getParam("sampling_period", sampling_period))
   {
-    CNR_WARN(*m_logger, m_hw_namespace + "/sampling_period' does not exist, set equal to 0.001");
+    CNR_WARN(m_logger, m_hw_namespace + "/sampling_period' does not exist, set equal to 0.001");
     sampling_period = 1.0e-3;
   }
 
@@ -66,7 +66,7 @@ bool RobotHwNodelet::enterOnInit()
       new pluginlib::ClassLoader<cnr_hardware_interface::RobotHW>("cnr_hardware_interface",
                                                                   "cnr_hardware_interface::RobotHW"));
 
-  CNR_RETURN_TRUE(*m_logger);
+  CNR_RETURN_TRUE(m_logger);
 }
 ```
 
@@ -75,23 +75,23 @@ The `RobotHwNodelet::doOnInit()` method creates the `RobtHw` objects exploiting 
 ```cpp
 bool RobotHwNodelet::doOnInit()
 {
-  CNR_TRACE_START(*m_logger);
+  CNR_TRACE_START(m_logger);
   std::string robot_type;
   try
   {
     if (!m_hw_nh.getParam("type", robot_type))
     {
-      CNR_FATAL(*m_logger, "The param '" << m_hw_nh.getNamespace() << "/type' is missing! Abort.");
-      CNR_RETURN_FALSE(*m_logger);
+      CNR_FATAL(m_logger, "The param '" << m_hw_nh.getNamespace() << "/type' is missing! Abort.");
+      CNR_RETURN_FALSE(m_logger);
     }
     m_robot_hw_plugin_loader->loadLibraryForClass(robot_type);
     m_hw = m_robot_hw_plugin_loader->createInstance(robot_type);
   }
   catch (std::exception& e)
   {
-    CNR_RETURN_FALSE(*m_logger, "OnInit of FakeRobotHw failed! what: " + std::string(e.what()));
+    CNR_RETURN_FALSE(m_logger, "OnInit of FakeRobotHw failed! what: " + std::string(e.what()));
   }
-  CNR_RETURN_TRUE(*m_logger);
+  CNR_RETURN_TRUE(m_logger);
 }
 ```
 
@@ -100,17 +100,17 @@ Finally, `RobotHwNodelet::exitOnInit()` creates two running threads: a diagnosti
 ```cpp
 bool RobotHwNodelet::exitOnInit()
 {
-  CNR_TRACE_START(*m_logger);
-  CNR_DEBUG(*m_logger, "Triggering the start of the main thread");
+  CNR_TRACE_START(m_logger);
+  CNR_DEBUG(m_logger, "Triggering the start of the main thread");
 
   if (m_hw == nullptr)
   {
-    CNR_RETURN_FALSE(*m_logger, "The RobotHw has not been properly initialized in the doOnInit() function. Abort.");
+    CNR_RETURN_FALSE(m_logger, "The RobotHw has not been properly initialized in the doOnInit() function. Abort.");
   }
 
   if (!m_hw->init(m_nh, m_hw_nh))
   {
-    CNR_RETURN_FALSE(*m_logger, "The RobotHw '" + m_hw_name + "'Initialization failed. Abort.");
+    CNR_RETURN_FALSE(m_logger, "The RobotHw '" + m_hw_name + "'Initialization failed. Abort.");
   }
 
   m_cm.reset(new controller_manager::ControllerManager(m_hw.get(), m_hw_nh));
@@ -122,15 +122,15 @@ bool RobotHwNodelet::exitOnInit()
   {
     if (m_update_thread_state == ON_ERROR)
     {
-      CNR_RETURN_FALSE(*m_logger, "The update thread is in Error. Abort.");
+      CNR_RETURN_FALSE(m_logger, "The update thread is in Error. Abort.");
     }
     if (m_update_thread_state == EXPIRED)
     {
-      CNR_RETURN_FALSE(*m_logger, "The update thread is expired. Something went wrong during the start. Abort.");
+      CNR_RETURN_FALSE(m_logger, "The update thread is expired. Something went wrong during the start. Abort.");
     }
     if ((ros::Time::now() - start).toSec() > 10.0)
     {
-      CNR_RETURN_FALSE(*m_logger, "Timeout Expired. The update thread did not yet started. Abort.");
+      CNR_RETURN_FALSE(m_logger, "Timeout Expired. The update thread did not yet started. Abort.");
     }
     ros::Duration(0.05).sleep();
   }
@@ -142,16 +142,16 @@ bool RobotHwNodelet::exitOnInit()
   {
     if (m_diagnostics_thread_state == ON_ERROR)
     {
-      CNR_RETURN_FALSE(*m_logger, "Main thread in ERROR");
+      CNR_RETURN_FALSE(m_logger, "Main thread in ERROR");
     }
     if ((ros::Time::now() - start).toSec() > 10.0)
     {
-      CNR_RETURN_FALSE(*m_logger, "Timeout Exipred. Main Thread did not started yet. Abort.");
+      CNR_RETURN_FALSE(m_logger, "Timeout Exipred. Main Thread did not started yet. Abort.");
     }
     ros::Duration(0.05).sleep();
   }
-  CNR_DEBUG(*m_logger, "The main is running");
-  CNR_RETURN_TRUE(*m_logger);
+  CNR_DEBUG(m_logger, "The main is running");
+  CNR_RETURN_TRUE(m_logger);
 }
 ```
 

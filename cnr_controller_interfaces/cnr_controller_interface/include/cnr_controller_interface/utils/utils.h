@@ -33,50 +33,27 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __CNR_CONTROLLER_INTERFACE__UTILS__H__
-#define __CNR_CONTROLLER_INTERFACE__UTILS__H__
+#ifndef CNR_CONTROLLER_INTERFACE__UTILS__H
+#define CNR_CONTROLLER_INTERFACE__UTILS__H
 
+#include <memory>
 #include <vector>
 #include <string>
+#include <boost/shared_ptr.hpp>
+#include <Eigen/Core>
+#include <sensor_msgs/JointState.h>
 
-namespace cnr_controller_interface
+
+namespace cnr
+{
+namespace control
 {
 
-template< typename T >
-inline std::string to_string(const std::vector< T >& what)
-{
-  std::string ret = "< ";
-  for (const auto & w : what) ret += std::to_string(w) + " ";
-  ret += " >";
-  return ret;
-}
-
-template<>
-inline std::string to_string(const std::vector<std::string>& what)
-{
-  std::string ret = "< ";
-  for (const auto & w : what) ret += w + " ";
-  ret += " >";
-  return ret;
-}
-
-template< typename T >
-inline std::string to_string(const T& what)
-{
-  std::string ret = "< " + std::to_string(what) + " >";
-  return ret;
-}
-
-template< >
-inline std::string to_string(const std::string& what)
-{
-  std::string ret = "< " + what + " >";
-  return ret;
-}
-
-
-template<class SharedPointer> 
-struct Holder 
+/**
+ * @brief The template is bare class used to cast the boost shared_ptr to std shared_ptr
+ */
+template<class SharedPointer>
+struct Holder
 {
   SharedPointer p;
 
@@ -87,23 +64,157 @@ struct Holder
   void operator () (...) { p.reset(); }
 };
 
-template<class T> 
-std::shared_ptr<T> to_std_ptr(const boost::shared_ptr<T> &p) 
+/**
+ * @brief Cast function that uses the 'holder' of the pointer
+ */
+template<class T>
+std::shared_ptr<T> to_std_ptr(const boost::shared_ptr<T> &p)
 {
   typedef Holder<std::shared_ptr<T>>   StandardHolder;
   typedef Holder<boost::shared_ptr<T>> BoostHolder;
-  
+
   StandardHolder *h = boost::get_deleter<StandardHolder>(p);
-  if( h ) 
+  if( h )
   {
     return h->p;
-  } 
-  else 
+  }
+  else
   {
     return std::shared_ptr<T>(p.get(), BoostHolder(p));
   }
 }
 
+
+
+
+
+inline bool extractJoint(const sensor_msgs::JointState msg,
+  const std::string& name, double* pos = nullptr, double* vel = nullptr, double* eff = nullptr)
+{
+  if(pos && (msg.position.size()!=msg.name.size()) )
+  {
+    return false;
+  }
+
+  if(vel && (msg.velocity.size()!=msg.name.size()) )
+  {
+    return false;
+  }
+
+  if(eff && (msg.effort.size()!=msg.name.size()) )
+  {
+    return false;
+  }
+
+  std::vector<std::string>::const_iterator it = std::find(msg.name.begin(), msg.name.end(), name);
+  if(it == msg.name.end())
+  {
+    return false;
+  }
+
+  size_t iJoint = std::distance(msg.name.begin(), it);
+  if(pos) *pos = msg.position.at(iJoint);
+  if(vel) *vel = msg.velocity.at(iJoint);
+  if(eff) *eff = msg.effort.at(iJoint);
+
+  return true;
+}
+
+
+
+inline bool extractJoint(const sensor_msgs::JointState msg,
+                         const std::vector<std::string>& names,
+                         std::vector<double>* pos = nullptr,
+                         std::vector<double>* vel = nullptr,
+                         std::vector<double>* eff = nullptr)
+{
+  if(msg.name.size() < names.size())
+  {
+    return false;
+  }
+
+  if(pos && (msg.position.size()!=msg.name.size()) )
+  {
+    return false;
+  }
+
+  if(vel && (msg.velocity.size()!=msg.name.size()) )
+  {
+    return false;
+  }
+
+  if(eff && (msg.effort.size()!=msg.name.size()) )
+  {
+    return false;
+  }
+
+  for(const auto & name : names)
+  {
+    std::vector<std::string>::const_iterator it = std::find(msg.name.begin(), msg.name.end(), name);
+    if(it == msg.name.end())
+    {
+      return false;
+    }
+
+    size_t iJoint = std::distance(msg.name.begin(), it);
+    if(pos) pos->at(iJoint) = msg.position.at(iJoint);
+    if(vel) vel->at(iJoint) = msg.velocity.at(iJoint);
+    if(eff) eff->at(iJoint) = msg.effort.at(iJoint);
+  }
+
+  return true;
+}
+
+
+
+template<typename Derived>
+inline bool extractJoint(const sensor_msgs::JointState msg,
+                         const std::vector<std::string>& names,
+                         Eigen::MatrixBase<Derived>* pos = nullptr,
+                         Eigen::MatrixBase<Derived>* vel = nullptr,
+                         Eigen::MatrixBase<Derived>* eff = nullptr)
+{
+  if(msg.name.size() < names.size())
+  {
+    return false;
+  }
+
+  if(pos && (msg.position.size()!=msg.name.size()) )
+  {
+    return false;
+  }
+
+  if(vel && (msg.velocity.size()!=msg.name.size()) )
+  {
+    return false;
+  }
+
+  if(eff && (msg.effort.size()!=msg.name.size()) )
+  {
+    return false;
+  }
+
+  for(const auto & name : names)
+  {
+    std::vector<std::string>::const_iterator it = std::find(msg.name.begin(), msg.name.end(), name);
+    if(it == msg.name.end())
+    {
+      return false;
+    }
+
+    size_t iJoint = std::distance(msg.name.begin(), it);
+    if(pos) (*pos)(iJoint) = msg.position.at(iJoint);
+    if(vel) (*vel)(iJoint) = msg.velocity.at(iJoint);
+    if(eff) (*eff)(iJoint) = msg.effort.at(iJoint);
+  }
+
+  return true;
+}
+
+
+
+
+}
 }
 
 #endif

@@ -32,6 +32,8 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
+#pragma once
+
 #ifndef CNR_CONTROLLER_INTERFACE__JOINT_CONTROLLER_INTERFACE_H
 #define CNR_CONTROLLER_INTERFACE__JOINT_CONTROLLER_INTERFACE_H
 
@@ -47,23 +49,51 @@
 #include <cnr_controller_interface/cnr_controller_interface.h>
 #include <cnr_controller_interface/internal/cnr_handles.h>
 
-namespace cnr_controller_interface
+#if !defined(MAX_NUM_AXES) || MAX_NUM_AXES==0
+  #define MAX_NUM_AXES 20
+#endif
+
+namespace cnr
+{
+namespace control
 {
 
+//! This constant is used in the templated-inherited controller,
+//! when a dynamic-sized allocation is selected, with pre-allocated memory
+constexpr int max_num_axes = MAX_NUM_AXES;
+
+typedef Eigen::Matrix<double,-1,1, Eigen::ColMajor, max_num_axes> Vector;
+
+template<int N, int MaxN=N, std::enable_if_t<N==1,int> =0 >
+Vector to(const typename rosdyn::ChainState<N,MaxN>::Value& v);
+
+template<int N, int MaxN=N, std::enable_if_t<N==1,int> =0 >
+typename rosdyn::ChainState<N,MaxN>::Value  to(const Vector& v);
+
+template<int N, int MaxN=N, std::enable_if_t<N!=1,int> =0 >
+Vector to(const typename rosdyn::ChainState<N,MaxN>::Value& v);
+
+template<int N, int MaxN, std::enable_if_t<N!=1,int> =0 >
+typename rosdyn::ChainState<N,MaxN>::Value to(const Vector& v);
 
 
 /**
+ * @brief The class is designed to get the feedback of a set of joints,
+ * and the joints must be connected to each other.
+ * The class is built aroun a 'rosdyn::ChainState' that stores the state
+ * of the joints, and at each cycle time the internal status is updated.
+ * The class creates a parallel thread cyclically (as the sampling rate)
+ * compute the forward kinematics. Furthermore, the effort may be computed
+ * from the external force measure id available.
+ * The computation is therefore done in parallel to avoid that the 'update' method
+ * takes too long, breaking the soft-realtime of the controller
  *
- *
- *
- * Base class to log the controller status
  */
-template<class H, class T>
-class JointController: public cnr_controller_interface::Controller<T>
+template<int N, int MaxN, class H, class T>
+class JointController: public cnr::control::Controller<T>
 {
 public:
-
-  ~JointController();
+  virtual ~JointController();
 
   virtual bool doInit() override;
   virtual bool doStarting(const ros::Time& /*time*/) override;
@@ -72,20 +102,13 @@ public:
   virtual bool doWaiting(const ros::Time& /*time*/) override;
   virtual bool doAborting(const ros::Time& /*time*/) override;
 
+protected:
   virtual bool enterInit() override;
   virtual bool enterStarting() override;
   virtual bool enterUpdate() override;
 
-  const Eigen::VectorXd& q                  ( ) const { return m_rstate->q(); }
-  const Eigen::VectorXd& qd                 ( ) const { return m_rstate->qd(); }
-  const Eigen::VectorXd& qdd                ( ) const { return m_rstate->qdd(); }
-  const Eigen::VectorXd& effort             ( ) const { return m_rstate->effort(); }
-  const double& q                  (size_t iAx) const { return m_rstate->q(iAx); }
-  const double& qd                 (size_t iAx) const { return m_rstate->qd(iAx); }
-  const double& qdd                (size_t iAx) const { return m_rstate->qdd(iAx); }
-  const double& effort             (size_t iAx) const { return m_rstate->effort(iAx); }
-
-  const size_t& nAx                         ( ) const { return m_rkin->nAx(); }
+  // Accessors, to be used by the inherited classes
+  const size_t& nAx( ) const { return m_rkin->nAx(); }
   const Eigen::VectorXd&  upperLimit        ( ) const { return m_rkin->upperLimit       (); }
   const Eigen::VectorXd&  lowerLimit        ( ) const { return m_rkin->lowerLimit       (); }
   const Eigen::VectorXd&  speedLimit        ( ) const { return m_rkin->speedLimit       (); }
@@ -94,7 +117,6 @@ public:
   const std::string&      baseFrame         ( ) const { return baseLink();       }
   const std::string&      toolLink          ( ) const { return m_rkin->toolLink(); }
   const std::string&      toolFrame         ( ) const { return toolLink();       }
-  const Eigen::Affine3d&  toolPose          ( ) const { return m_rstate->toolPose(); }
   const double& upperLimit         (size_t iAx) const { return m_rkin->upperLimit       (iAx);}
   const double& lowerLimit         (size_t iAx) const { return m_rkin->lowerLimit       (iAx);}
   const double& speedLimit         (size_t iAx) const { return m_rkin->speedLimit       (iAx);}
@@ -102,22 +124,28 @@ public:
   const std::vector<std::string>& jointNames( ) const { return m_rkin->jointNames       (); }
   const std::vector<std::string>& linkNames ( ) const { return m_rkin->linkNames        (); }
   const std::string& jointName     (size_t iAx) const { return m_rkin->jointName        (iAx);}
-  const std::string& linkName      (size_t iAx) const { return m_rkin->linkNames        (iAx);} 
+  const std::string& linkName      (size_t iAx) const { return m_rkin->linkNames        (iAx);}
 
-protected:
-  Handler<H,T>              m_handler; 
-  rosdyn::ChainInterfacePtr m_rkin;
-  rosdyn::ChainStateXPtr    m_rstate;
+  Handler<H,T>               m_handler;
+  rosdyn::ChainInterfacePtr  m_rkin;
+  rosdyn::ChainState<N,MaxN> m_rstate;
 
-  Eigen::IOFormat           m_cfrmt;
+  Eigen::IOFormat                 m_cfrmt;
 
   virtual bool updateTransformations();
   std::thread m_update_transformations;
   bool        m_stop_update_transformations;
   std::mutex  m_mtx;
+
+
 };
 
-} // cnr_controller_interface
+
+
+
+
+}  // control
+}  // cnr
 
 #include <cnr_controller_interface/internal/cnr_joint_controller_interface_impl.h>
 

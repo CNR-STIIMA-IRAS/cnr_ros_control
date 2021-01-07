@@ -46,12 +46,12 @@ PLUGINLIB_EXPORT_CLASS(cnr_hardware_interface::TopicsRobotHW, cnr_hardware_inter
 
 
 #define CNR_FATAL_RETURN( MSG )\
-      CNR_RETURN_FALSE(*m_logger, "ERROR DURING STARTING HARDWARE INTERFACE ' "+m_robothw_nh.getNamespace()+" ':" + std::string( MSG ) );\
+      CNR_RETURN_FALSE(m_logger, "ERROR DURING STARTING HARDWARE INTERFACE ' "+m_robothw_nh.getNamespace()+" ':" + std::string( MSG ) );\
       std::cout.flush();\
 
 
 #define WARNING( MSG )\
-      CNR_DEBUG(*m_logger, "[ "+ m_robothw_nh.getNamespace() + " ] RobotHW Nodelet: " + std::string( MSG ) );
+      CNR_DEBUG(m_logger, "[ "+ m_robothw_nh.getNamespace() + " ] RobotHW Nodelet: " + std::string( MSG ) );
 
 static size_t line = __LINE__;
 #define __LL__ line = __LINE__;
@@ -90,17 +90,17 @@ bool TopicsRobotHW::doInit()
 #define INIT_RESOURCE( RES, res_var, RES_TYPE, CLAIMED_RES_TYPE)\
       if( m_resources.count( RES ) )\
       {\
-        CNR_INFO(*m_logger, "[ " << m_robot_name << " ] Create '" <<  #RES << "' Claimed Resource");\
+        CNR_INFO(m_logger, "[ " << m_robot_name << " ] Create '" <<  #RES << "' Claimed Resource");\
         std::shared_ptr< cnr_hardware_interface::Resource > p  = m_resources.at( RES );\
         std::shared_ptr< cnr_hardware_interface::RES_TYPE > pp = std::static_pointer_cast<cnr_hardware_interface::RES_TYPE>( p );\
         res_var.reset( new CLAIMED_RES_TYPE( *pp, m_robothw_nh, this->m_topics_subscribed ) );\
-        CNR_INFO(*m_logger, "[ " << m_robot_name << " ] Initializing '" << #RES << "' Claimed Resource");\
+        CNR_INFO(m_logger, "[ " << m_robot_name << " ] Initializing '" << #RES << "' Claimed Resource");\
         init##CLAIMED_RES_TYPE( );\
-        CNR_INFO(*m_logger, "[ " << m_robot_name << " ] Claimed Resource '"<< #RES << "' succesfully initialized");\
+        CNR_INFO(m_logger, "[ " << m_robot_name << " ] Claimed Resource '"<< #RES << "' succesfully initialized");\
       }
 
 {
-  CNR_TRACE_START(*m_logger);
+  CNR_TRACE_START(m_logger);
   try
   {
     std::vector<std::string> resources;
@@ -129,7 +129,7 @@ bool TopicsRobotHW::doInit()
 
       if (it != cnr_hardware_interface::RESOURCES().end())
       {
-        CNR_DEBUG(*m_logger, "Reading param for resource: '" << it->second);
+        CNR_DEBUG(m_logger, "Reading param for resource: '" << it->second);
         std::string ns = m_robothw_nh.getNamespace() + "/" + it->second;
 
         std::shared_ptr< cnr_hardware_interface::Resource > claimed_resource;
@@ -214,7 +214,7 @@ bool TopicsRobotHW::doInit()
             CNR_FATAL_RETURN(ns + "/frames_id has size zero");
           }
           for (auto const & fr :  pr->m_frames_id)
-            CNR_DEBUG(*m_logger, ns << " - " << fr);
+            CNR_DEBUG(m_logger, ns << " - " << fr);
           claimed_resource = pr;
         }
         break;
@@ -263,10 +263,10 @@ bool TopicsRobotHW::doInit()
         }
         else
         {
-          CNR_DEBUG(*m_logger, "Subscribed topics: ");
+          CNR_DEBUG(m_logger, "Subscribed topics: ");
           for (auto const & s : subscribed_topics)
           {
-            CNR_DEBUG(*m_logger, " - " << s);
+            CNR_DEBUG(m_logger, " - " << s);
           }
         }
 
@@ -284,8 +284,8 @@ bool TopicsRobotHW::doInit()
       }
       else
       {
-        CNR_WARN(*m_logger,  m_robothw_nh.getNamespace() << "/resources/" <<  resource << "'  is not supported");
-        CNR_WARN(*m_logger,  " Available Resource: " << cnr_hardware_interface::AVAILABLE_RESOURCES());
+        CNR_WARN(m_logger,  m_robothw_nh.getNamespace() << "/resources/" <<  resource << "'  is not supported");
+        CNR_WARN(m_logger,  " Available Resource: " << cnr_hardware_interface::AVAILABLE_RESOURCES());
       }
 
     }
@@ -294,7 +294,7 @@ bool TopicsRobotHW::doInit()
       CNR_FATAL_RETURN("No claimed resources. ?!?!?");
     }
 
-    CNR_DEBUG(*m_logger, "Create the TopicsRobotHW (claimed resources: " << m_resources.size() << ", max missing messages: " << maximum_missing_cycles);
+    CNR_DEBUG(m_logger, "Create the TopicsRobotHW (claimed resources: " << m_resources.size() << ", max missing messages: " << maximum_missing_cycles);
 
 
     m_resource_names = getResourceNames(m_resources);
@@ -308,7 +308,7 @@ bool TopicsRobotHW::doInit()
     INIT_RESOURCE(POSE_RESOURCE, m_pose_resource, PoseResource, PoseClaimedResource);
     INIT_RESOURCE(TWIST_RESOURCE, m_twist_resource, TwistResource, TwistClaimedResource);
 
-    CNR_INFO(*m_logger, "[ " << m_robot_name << " ] Ok, TopicsRobotHW initialized");
+    CNR_INFO(m_logger, "[ " << m_robot_name << " ] Ok, TopicsRobotHW initialized");
 
   }
   catch (std::exception& e)
@@ -328,7 +328,7 @@ bool TopicsRobotHW::doInit()
     return false;
   }
 
-  CNR_RETURN_TRUE(*m_logger);;
+  CNR_RETURN_TRUE(m_logger);;
 
 #undef INIT_RESOURCE
 }
@@ -407,7 +407,7 @@ bool TopicsRobotHW::doWrite(const ros::Time& time, const ros::Duration& period)
 
 bool TopicsRobotHW::doPrepareSwitch(const std::list< hardware_interface::ControllerInfo >& start_list, const std::list< hardware_interface::ControllerInfo >& stop_list)
 {
-  CNR_TRACE_START(*m_logger);
+  CNR_TRACE_START(m_logger);
   if (m_resources.count(JOINT_RESOURCE))
   {
     assert(m_joint_resource);
@@ -433,7 +433,7 @@ bool TopicsRobotHW::doPrepareSwitch(const std::list< hardware_interface::Control
     assert(m_twist_resource);
     m_twist_resource->prepareSwitch(start_list, stop_list);
   }
-  CNR_RETURN_TRUE(*m_logger);
+  CNR_RETURN_TRUE(m_logger);
 }
 
 
@@ -455,14 +455,14 @@ if( m_resources.count( RES ) )\
 }
 
 {
-  CNR_TRACE_START(*m_logger);
+  CNR_TRACE_START(m_logger);
   CHECK_RESOURCE(JOINT_RESOURCE, m_joint_resource);
   CHECK_RESOURCE(ANALOG_RESOURCE, m_analog_resource);
   CHECK_RESOURCE(WRENCH_RESOURCE, m_force_torque_sensor_resource);
   CHECK_RESOURCE(POSE_RESOURCE, m_pose_resource);
   CHECK_RESOURCE(TWIST_RESOURCE, m_twist_resource);
 
-  CNR_RETURN_FALSE(*m_logger);
+  CNR_RETURN_FALSE(m_logger);
 #undef CHECK_RESOURCE
 }
 
@@ -475,7 +475,7 @@ bool TopicsRobotHW::doShutdown()
   }\
 
 {
-  CNR_TRACE_START(*m_logger);
+  CNR_TRACE_START(m_logger);
   if (!m_shutted_down)
   {
     SHUTDOWN_RESOURCE(JOINT_RESOURCE, m_joint_resource);
@@ -484,12 +484,12 @@ bool TopicsRobotHW::doShutdown()
     SHUTDOWN_RESOURCE(POSE_RESOURCE, m_pose_resource);
     SHUTDOWN_RESOURCE(TWIST_RESOURCE, m_twist_resource);
   }
-  CNR_RETURN_TRUE(*m_logger);
+  CNR_RETURN_TRUE(m_logger);
 }
 
 bool TopicsRobotHW::initJointClaimedResource()
 {
-  CNR_TRACE_START(*m_logger);
+  CNR_TRACE_START(m_logger);
   bool ret = true;
   try
   {
@@ -519,7 +519,7 @@ bool TopicsRobotHW::initJointClaimedResource()
     ret = false;
   }
 
-  CNR_RETURN_BOOL(*m_logger, ret);
+  CNR_RETURN_BOOL(m_logger, ret);
 }
 
 bool TopicsRobotHW::initAnalogClaimedResource()

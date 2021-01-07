@@ -37,23 +37,32 @@
 #include <ros/ros.h>
 #include <cnr_logger/cnr_logger.h>
 #include <gtest/gtest.h>
+#include <pluginlib/class_loader.h>
+#include <cnr_fake_hardware_interface/cnr_fake_robot_hw.h>
 
-std::shared_ptr<cnr_logger::TraceLogger> logger;
+ros::NodeHandle root_nh;
+ros::NodeHandle robot_nh;
+std::shared_ptr<cnr_hardware_interface::FakeRobotHW> robot_hw;
+std::shared_ptr<pluginlib::ClassLoader<cnr_hardware_interface::RobotHW>> robot_hw_plugin_loader;
 
 // Declare a test
-TEST(TestSuite, fullConstructor)
+TEST(TestSuite, Constructor)
 {
-  EXPECT_NO_FATAL_FAILURE(logger.reset(new cnr_logger::TraceLogger("log1", "/file_and_screen_different_appenders")));
-  EXPECT_FALSE(logger->init("/file_and_screen_different_appenders", false, false));  // Already initialized
-  EXPECT_NO_FATAL_FAILURE(logger.reset());
+  EXPECT_NO_FATAL_FAILURE(robot_hw.reset(new cnr_hardware_interface::FakeRobotHW()));
+  EXPECT_TRUE(robot_hw->init(root_nh, robot_nh));
 }
 
+TEST(TestSuite, Desctructor)
+{
+  EXPECT_NO_FATAL_FAILURE(robot_hw.reset());
+}
 
 // Run all the tests that were declared with TEST()
 int main(int argc, char **argv)
 {
   testing::InitGoogleTest(&argc, argv);
   ros::init(argc, argv, "cnr_logger_tester");
-  ros::NodeHandle nh;
+  root_nh = ros::NodeHandle("/");
+  robot_nh = ros::NodeHandle("/ur10_hw");
   return RUN_ALL_TESTS();
 }

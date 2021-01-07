@@ -11,36 +11,16 @@
 #include <rosdyn_utilities/chain_state.h>
 #include <cnr_controller_interface/internal/cnr_handles.h>
 
-namespace cnr_controller_interface
+namespace cnr
 {
-  
-const rosdyn::ChainStateX * const getPtr( const rosdyn::ChainStateXConstPtr& in)
+namespace control
 {
-  return in.get();
-}
-
-const rosdyn::ChainStateX * const getPtr( const rosdyn::ChainStateX& in)
-{
-  return &in;
-}
-
-
-rosdyn::ChainStateX* getPtr(rosdyn::ChainStateXPtr& in)
-{
-  return in.get();
-}
-
-rosdyn::ChainStateX* getPtr( rosdyn::ChainStateX& in)
-{
-  return &in;
-}
-
 
 HandleIndexes get_index_map(const std::vector<std::string>& names, rosdyn::ChainInterfaceConstPtr ks)
-{ 
+{
   HandleIndexes ret;
   try
-  { 
+  {
     for(size_t iAx=0; iAx< ks->jointNames().size(); iAx++ )
     {
       auto it = std::find(names.begin(), names.end(), ks->jointName(iAx));
@@ -64,10 +44,10 @@ HandleIndexes get_index_map(const std::vector<std::string>& names, rosdyn::Chain
 
 
 HandleIndexes get_index_map(const std::vector<std::string>& names, rosdyn::ChainStateXConstPtr ks)
-{ 
+{
   HandleIndexes ret;
   try
-  { 
+  {
     for(size_t iAx=0; iAx< ks->jointNames().size(); iAx++ )
     {
       auto it = std::find(names.begin(), names.end(), ks->jointName(iAx));
@@ -88,6 +68,7 @@ HandleIndexes get_index_map(const std::vector<std::string>& names, rosdyn::Chain
   return ret;
 }
 
+}
 }
 
 // streaming status of the handle (by reference)
