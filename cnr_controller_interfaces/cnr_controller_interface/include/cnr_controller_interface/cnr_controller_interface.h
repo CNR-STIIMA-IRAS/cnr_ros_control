@@ -59,8 +59,9 @@ namespace control
 {
 
 
-template< class T >
-class Controller: public ::controller_interface::Controller< T >, public realtime_utilities::DiagnosticsInterface
+template<class T>
+class Controller: public controller_interface::Controller<T>,
+                  public realtime_utilities::DiagnosticsInterface
 {
 public:
 
@@ -77,7 +78,7 @@ public:
   void waiting(const ros::Time& time)                                        final;
   void aborting(const ros::Time& time)                                       final;
 
-  cnr_logger::TraceLogger& logger() { return m_logger; }
+  cnr_logger::TraceLoggerPtr logger() { return m_logger; }
 
 public:
   virtual bool doInit()
@@ -196,12 +197,12 @@ protected:
 protected:
   T*            m_hw;
   ros::Duration m_dt;
-  cnr_logger::TraceLogger   m_logger;
-  std::string               m_hw_name;
-  std::string               m_ctrl_name;
-  double                    m_sampling_period;
-  double                    m_watchdog;
-  std::vector<std::string>  m_status_history;
+  cnr_logger::TraceLoggerPtr  m_logger;
+  std::string                 m_hw_name;
+  std::string                 m_ctrl_name;
+  double                      m_sampling_period;
+  double                      m_watchdog;
+  std::vector<std::string>    m_status_history;
 
 private:
   ros::NodeHandle     m_root_nh;

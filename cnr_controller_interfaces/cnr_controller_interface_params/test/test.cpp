@@ -35,41 +35,19 @@
 
 #include <iostream>
 #include <ros/ros.h>
-#include <cnr_logger/cnr_logger.h>
 #include <gtest/gtest.h>
-#include <pluginlib/class_loader.h>
-#include <cnr_fake_hardware_interface/cnr_fake_robot_hw.h>
-#include <cnr_controller_interface/cnr_controller_interface.h>
-
-std::shared_ptr<ros::NodeHandle> root_nh;
-std::shared_ptr<ros::NodeHandle> robot_nh;
-std::shared_ptr<ros::NodeHandle> ctrl_nh;
-std::shared_ptr<cnr_hardware_interface::FakeRobotHW> robot_hw;
-std::shared_ptr<cnr::control::Controller<hardware_interface::JointStateInterface> > ctrl;
 
 // Declare a test
-TEST(TestSuite, Constructor)
+TEST(TestSuite, fullConstructor)
 {
-  EXPECT_NO_FATAL_FAILURE(ctrl.reset(new cnr::control::Controller<hardware_interface::JointStateInterface>()));
-  EXPECT_FALSE(ctrl->init(robot_hw->get<hardware_interface::JointStateInterface>(), *root_nh, *robot_nh));
-  EXPECT_TRUE(ctrl->init(robot_hw->get<hardware_interface::JointStateInterface>(), *robot_nh, *ctrl_nh));
 }
 
-TEST(TestSuite, Desctructor)
-{
-  EXPECT_NO_FATAL_FAILURE(ctrl.reset());
-  EXPECT_NO_FATAL_FAILURE(robot_hw.reset());
-}
 
 // Run all the tests that were declared with TEST()
 int main(int argc, char **argv)
 {
   testing::InitGoogleTest(&argc, argv);
   ros::init(argc, argv, "cnr_logger_tester");
-  root_nh  .reset(new ros::NodeHandle("/"));
-  robot_nh .reset(new ros::NodeHandle("/ur10_hw"));
-  ctrl_nh  .reset(new ros::NodeHandle("/ur10_hw/fake_controller"));
-  robot_hw.reset(new cnr_hardware_interface::FakeRobotHW());
-  robot_hw->init(*root_nh, *robot_nh);
+  ros::NodeHandle nh;
   return RUN_ALL_TESTS();
 }

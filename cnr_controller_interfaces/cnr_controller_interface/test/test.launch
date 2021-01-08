@@ -16,7 +16,7 @@
 <rosparam>
   type: cnr/control/FakeRobotHW
   appenders: [file, screen]
-  levels: [trace, info]
+  levels: [trace, trace]
   pattern_layout: "[%5p][%d{HH:mm:ss,SSS}][%50M:%04L][%24c] %m%n"
   file_name: "ur10_hw"
   joint_names:
@@ -30,6 +30,7 @@
   tool_link: ur10_tool0
   robot_description_param: /robot_description
   robot_description_planning_param: /robot_description_planning
+  sampling_period: 0.001
 
   initial_position: [0, -1.57, 0, 0, 0, 0]
   fake_controller:
