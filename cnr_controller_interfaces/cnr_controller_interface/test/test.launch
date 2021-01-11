@@ -47,6 +47,46 @@
 
 <include file="$(find ur_description)/launch/ur10_upload.launch" />
 
+<group ns="robot_description_planning">
+  <rosparam>
+  joint_limits:
+    linear_motor_cursor_joint:
+      has_velocity_limits: true
+      max_velocity: 0.5
+      has_acceleration_limits: true
+      max_acceleration: 14 #1.55
+    ur10_elbow_joint:
+      has_velocity_limits: true
+      max_velocity: 1.4
+      has_acceleration_limits: true
+      max_acceleration: 3
+    ur10_shoulder_lift_joint:
+      has_velocity_limits: true
+      max_velocity: 1.4
+      has_acceleration_limits: true
+      max_acceleration: 14 #1.55
+    ur10_shoulder_pan_joint:
+      has_velocity_limits: true
+      max_velocity: 1.4
+      has_acceleration_limits: true
+      max_acceleration: 14 #1.55
+    ur10_wrist_1_joint:
+      has_velocity_limits: true
+      max_velocity: 1.4
+      has_acceleration_limits: true
+      max_acceleration: 14 #1.55
+    ur10_wrist_2_joint:
+      has_velocity_limits: true
+      max_velocity: 1.4
+      has_acceleration_limits: true
+      max_acceleration: 14 #1.55
+    ur10_wrist_3_joint:
+      has_velocity_limits: true
+      max_velocity: 1.4
+      has_acceleration_limits: true
+      max_acceleration: 3
+  </rosparam>
+</group>
 
 
 <group if="$(arg valgrind)">

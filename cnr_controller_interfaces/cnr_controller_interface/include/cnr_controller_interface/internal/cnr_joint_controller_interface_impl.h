@@ -152,9 +152,18 @@ bool JointController<N,MaxN,H,T>::enterInit()
   }
   else if(res==0)
   {
+    CNR_WARN_COND(this->m_logger, (report.str().length()>0), report.str() );
+    CNR_WARN_COND(this->m_logger, (report.str().length()>0),
+                  "Further tentative, looking parameters under: " << Controller<T>::getRootNamespace());
+    report.str(std::string());
     if(m_rkin->init(Controller<T>::getRootNh(),joint_names, base_link, tool_link, report) != 1)
     {
       CNR_ERROR_COND(this->m_logger, (report.str().length()>0), report.str() );
+      std::string result;
+      if(ros::param::search("/", "robot_description_planning", result))
+      {
+        CNR_WARN(this->m_logger, " 'robot_description_planning' has been found under: " << result );
+      }
       CNR_RETURN_FALSE(this->m_logger);
     }
   }
