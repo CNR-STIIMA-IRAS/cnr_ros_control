@@ -57,6 +57,8 @@ template<int N,int MaxN,class H,class T>
 inline JointCommandController<N,MaxN,H,T>::~JointCommandController()
 {
   CNR_TRACE_START(this->m_logger);
+  m_target.stopUpdateTransformationsThread();
+  CNR_TRACE(this->m_logger, "OK");
 }
 
 template<int N,int MaxN,class H,class T>
@@ -80,6 +82,7 @@ inline bool JointCommandController<N,MaxN,H,T>::doUpdate(const ros::Time& /*time
 template<int N,int MaxN,class H,class T>
 inline bool JointCommandController<N,MaxN,H,T>::doStopping(const ros::Time& /*time*/)
 {
+  m_target.stopUpdateTransformationsThread();
   return true;
 }
 
@@ -138,7 +141,10 @@ inline bool JointCommandController<N,MaxN,H,T>::enterStarting()
 
   m_target.setZero();
   m_target.q() = this->m_rstate.q();
-  m_target.updateTransformations();
+
+  int ffwd = rosdyn::ChainState<N,MaxN>::SECOND_ORDER | rosdyn::ChainState<N,MaxN>::FFWD_STATIC;
+
+  m_target.startUpdateTransformationsThread(ffwd, 1.0/this->m_sampling_period);
 
   CNR_RETURN_TRUE(this->m_logger);
 }
@@ -151,7 +157,7 @@ inline bool JointCommandController<N,MaxN,H,T>::enterUpdate()
   {
     CNR_RETURN_FALSE(this->m_logger);
   }
-  m_last_target.copy(m_target, false);
+  m_last_target = m_target;
   CNR_RETURN_TRUE_THROTTLE_DEFAULT(this->m_logger);
 }
 
@@ -256,7 +262,7 @@ inline bool JointCommandController<N,MaxN,H,T>::exitStopping()
   {
     CNR_RETURN_FALSE(this->m_logger);
   }
-  m_last_target.copy(m_target,false);
+  m_last_target = m_target;
 
   CNR_RETURN_TRUE(this->m_logger);
 }

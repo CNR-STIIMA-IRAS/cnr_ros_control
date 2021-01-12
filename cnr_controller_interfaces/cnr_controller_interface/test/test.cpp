@@ -40,6 +40,8 @@
 #include <pluginlib/class_loader.h>
 #include <cnr_fake_hardware_interface/cnr_fake_robot_hw.h>
 #include <cnr_controller_interface/cnr_controller_interface.h>
+#include <cnr_controller_interface/cnr_joint_controller_interface.h>
+#include <cnr_controller_interface/cnr_joint_command_controller_interface.h>
 
 std::shared_ptr<ros::NodeHandle> root_nh;
 std::shared_ptr<ros::NodeHandle> robot_nh;
@@ -47,12 +49,33 @@ std::shared_ptr<ros::NodeHandle> ctrl_nh;
 std::shared_ptr<cnr_hardware_interface::FakeRobotHW> robot_hw;
 std::shared_ptr<cnr::control::Controller<hardware_interface::JointStateInterface> > ctrl;
 
+template<int N, int MaxN=N>
+using JointCommandController = cnr::control::JointCommandController<N,MaxN,
+            hardware_interface::PosVelJointHandle,hardware_interface::PosVelJointInterface>;
+
+std::shared_ptr<JointCommandController<-1> > jc_ctrl_x;
+std::shared_ptr<JointCommandController<6>  > jc_ctrl_6;
+
 // Declare a test
 TEST(TestSuite, Constructor)
 {
   EXPECT_NO_FATAL_FAILURE(ctrl.reset(new cnr::control::Controller<hardware_interface::JointStateInterface>()));
   EXPECT_FALSE(ctrl->init(robot_hw->get<hardware_interface::JointStateInterface>(), *root_nh, *robot_nh));
   EXPECT_TRUE(ctrl->init(robot_hw->get<hardware_interface::JointStateInterface>(), *robot_nh, *ctrl_nh));
+}
+
+TEST(TestSuite, JCXConstructor)
+{
+  EXPECT_NO_FATAL_FAILURE(jc_ctrl_x.reset(new JointCommandController<-1>()));
+  EXPECT_FALSE(jc_ctrl_x->init(robot_hw->get<hardware_interface::PosVelJointInterface>(), *root_nh, *robot_nh));
+  EXPECT_TRUE(jc_ctrl_x->init(robot_hw->get<hardware_interface::PosVelJointInterface>(), *robot_nh, *ctrl_nh));
+}
+
+TEST(TestSuite, JC6Constructor)
+{
+  EXPECT_NO_FATAL_FAILURE(jc_ctrl_6.reset(new JointCommandController<6>()));
+  EXPECT_FALSE(jc_ctrl_6->init(robot_hw->get<hardware_interface::PosVelJointInterface>(), *root_nh, *robot_nh));
+  EXPECT_TRUE(jc_ctrl_6->init(robot_hw->get<hardware_interface::PosVelJointInterface>(), *robot_nh, *ctrl_nh));
 }
 
 TEST(TestSuite, Desctructor)

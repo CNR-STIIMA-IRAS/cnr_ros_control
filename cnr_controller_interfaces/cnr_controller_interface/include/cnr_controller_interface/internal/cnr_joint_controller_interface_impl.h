@@ -56,10 +56,9 @@ namespace control
 template<int N,int MaxN,class H,class T>
 JointController<N,MaxN,H,T>::~JointController()
 {
-  m_stop_update_transformations = true;
-  if(m_update_transformations.joinable())
-    m_update_transformations.join();
   CNR_TRACE_START(this->m_logger);
+  m_rstate.stopUpdateTransformationsThread();
+  CNR_TRACE(this->m_logger, "OK");
 }
 
 template<int N,int MaxN,class H,class T>
@@ -82,9 +81,7 @@ bool JointController<N,MaxN,H,T>::doUpdate(const ros::Time& /*time*/, const ros:
 template<int N,int MaxN,class H,class T>
 bool JointController<N,MaxN,H,T>::doStopping(const ros::Time& /*time*/)
 {
-  m_stop_update_transformations = true;
-  if(m_update_transformations.joinable())
-    m_update_transformations.join();
+  m_rstate.stopUpdateTransformationsThread();
   return true;
 }
 
@@ -205,8 +202,9 @@ bool JointController<N,MaxN,H,T>::enterStarting()
   }
   m_handler >> m_rstate;
 
-  m_stop_update_transformations = false;
-  m_update_transformations = std::thread(&JointController<N,MaxN,H,T>::updateTransformations, this);
+  int ffwd = rosdyn::ChainState<N,MaxN>::SECOND_ORDER | rosdyn::ChainState<N,MaxN>::FFWD_STATIC;
+
+  m_rstate.startUpdateTransformationsThread(ffwd, 1.0/this->m_sampling_period);
 
   CNR_RETURN_TRUE(this->m_logger);
 }
@@ -220,7 +218,6 @@ bool JointController<N,MaxN,H,T>::enterUpdate()
     CNR_RETURN_FALSE(this->m_logger);
   }
 
-  std::lock_guard<std::mutex> lock(m_mtx);
   this->m_handler >> m_rstate;
   // NOTE: the transformations may take time, especially due the pseudo inversion of the Jacobian, to estimate the external wrench.
   // Therefore, they are executed in parallel
@@ -229,33 +226,6 @@ bool JointController<N,MaxN,H,T>::enterUpdate()
   CNR_RETURN_TRUE_THROTTLE_DEFAULT(this->m_logger);
 }
 
-template<int N,int MaxN,class H,class T>
-bool JointController<N,MaxN,H,T>::updateTransformations()
-{
-  auto q = m_rstate.q();
-  auto qd = m_rstate.qd();
-  auto qdd = m_rstate.qdd();
-  auto external_effort = m_rstate.external_effort();
-
-  CNR_TRACE_START_THROTTLE_DEFAULT(this->m_logger);
-  ros::Rate rt(1.0/this->m_sampling_period);
-  while(!m_stop_update_transformations && ros::ok())
-  {
-    {
-      std::lock_guard<std::mutex> lock(m_mtx);
-      q = m_rstate.q();
-      qd = m_rstate.qd();
-      qdd = m_rstate.qdd();
-      external_effort = m_rstate.external_effort();
-    }
-
-    m_rstate.updateTransformations(&q, &qd, &qdd, &external_effort);
-
-    rt.sleep();
-  }
-
-  CNR_RETURN_TRUE_THROTTLE_DEFAULT(this->m_logger);
-}
 
 }  // cnr_controller_interface
 }  // namespace cnr

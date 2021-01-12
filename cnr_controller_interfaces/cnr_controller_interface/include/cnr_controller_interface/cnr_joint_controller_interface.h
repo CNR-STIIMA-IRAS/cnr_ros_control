@@ -131,13 +131,6 @@ protected:
   rosdyn::ChainState<N,MaxN> m_rstate;
 
   Eigen::IOFormat                 m_cfrmt;
-
-  virtual bool updateTransformations();
-  std::thread m_update_transformations;
-  bool        m_stop_update_transformations;
-  std::mutex  m_mtx;
-
-
 };
 
 
