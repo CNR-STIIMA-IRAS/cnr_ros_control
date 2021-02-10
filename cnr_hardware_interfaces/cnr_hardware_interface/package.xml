@@ -40,7 +40,6 @@
   <run_depend>realtime_utilities</run_depend>
   <run_depend>pluginlib</run_depend>
 
-
   <build_depend>code_coverage</build_depend>
   <build_depend>rostest</build_depend>
   

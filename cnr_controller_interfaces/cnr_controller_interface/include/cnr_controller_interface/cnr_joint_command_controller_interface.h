@@ -124,6 +124,8 @@ private:
   double m_max_velocity_multiplier;
   void safeOverrideCallback_1(const std_msgs::Int64ConstPtr& msg);
   void safeOverrideCallback_2(const std_msgs::Int64ConstPtr& msg);
+
+  virtual void updateTransformationsThread(int ffwd_kin_type, double hz);
 };
 
 }  // namespace control

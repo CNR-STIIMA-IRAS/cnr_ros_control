@@ -4,30 +4,21 @@
 <arg name="valgrind" default="false" />
 <arg name="debug" default="false" />
 
-<group ns="file_and_screen_different_appenders" >
-<rosparam>
-  appenders: [file, screen]
-  levels: [debug, info]
-  file_name: "ciao"
-</rosparam>
-</group>
-
-<group ns="ur10_hw" >
+<group ns="/ur10_hw" >
 <rosparam>
   type: cnr/control/FakeRobotHW
   appenders: [file, screen]
   levels: [trace, trace]
-  pattern_layout: "[%5p][%d{HH:mm:ss,SSS}][%50M:%04L][%24c] %m%n"
   file_name: "ur10_hw"
   joint_names:
-  - ur10_shoulder_pan_joint
-  - ur10_shoulder_lift_joint
-  - ur10_elbow_joint
-  - ur10_wrist_1_joint
-  - ur10_wrist_2_joint
-  - ur10_wrist_3_joint
-  base_link: ur10_base_link
-  tool_link: ur10_tool0
+  - shoulder_pan_joint
+  - shoulder_lift_joint
+  - elbow_joint
+  - wrist_1_joint
+  - wrist_2_joint
+  - wrist_3_joint
+  base_link: base_link
+  tool_link: tool0
   robot_description_param: /robot_description
   robot_description_planning_param: /robot_description_planning
   sampling_period: 0.001
@@ -36,18 +27,18 @@
   fake_controller:
     type: cnr/control/JointStatePublisher
     controlled_joint:
-    - ur10_shoulder_pan_joint
-    - ur10_shoulder_lift_joint
-    - ur10_elbow_joint
-    - ur10_wrist_1_joint
-    - ur10_wrist_2_joint
-    - ur10_wrist_3_joint
+    - shoulder_pan_joint
+    - shoulder_lift_joint
+    - elbow_joint
+    - wrist_1_joint
+    - wrist_2_joint
+    - wrist_3_joint
 </rosparam>
 </group>
 
 <include file="$(find ur_description)/launch/ur10_upload.launch" />
 
-<group ns="robot_description_planning">
+<group ns="/robot_description_planning">
   <rosparam>
   joint_limits:
     linear_motor_cursor_joint:
@@ -55,32 +46,32 @@
       max_velocity: 0.5
       has_acceleration_limits: true
       max_acceleration: 14 #1.55
-    ur10_elbow_joint:
+    elbow_joint:
       has_velocity_limits: true
       max_velocity: 1.4
       has_acceleration_limits: true
       max_acceleration: 3
-    ur10_shoulder_lift_joint:
+    shoulder_lift_joint:
       has_velocity_limits: true
       max_velocity: 1.4
       has_acceleration_limits: true
       max_acceleration: 14 #1.55
-    ur10_shoulder_pan_joint:
+    shoulder_pan_joint:
       has_velocity_limits: true
       max_velocity: 1.4
       has_acceleration_limits: true
       max_acceleration: 14 #1.55
-    ur10_wrist_1_joint:
+    wrist_1_joint:
       has_velocity_limits: true
       max_velocity: 1.4
       has_acceleration_limits: true
       max_acceleration: 14 #1.55
-    ur10_wrist_2_joint:
+    wrist_2_joint:
       has_velocity_limits: true
       max_velocity: 1.4
       has_acceleration_limits: true
       max_acceleration: 14 #1.55
-    ur10_wrist_3_joint:
+    wrist_3_joint:
       has_velocity_limits: true
       max_velocity: 1.4
       has_acceleration_limits: true
@@ -100,7 +91,11 @@
   <arg unless="$(arg debug)" name="launch_prefix" value="" />
   <arg     if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args" />
 
-<test launch-prefix="$(arg launch_prefix)" test-name="cnr_controller_interface_test" pkg="cnr_controller_interface" type="cnr_controller_interface_test">
+<test launch-prefix="$(arg launch_prefix)"
+        test-name="cnr_controller_interface_test"
+          pkg="cnr_controller_interface"
+            type="cnr_controller_interface_test"
+               args="--gtest_filter=TestSuite.JointCommandControllerXConstructor">
 </test>
 
 </group>

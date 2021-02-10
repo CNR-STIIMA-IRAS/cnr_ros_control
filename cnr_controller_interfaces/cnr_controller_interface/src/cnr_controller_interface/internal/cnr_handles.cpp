@@ -16,17 +16,17 @@ namespace cnr
 namespace control
 {
 
-HandleIndexes get_index_map(const std::vector<std::string>& names, rosdyn::ChainInterfaceConstPtr ks)
+HandleIndexes get_index_map(const std::vector<std::string>& names, const rosdyn::Chain& ks)
 {
   HandleIndexes ret;
   try
   {
-    for(size_t iAx=0; iAx< ks->jointNames().size(); iAx++ )
+    for(size_t iAx=0; iAx< ks.getActiveJointsName().size(); iAx++ )
     {
-      auto it = std::find(names.begin(), names.end(), ks->jointName(iAx));
+      auto it = std::find(names.begin(), names.end(), ks.getJointName(iAx));
       if( it != names.end() )
       {
-        ret[ks->jointName(iAx)] = iAx;
+        ret[ks.getJointName(iAx)] = iAx;
       }
     }
   }
@@ -41,32 +41,6 @@ HandleIndexes get_index_map(const std::vector<std::string>& names, rosdyn::Chain
   return ret;
 }
 
-
-
-HandleIndexes get_index_map(const std::vector<std::string>& names, rosdyn::ChainStateXConstPtr ks)
-{
-  HandleIndexes ret;
-  try
-  {
-    for(size_t iAx=0; iAx< ks->jointNames().size(); iAx++ )
-    {
-      auto it = std::find(names.begin(), names.end(), ks->jointName(iAx));
-      if( it != names.end() )
-      {
-        ret[ks->jointName(iAx)] = iAx;
-      }
-    }
-  }
-  catch(std::exception& e)
-  {
-    std::cerr << __FILE__ << ":" << __LINE__ << " " << e.what() << std::endl;
-  }
-  catch(...)
-  {
-    std::cerr << __FILE__ << ":" << __LINE__ << " Unhandled exception" << std::endl;
-  }
-  return ret;
-}
 
 }
 }

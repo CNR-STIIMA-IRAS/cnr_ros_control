@@ -19,14 +19,14 @@
   pattern_layout: "[%5p][%d{HH:mm:ss,SSS}][%50M:%04L][%24c] %m%n"
   file_name: "ur10_hw"
   joint_names:
-  - ur10_shoulder_pan_joint
-  - ur10_shoulder_lift_joint
-  - ur10_elbow_joint
-  - ur10_wrist_1_joint
-  - ur10_wrist_2_joint
-  - ur10_wrist_3_joint
-  base_link: ur10_base_link
-  tool_link: ur10_tool0
+  - shoulder_pan_joint
+  - shoulder_lift_joint
+  - elbow_joint
+  - wrist_1_joint
+  - wrist_2_joint
+  - wrist_3_joint
+  base_link: base_link
+  tool_link: tool0
   robot_description_param: /robot_description
   robot_description_planning_param: /robot_description_planning
 
@@ -34,12 +34,12 @@
   fake_controller:
     type: cnr/control/JointStatePublisher
     controlled_joint:
-    - ur10_shoulder_pan_joint
-    - ur10_shoulder_lift_joint
-    - ur10_elbow_joint
-    - ur10_wrist_1_joint
-    - ur10_wrist_2_joint
-    - ur10_wrist_3_joint
+    - shoulder_pan_joint
+    - shoulder_lift_joint
+    - elbow_joint
+    - wrist_1_joint
+    - wrist_2_joint
+    - wrist_3_joint
 </rosparam>
 </group>
 

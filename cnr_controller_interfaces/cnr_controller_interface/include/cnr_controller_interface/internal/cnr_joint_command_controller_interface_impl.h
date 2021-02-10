@@ -40,6 +40,7 @@
 #include <std_msgs/Int64.h>
 #include <ros/ros.h>
 #include <cnr_logger/cnr_logger.h>
+#include <rosdyn_core/kinematics_saturation.h>
 #include <rosdyn_utilities/chain_state.h>
 #include <cnr_controller_interface/internal/cnr_handles.h>
 #include <cnr_controller_interface/cnr_joint_command_controller_interface.h>
@@ -57,7 +58,7 @@ template<int N,int MaxN,class H,class T>
 inline JointCommandController<N,MaxN,H,T>::~JointCommandController()
 {
   CNR_TRACE_START(this->m_logger);
-  m_target.stopUpdateTransformationsThread();
+  this->stopUpdateTransformationsThread();
   CNR_TRACE(this->m_logger, "OK");
 }
 
@@ -82,7 +83,7 @@ inline bool JointCommandController<N,MaxN,H,T>::doUpdate(const ros::Time& /*time
 template<int N,int MaxN,class H,class T>
 inline bool JointCommandController<N,MaxN,H,T>::doStopping(const ros::Time& /*time*/)
 {
-  m_target.stopUpdateTransformationsThread();
+  this->stopUpdateTransformationsThread();
   return true;
 }
 
@@ -108,8 +109,8 @@ inline bool JointCommandController<N,MaxN,H,T>::enterInit()
   }
 
   m_priority = QD_PRIORITY;
-  m_target.init(this->m_rkin);
-  m_last_target.init(this->m_rkin);
+  m_target.init(this->m_chain);
+  m_last_target.init(this->m_chain);
 
   this->template add_subscriber<std_msgs::Int64>("/speed_ovr" , 1,
                      boost::bind(&JointCommandController<N,MaxN,H,T>::overrideCallback, this, _1), false);
@@ -139,12 +140,10 @@ inline bool JointCommandController<N,MaxN,H,T>::enterStarting()
     CNR_RETURN_FALSE(this->m_logger);
   }
 
-  m_target.setZero();
+  m_target.setZero(this->m_chain);
   m_target.q() = this->m_rstate.q();
 
-  int ffwd = rosdyn::ChainState<N,MaxN>::SECOND_ORDER | rosdyn::ChainState<N,MaxN>::FFWD_STATIC;
-
-  m_target.startUpdateTransformationsThread(ffwd, 1.0/this->m_sampling_period);
+  // in the exitStarting, the updateThread with the ffwd is launched
 
   CNR_RETURN_TRUE(this->m_logger);
 }
@@ -157,7 +156,7 @@ inline bool JointCommandController<N,MaxN,H,T>::enterUpdate()
   {
     CNR_RETURN_FALSE(this->m_logger);
   }
-  m_last_target = m_target;
+  m_last_target.copy(m_target, m_target.FULL_STATE);
   CNR_RETURN_TRUE_THROTTLE_DEFAULT(this->m_logger);
 }
 
@@ -175,10 +174,10 @@ inline bool JointCommandController<N,MaxN,H,T>::exitUpdate()
   {
     report << "==========\n";
     report << "Priorty            : " << std::to_string(m_priority) << "\n";
-    report << "upper limit        : " << TP(this->m_rkin->upperLimit()) << "\n";
-    report << "lower limit        : " << TP(this->m_rkin->lowerLimit()) << "\n";
-    report << "Speed Limit        : " << TP(this->m_rkin->speedLimit()) << "\n";
-    report << "Acceleration Limit : " << TP(this->m_rkin->accelerationLimit()) << "\n";
+    report << "upper limit        : " << TP(this->m_chain.getQMax()) << "\n";
+    report << "lower limit        : " << TP(this->m_chain.getQMin()) << "\n";
+    report << "Speed Limit        : " << TP(this->m_chain.getDQMax()) << "\n";
+    report << "Acceleration Limit : " << TP(this->m_chain.getDDQMax()) << "\n";
     report << "----------\n";
     // ============================== ==============================
     ROS_DEBUG_ONCE("Set Target according to Priority");
@@ -210,7 +209,7 @@ inline bool JointCommandController<N,MaxN,H,T>::exitUpdate()
     // ============================== ==============================
     auto saturated_qd = nominal_qd;
 
-    if(this->m_rkin->saturateSpeed(saturated_qd, this->m_rstate.qd(), this->m_rstate.q(),
+    if(rosdyn::saturateSpeed(this->m_chain, saturated_qd, this->m_rstate.qd(), this->m_rstate.q(),
                                this->m_sampling_period, m_max_velocity_multiplier, true, &report))
     {
       print_report = true;
@@ -228,11 +227,11 @@ inline bool JointCommandController<N,MaxN,H,T>::exitUpdate()
   report<< "qd trg: " << TP(m_target.qd()) << "\n";
   report<< "ef trg: " << TP(m_target.effort()) << "\n";
 
-  this->m_handler << m_target;
+  this->m_handler.update(m_target, this->m_chain);
 
   for(size_t iAx=0; iAx<this->jointNames().size(); iAx++)
   {
-    report<< this->m_hw->getHandle(this->jointName(iAx)) <<"\n";
+    report<< this->m_hw->getHandle(this->m_chain.getJointName(iAx)) <<"\n";
   }
 
   CNR_WARN_COND_THROTTLE(this->m_logger, print_report, throttle_time, report.str() );
@@ -251,18 +250,18 @@ inline bool JointCommandController<N,MaxN,H,T>::exitStopping()
 {
   CNR_TRACE_START(this->m_logger);
 
-  for(unsigned int iAx=0; iAx<this->m_rkin->nAx(); iAx++)
+  for(unsigned int iAx=0; iAx<this->m_chain.getActiveJointsNumber(); iAx++)
   {
     m_target.q(iAx) = this->m_rstate.q(iAx);
   }
   eigen_utils::setZero(m_target.qd());
-  this->m_handler << m_target;
+  this->m_handler.update(m_target, this->m_chain);
 
   if(!JointController<N,MaxN,H,T>::exitStopping())
   {
     CNR_RETURN_FALSE(this->m_logger);
   }
-  m_last_target = m_target;
+  m_last_target.copy(m_target, m_target.FULL_STATE);
 
   CNR_RETURN_TRUE(this->m_logger);
 }
@@ -424,6 +423,33 @@ inline void JointCommandController<N,MaxN,H,T>::setCommandEffort(const double& i
   std::lock_guard<std::mutex> lock(m_mtx);
   m_target.effort(idx) = in;
 }
+
+template<int N,int MaxN,class H,class T>
+inline void JointCommandController<N,MaxN,H,T>::updateTransformationsThread(int ffwd_kin_type, double hz)
+{
+  rosdyn::ChainState<N,MaxN> rstate;
+  rosdyn::ChainState<N,MaxN> target;
+
+  ros::Rate rt(hz);
+  while(!this->stop_update_transformations_)
+  {
+    {
+      std::lock_guard<std::mutex> lock(this->mtx_);
+      rstate.copy(this->m_rstate, this->m_rstate.ONLY_JOINT);
+      target.copy(this->m_rstate, this->m_target.ONLY_JOINT);
+    }
+    rstate.updateTransformations(this->m_chain, ffwd_kin_type);
+    target.updateTransformations(this->m_chain, ffwd_kin_type);
+    {
+      std::lock_guard<std::mutex> lock(this->mtx_);
+      this->m_rstate.copy(rstate, this->m_rstate.ONLY_CART);
+      this->m_target.copy(target, this->m_rstate.ONLY_CART);
+    }
+    rt.sleep();
+  }
+}
+
+
 
 }  // namespace control
 }  // cnr

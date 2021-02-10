@@ -46,6 +46,13 @@ std::shared_ptr<ros::NodeHandle> robot_nh;
 std::shared_ptr<cnr_hardware_interface::FakeRobotHW> robot_hw;
 std::shared_ptr<pluginlib::ClassLoader<cnr_hardware_interface::RobotHW>> robot_hw_plugin_loader;
 
+std::string to_string(const std::vector<std::string>& vv)
+{
+  std::string ret = "[ ";
+  for(const auto &v : vv ) ret += v +" ";
+  return ret + "]";
+}
+
 // Declare a test
 TEST(TestSuite, Constructor)
 {
@@ -53,6 +60,22 @@ TEST(TestSuite, Constructor)
   EXPECT_TRUE(robot_hw->init(*root_nh, *robot_nh));
 }
 
+TEST(TestSuite, Handles)
+{
+  EXPECT_TRUE(robot_hw->get<hardware_interface::JointStateInterface     >());
+  EXPECT_TRUE(robot_hw->get<hardware_interface::PositionJointInterface  >());
+  EXPECT_TRUE(robot_hw->get<hardware_interface::VelocityJointInterface  >());
+  EXPECT_TRUE(robot_hw->get<hardware_interface::EffortJointInterface    >());
+  EXPECT_TRUE(robot_hw->get<hardware_interface::PosVelEffJointInterface >());
+  EXPECT_TRUE(robot_hw->get<hardware_interface::VelEffJointInterface    >());
+
+  std::cout << "JointStateInterface     :" << to_string(robot_hw->get<hardware_interface::JointStateInterface     >()->getNames()) << std::endl;
+  std::cout << "PositionJointInterface  :" << to_string(robot_hw->get<hardware_interface::PositionJointInterface  >()->getNames()) << std::endl;
+  std::cout << "VelocityJointInterface  :" << to_string(robot_hw->get<hardware_interface::VelocityJointInterface  >()->getNames()) << std::endl;
+  std::cout << "EffortJointInterface    :" << to_string(robot_hw->get<hardware_interface::EffortJointInterface    >()->getNames()) << std::endl;
+  std::cout << "PosVelEffJointInterface :" << to_string(robot_hw->get<hardware_interface::PosVelEffJointInterface >()->getNames()) << std::endl;
+  std::cout << "VelEffJointInterface    :" << to_string(robot_hw->get<hardware_interface::VelEffJointInterface    >()->getNames()) << std::endl;
+}
 TEST(TestSuite, Desctructor)
 {
   EXPECT_NO_FATAL_FAILURE(robot_hw.reset());

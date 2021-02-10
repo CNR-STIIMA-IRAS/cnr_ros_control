@@ -105,32 +105,27 @@ public:
 protected:
   virtual bool enterInit() override;
   virtual bool enterStarting() override;
+  virtual bool exitStarting() override;
   virtual bool enterUpdate() override;
 
   // Accessors, to be used by the inherited classes
-  const size_t& nAx( ) const { return m_rkin->nAx(); }
-  const Eigen::VectorXd&  upperLimit        ( ) const { return m_rkin->upperLimit       (); }
-  const Eigen::VectorXd&  lowerLimit        ( ) const { return m_rkin->lowerLimit       (); }
-  const Eigen::VectorXd&  speedLimit        ( ) const { return m_rkin->speedLimit       (); }
-  const Eigen::VectorXd&  accelerationLimit ( ) const { return m_rkin->accelerationLimit(); }
-  const std::string&      baseLink          ( ) const { return m_rkin->baseLink(); }
-  const std::string&      baseFrame         ( ) const { return baseLink();       }
-  const std::string&      toolLink          ( ) const { return m_rkin->toolLink(); }
-  const std::string&      toolFrame         ( ) const { return toolLink();       }
-  const double& upperLimit         (size_t iAx) const { return m_rkin->upperLimit       (iAx);}
-  const double& lowerLimit         (size_t iAx) const { return m_rkin->lowerLimit       (iAx);}
-  const double& speedLimit         (size_t iAx) const { return m_rkin->speedLimit       (iAx);}
-  const double& accelerationLimit  (size_t iAx) const { return m_rkin->accelerationLimit(iAx);}
-  const std::vector<std::string>& jointNames( ) const { return m_rkin->jointNames       (); }
-  const std::vector<std::string>& linkNames ( ) const { return m_rkin->linkNames        (); }
-  const std::string& jointName     (size_t iAx) const { return m_rkin->jointName        (iAx);}
-  const std::string& linkName      (size_t iAx) const { return m_rkin->linkNames        (iAx);}
+  const unsigned int& nAx( ) const { return m_chain.getActiveJointsNumber(); }
+  const std::vector<std::string>& jointNames( ) const { return m_chain.getActiveJointsName(); }
 
-  Handler<H,T>               m_handler;
-  rosdyn::ChainInterfacePtr  m_rkin;
-  rosdyn::ChainState<N,MaxN> m_rstate;
+  Handler<H,T>                   m_handler;
+  urdf::ModelInterfaceSharedPtr  m_urdf_model;
+  rosdyn::Chain                  m_chain;
+  rosdyn::ChainState<N,MaxN>     m_rstate;
 
-  Eigen::IOFormat                 m_cfrmt;
+  Eigen::IOFormat            m_cfrmt;
+
+  void startUpdateTransformationsThread(int ffwd_kin_type, double hz = 10.0);
+  void stopUpdateTransformationsThread();
+  virtual void updateTransformationsThread(int ffwd_kin_type, double hz);
+
+  std::thread     update_transformations_;
+  bool            stop_update_transformations_;
+  std::mutex      mtx_;
 };
 
 
@@ -145,3 +140,21 @@ protected:
 #endif  // CNR_CONTROLLER_INTERFACE__JOINT_CONTROLLER_INTERFACE_H
 
 
+
+
+//  const Eigen::VectorXd&  upperLimit        ( ) const { return m_rkin->upperLimit       (); }
+//  const Eigen::VectorXd&  lowerLimit        ( ) const { return m_rkin->lowerLimit       (); }
+//  const Eigen::VectorXd&  speedLimit        ( ) const { return m_rkin->speedLimit       (); }
+//  const Eigen::VectorXd&  accelerationLimit ( ) const { return m_rkin->accelerationLimit(); }
+//  const std::string&      baseLink          ( ) const { return m_rkin->baseLink(); }
+//  const std::string&      baseFrame         ( ) const { return baseLink();       }
+//  const std::string&      toolLink          ( ) const { return m_rkin->toolLink(); }
+//  const std::string&      toolFrame         ( ) const { return toolLink();       }
+//  const double& upperLimit         (size_t iAx) const { return m_rkin->upperLimit       (iAx);}
+//  const double& lowerLimit         (size_t iAx) const { return m_rkin->lowerLimit       (iAx);}
+//  const double& speedLimit         (size_t iAx) const { return m_rkin->speedLimit       (iAx);}
+//  const double& accelerationLimit  (size_t iAx) const { return m_rkin->accelerationLimit(iAx);}
+
+//  const std::vector<std::string>& linkNames ( ) const { return m_rkin->linkNames        (); }
+//  const std::string& jointName     (size_t iAx) const { return m_rkin->jointName        (iAx);}
+//  const std::string& linkName      (size_t iAx) const { return m_rkin->linkNames        (iAx);}

@@ -71,6 +71,12 @@ template<class T>
 bool Controller<T>::init(T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh)
 {
   size_t l = __LINE__;
+  if(!hw)
+  {
+    std::cerr << cnr_logger::RED() << __PRETTY_FUNCTION__ << ":" << __LINE__ << ": " ;
+    std::cerr << "The argument 'hw' is a nullptr. " << std::endl;
+    return false;
+  }
   try
   {
     l = __LINE__;
@@ -102,7 +108,6 @@ bool Controller<T>::init(T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& contr
     }
     l = __LINE__;
     if(m_hw_name  .at(0) == '_') m_hw_name  .erase(0, 1);
-    std::cout << m_hw_name << std::endl;
     l = __LINE__;
     std::replace(m_ctrl_name.begin(), m_ctrl_name.end(), '/', '_');
     if(m_ctrl_name.size()==0)

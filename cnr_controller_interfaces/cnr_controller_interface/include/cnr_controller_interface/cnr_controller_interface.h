@@ -67,9 +67,9 @@ public:
 
   virtual ~Controller();
 
-  bool init(T*, ros::NodeHandle&)                                            final
+  bool init(T* hw, ros::NodeHandle&)                                         final
   {
-    return true;
+    return hw;
   }
   bool init(T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh) final;
   void starting(const ros::Time& time)                                       final;
