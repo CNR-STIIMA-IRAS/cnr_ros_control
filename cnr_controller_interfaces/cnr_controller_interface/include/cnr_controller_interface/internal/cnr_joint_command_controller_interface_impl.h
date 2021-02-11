@@ -141,7 +141,7 @@ inline bool JointCommandController<N,MaxN,H,T>::enterStarting()
   }
 
   m_target.setZero(this->m_chain);
-  m_target.q() = this->m_rstate.q();
+  m_target.q() = this->getPosition();
 
   // in the exitStarting, the updateThread with the ffwd is launched
 
@@ -209,7 +209,7 @@ inline bool JointCommandController<N,MaxN,H,T>::exitUpdate()
     // ============================== ==============================
     auto saturated_qd = nominal_qd;
 
-    if(rosdyn::saturateSpeed(this->m_chain, saturated_qd, this->m_rstate.qd(), this->m_rstate.q(),
+    if(rosdyn::saturateSpeed(this->m_chain, saturated_qd, this->getVelocity(), this->getPosition(),
                                this->m_sampling_period, m_max_velocity_multiplier, true, &report))
     {
       print_report = true;
@@ -252,7 +252,7 @@ inline bool JointCommandController<N,MaxN,H,T>::exitStopping()
 
   for(unsigned int iAx=0; iAx<this->m_chain.getActiveJointsNumber(); iAx++)
   {
-    m_target.q(iAx) = this->m_rstate.q(iAx);
+    m_target.q(iAx) = this->getPosition(iAx);
   }
   eigen_utils::setZero(m_target.qd());
   this->m_handler.update(m_target, this->m_chain);
@@ -430,20 +430,31 @@ inline void JointCommandController<N,MaxN,H,T>::updateTransformationsThread(int 
   rosdyn::ChainState<N,MaxN> rstate;
   rosdyn::ChainState<N,MaxN> target;
 
+  CNR_INFO(this->logger(), "Before First state & target update ;)"
+              << "\nstate:\n" << std::to_string(this->chainState())
+                << "\ntarget:\n" << std::to_string(this->m_target));
+
   ros::Rate rt(hz);
   while(!this->stop_update_transformations_)
   {
     {
-      std::lock_guard<std::mutex> lock(this->mtx_);
-      rstate.copy(this->m_rstate, this->m_rstate.ONLY_JOINT);
-      target.copy(this->m_rstate, this->m_target.ONLY_JOINT);
+      //std::lock_guard<std::mutex> lock(this->mtx_);
+      rstate.copy(this->chainState(), this->chainState().ONLY_JOINT);
+      target.copy(this->m_target, this->m_target.ONLY_JOINT);
     }
     rstate.updateTransformations(this->m_chain, ffwd_kin_type);
     target.updateTransformations(this->m_chain, ffwd_kin_type);
     {
-      std::lock_guard<std::mutex> lock(this->mtx_);
-      this->m_rstate.copy(rstate, this->m_rstate.ONLY_CART);
-      this->m_target.copy(target, this->m_rstate.ONLY_CART);
+      //std::lock_guard<std::mutex> lock(this->mtx_);
+      this->chainState().copy(rstate, rstate.ONLY_CART);
+      this->m_target.copy(target, target.ONLY_CART);
+    }
+    if(!this->update_transformations_runnig_)
+    {
+      CNR_INFO(this->logger(), "First state & target update ;)"
+                  << "\nstate:\n" << std::to_string(this->chainState())
+                    << "\ntarget:\n" << std::to_string(this->m_target));
+      this->update_transformations_runnig_ = true;
     }
     rt.sleep();
   }

@@ -288,6 +288,26 @@ struct Handler<hardware_interface::JointHandle, hardware_interface::PositionJoin
 }  // namespace control
 }  // namespace ros
 
+namespace std
+{
+// streaming status of the handle (by reference)
+std::string to_string(const hardware_interface::JointHandle& rhs);
+std::string to_string(const hardware_interface::JointStateHandle& rhs);
+std::string to_string(const hardware_interface::VelEffJointHandle& rhs);
+std::string to_string(const hardware_interface::PosVelEffJointHandle& rhs);
+
+template<class Handle, class HardwareInterface>
+inline std::string to_string(const cnr::control::Handler<Handle, HardwareInterface>& handler)
+{
+  std::string ret;
+  for(const auto & hh: handler.handles_)
+  {
+    ret += to_string(hh.second)+"\n";
+  }
+  return ret;
+}
+}
+
 // streaming status of the handle (by reference)
 std::ostream& operator<<(std::ostream& os, hardware_interface::JointHandle& rhs);
 std::ostream& operator<<(std::ostream& os, hardware_interface::JointStateHandle& rhs);

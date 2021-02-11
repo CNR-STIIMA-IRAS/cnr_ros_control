@@ -115,17 +115,39 @@ protected:
   Handler<H,T>                   m_handler;
   urdf::ModelInterfaceSharedPtr  m_urdf_model;
   rosdyn::Chain                  m_chain;
-  rosdyn::ChainState<N,MaxN>     m_rstate;
 
-  Eigen::IOFormat            m_cfrmt;
+  const rosdyn::ChainState<N,MaxN>& chainState() const;
+  rosdyn::ChainState<N,MaxN>& chainState();
+
+  using Value = typename rosdyn::ChainState<N,MaxN>::Value;
+
+  const Value& getPosition    ( ) const;
+  const Value& getVelocity    ( ) const;
+  const Value& getAcceleration( ) const;
+  const Value& getEffort      ( ) const;
+
+  double getPosition    (int idx) const;
+  double getVelocity    (int idx) const;
+  double getAcceleration(int idx) const;
+  double getEffort      (int idx) const;
+
+  const Eigen::Affine3d& getToolPose( ) const;
+  const Eigen::Vector6d& getTwist( ) const;
+  const Eigen::Vector6d& getTwistd( ) const;
+  const Eigen::Matrix<double,6,N, Eigen::ColMajor,6, MaxN>& getJacobian( ) const;
 
   void startUpdateTransformationsThread(int ffwd_kin_type, double hz = 10.0);
   void stopUpdateTransformationsThread();
   virtual void updateTransformationsThread(int ffwd_kin_type, double hz);
 
-  std::thread     update_transformations_;
-  bool            stop_update_transformations_;
-  std::mutex      mtx_;
+  std::thread         update_transformations_;
+  bool                stop_update_transformations_;
+  bool                update_transformations_runnig_;
+  mutable std::mutex  mtx_;
+
+private:
+  rosdyn::ChainState<N,MaxN>  m_rstate;
+  Eigen::IOFormat             m_cfrmt;
 };
 
 
@@ -139,22 +161,3 @@ protected:
 
 #endif  // CNR_CONTROLLER_INTERFACE__JOINT_CONTROLLER_INTERFACE_H
 
-
-
-
-//  const Eigen::VectorXd&  upperLimit        ( ) const { return m_rkin->upperLimit       (); }
-//  const Eigen::VectorXd&  lowerLimit        ( ) const { return m_rkin->lowerLimit       (); }
-//  const Eigen::VectorXd&  speedLimit        ( ) const { return m_rkin->speedLimit       (); }
-//  const Eigen::VectorXd&  accelerationLimit ( ) const { return m_rkin->accelerationLimit(); }
-//  const std::string&      baseLink          ( ) const { return m_rkin->baseLink(); }
-//  const std::string&      baseFrame         ( ) const { return baseLink();       }
-//  const std::string&      toolLink          ( ) const { return m_rkin->toolLink(); }
-//  const std::string&      toolFrame         ( ) const { return toolLink();       }
-//  const double& upperLimit         (size_t iAx) const { return m_rkin->upperLimit       (iAx);}
-//  const double& lowerLimit         (size_t iAx) const { return m_rkin->lowerLimit       (iAx);}
-//  const double& speedLimit         (size_t iAx) const { return m_rkin->speedLimit       (iAx);}
-//  const double& accelerationLimit  (size_t iAx) const { return m_rkin->accelerationLimit(iAx);}
-
-//  const std::vector<std::string>& linkNames ( ) const { return m_rkin->linkNames        (); }
-//  const std::string& jointName     (size_t iAx) const { return m_rkin->jointName        (iAx);}
-//  const std::string& linkName      (size_t iAx) const { return m_rkin->linkNames        (iAx);}

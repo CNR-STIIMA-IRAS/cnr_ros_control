@@ -1,7 +1,7 @@
 /*
- *  Software License Agreement (New BSD License)
+ *  Software License Agreement(New BSD License)
  *
- *  Copyright 2020 National Council of Research of Italy (CNR)
+ *  Copyright 2020 National Council of Research of Italy(CNR)
  *
  *  All rights reserved.
  *
@@ -24,11 +24,11 @@
  *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
  *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
  *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES(INCLUDING,
  *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
  *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
  *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ *  LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
@@ -111,7 +111,7 @@ bool JointController<N,MaxN,H,T>::enterInit()
     }
 
     //=======================================
-    // JOINT NAMES (RESOURCES)
+    // JOINT NAMES(RESOURCES)
     //=======================================
     std::vector<std::string> joint_names;
     rosdyn::get_joint_names(this->getControllerNh(),joint_names);
@@ -178,7 +178,7 @@ bool JointController<N,MaxN,H,T>::enterInit()
       CNR_RETURN_FALSE(this->m_logger);
     }
 
-    rosdyn::LinkPtr root_link(new rosdyn::Link());  //link primitivo da cui parte la catena cinematica (world ad esempio)
+    rosdyn::LinkPtr root_link(new rosdyn::Link());  //link primitivo da cui parte la catena cinematica(world ad esempio)
     root_link->fromUrdf(m_urdf_model->root_link_);
 
     std::string error;
@@ -214,7 +214,7 @@ bool JointController<N,MaxN,H,T>::enterInit()
     if(!ros::param::has(robot_description_planning_param))
     {
       CNR_ERROR(this->m_logger, "The parameter '" << robot_description_planning_param <<
-                " does not exist (check the value of parameter '" << robot_description_planning_param <<"'");
+                " does not exist(check the value of parameter '" << robot_description_planning_param <<"'");
       CNR_RETURN_FALSE(this->m_logger);
     }
 
@@ -233,7 +233,7 @@ bool JointController<N,MaxN,H,T>::enterInit()
 l = __LINE__;
     m_rstate.init(m_chain);
 l = __LINE__;
-    for (unsigned int iAx=0; iAx<m_chain.getActiveJointsNumber(); iAx++)
+    for(unsigned int iAx=0; iAx<m_chain.getActiveJointsNumber(); iAx++)
     {
       try
       {
@@ -243,14 +243,14 @@ l = __LINE__;
         }
         m_handler.handles_[m_chain.getJointName(iAx)] = Controller<T>::m_hw->getHandle(m_chain.getJointName(iAx));
       }
-      catch (std::exception& e)
+      catch(std::exception& e)
       {
         CNR_RETURN_FALSE(this->m_logger,
           "Controller '" + Controller<T>::getControllerNamespace() + "' failed in init. " + std::string("")
           + "The controlled joint named '" + m_chain.getJointName(iAx) + "' is not managed by hardware_interface.\
 Error: " + std::string(e.what()));
       }
-      catch (...)
+      catch(...)
       {
         CNR_RETURN_FALSE(this->m_logger,
           "Controller '" + Controller<T>::getControllerNamespace() + "' failed in init. " + std::string("")
@@ -280,7 +280,14 @@ bool JointController<N,MaxN,H,T>::enterStarting()
   {
     CNR_RETURN_FALSE(this->m_logger);
   }
+
+  CNR_DEBUG(this->m_logger, "Starting HW Status\n" << std::to_string(m_handler) );
   m_handler.flush(m_rstate, m_chain);
+
+  int ffwd = rosdyn::ChainState<N,MaxN>::SECOND_ORDER | rosdyn::ChainState<N,MaxN>::FFWD_STATIC;
+
+  startUpdateTransformationsThread(ffwd, 1.0/this->m_sampling_period);
+
   CNR_RETURN_TRUE(this->m_logger);
 }
 
@@ -288,10 +295,6 @@ template<int N,int MaxN,class H,class T>
 bool JointController<N,MaxN,H,T>::exitStarting()
 {
   CNR_TRACE_START(this->m_logger);
-
-  int ffwd = rosdyn::ChainState<N,MaxN>::SECOND_ORDER | rosdyn::ChainState<N,MaxN>::FFWD_STATIC;
-
-  startUpdateTransformationsThread(ffwd, 1.0/this->m_sampling_period);
 
   if(!Controller<T>::exitStarting())
   {
@@ -322,6 +325,7 @@ template<int N,int MaxN,class H,class T>
 inline void JointController<N,MaxN,H,T>::startUpdateTransformationsThread(int ffwd_kin_type, double hz)
 {
   stop_update_transformations_ = false;
+  update_transformations_runnig_ = false;
   update_transformations_ = std::thread(
         &JointController<N,MaxN,H,T>::updateTransformationsThread, this, ffwd_kin_type, hz);
 }
@@ -337,25 +341,131 @@ inline void JointController<N,MaxN,H,T>::stopUpdateTransformationsThread()
 template<int N,int MaxN,class H,class T>
 inline void JointController<N,MaxN,H,T>::updateTransformationsThread(int ffwd_kin_type, double hz)
 {
-  mtx_.lock();
   rosdyn::ChainState<N,MaxN> rstate;
-  mtx_.unlock();
 
   ros::Rate rt(hz);
   while(!stop_update_transformations_)
   {
     {
-      std::lock_guard<std::mutex> lock(mtx_);
+//      std::lock_guard<std::mutex> lock(mtx_);
       rstate.copy(m_rstate, m_rstate.ONLY_JOINT);
     }
     rstate.updateTransformations(m_chain, ffwd_kin_type);
     {
-      std::lock_guard<std::mutex> lock(mtx_);
+//      std::lock_guard<std::mutex> lock(mtx_);
       m_rstate.copy(rstate, m_rstate.ONLY_CART);
+    }
+    if(!this->update_transformations_runnig_)
+    {
+      CNR_INFO(this->logger(), "First state update ;)");
+      this->update_transformations_runnig_ = true;
     }
     rt.sleep();
   }
 }
+
+
+
+template<int N,int MaxN,class H,class T>
+inline const rosdyn::ChainState<N,MaxN>& JointController<N,MaxN,H,T>::chainState() const
+{
+  std::lock_guard<std::mutex> lock(this->mtx_);
+  return m_rstate;
+}
+
+template<int N,int MaxN,class H,class T>
+inline rosdyn::ChainState<N,MaxN>& JointController<N,MaxN,H,T>::chainState()
+{
+  std::lock_guard<std::mutex> lock(this->mtx_);
+  return m_rstate;
+}
+
+
+template<int N,int MaxN,class H,class T>
+inline const typename JointController<N,MaxN,H,T>::Value& JointController<N,MaxN,H,T>::getPosition( ) const
+{
+  std::lock_guard<std::mutex> lock(this->mtx_);
+  return m_rstate.q();
+}
+
+template<int N,int MaxN,class H,class T>
+inline const typename JointController<N,MaxN,H,T>::Value& JointController<N,MaxN,H,T>::getVelocity( ) const
+{
+  std::lock_guard<std::mutex> lock(this->mtx_);
+  return m_rstate.qd();
+}
+
+template<int N,int MaxN,class H,class T>
+inline const typename JointController<N,MaxN,H,T>::Value& JointController<N,MaxN,H,T>::getAcceleration( ) const
+{
+  std::lock_guard<std::mutex> lock(this->mtx_);
+  return m_rstate.qdd();
+}
+
+template<int N,int MaxN,class H,class T>
+inline const typename JointController<N,MaxN,H,T>::Value& JointController<N,MaxN,H,T>::getEffort( ) const
+{
+  std::lock_guard<std::mutex> lock(this->mtx_);
+  return m_rstate.effort();
+}
+
+template<int N,int MaxN,class H,class T>
+inline double JointController<N,MaxN,H,T>::getPosition(int idx) const
+{
+  std::lock_guard<std::mutex> lock(this->mtx_);
+  return m_rstate.q(idx);
+}
+
+template<int N,int MaxN,class H,class T>
+inline double JointController<N,MaxN,H,T>::getVelocity(int idx) const
+{
+  std::lock_guard<std::mutex> lock(this->mtx_);
+  return m_rstate.qd(idx);
+}
+
+template<int N,int MaxN,class H,class T>
+inline double JointController<N,MaxN,H,T>::getAcceleration(int idx) const
+{
+  std::lock_guard<std::mutex> lock(this->mtx_);
+  return m_rstate.qdd(idx);
+}
+
+template<int N,int MaxN,class H,class T>
+inline double JointController<N,MaxN,H,T>::getEffort(int idx) const
+{
+  std::lock_guard<std::mutex> lock(this->mtx_);
+  return m_rstate.effort(idx);
+}
+
+template<int N,int MaxN,class H,class T>
+inline const Eigen::Affine3d& JointController<N,MaxN,H,T>::getToolPose( ) const
+{
+  std::lock_guard<std::mutex> lock(this->mtx_);
+  return m_rstate.toolPose();
+}
+
+template<int N,int MaxN,class H,class T>
+inline const Eigen::Vector6d& JointController<N,MaxN,H,T>::getTwist( ) const
+{
+  std::lock_guard<std::mutex> lock(this->mtx_);
+  return m_rstate.twist();
+}
+
+template<int N,int MaxN,class H,class T>
+inline const Eigen::Vector6d& JointController<N,MaxN,H,T>::getTwistd( ) const
+{
+  std::lock_guard<std::mutex> lock(this->mtx_);
+  return m_rstate.twistd();
+}
+
+template<int N,int MaxN,class H,class T>
+inline const Eigen::Matrix<double,6,N, Eigen::ColMajor,6, MaxN>& JointController<N,MaxN,H,T>::getJacobian( ) const
+{
+  std::lock_guard<std::mutex> lock(this->mtx_);
+  return m_rstate.jacobian();
+}
+
+
 
 }  // cnr_controller_interface
 }  // namespace cnr

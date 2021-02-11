@@ -1,6 +1,8 @@
 #include <memory>
 #include <thread>
 #include <cstring>
+#include <string>
+#include <sstream>
 
 #include <hardware_interface/joint_state_interface.h>
 #include <hardware_interface/joint_command_interface.h>
@@ -100,4 +102,40 @@ std::ostream& operator<<(std::ostream& os, hardware_interface::PosVelEffJointHan
   os << rhs.getName() << ", state: q" << rhs.getPosition() << ",  qd" << rhs.getVelocity() << ", eff " << rhs.getEffort();
   os << ", cmd: q"<< rhs.getCommandPosition()<<", qd " << rhs.getCommandVelocity() << ", eff " << rhs.getCommandEffort();
   return os;
+}
+
+namespace std
+{
+// streaming status of the handle (by reference)
+// streaming status of the handle (by value)
+::std::string to_string(const hardware_interface::JointHandle& rhs)
+{
+  std::stringstream ss;
+  ss << rhs.getName() << ", state: q" << rhs.getPosition() << ", qd" << rhs.getVelocity() << ", eff " << rhs.getEffort();
+  ss << ", cmd: " << rhs.getCommand();
+  return ss.str();
+}
+
+::std::string to_string(const hardware_interface::JointStateHandle& rhs)
+{
+  std::stringstream ss;
+  ss << rhs.getName() << ", state: q" << rhs.getPosition() << ", qd" << rhs.getVelocity() << ", eff " << rhs.getEffort();
+  return ss.str();
+}
+
+::std::string to_string(const hardware_interface::VelEffJointHandle& rhs)
+{
+  std::stringstream ss;
+  ss << rhs.getName() << ", state: q" << rhs.getPosition() << ", qd" << rhs.getVelocity() << ", eff " << rhs.getEffort();
+  ss << ", cmd: qd" << rhs.getCommandVelocity() << ", eff " << rhs.getCommandEffort();
+  return ss.str();
+}
+
+::std::string to_string(const hardware_interface::PosVelEffJointHandle& rhs)
+{
+  std::stringstream ss;
+  ss << rhs.getName() << ", state: q" << rhs.getPosition() << ",  qd" << rhs.getVelocity() << ", eff " << rhs.getEffort();
+  ss << ", cmd: q"<< rhs.getCommandPosition()<<", qd " << rhs.getCommandVelocity() << ", eff " << rhs.getCommandEffort();
+  return ss.str();
+}
 }

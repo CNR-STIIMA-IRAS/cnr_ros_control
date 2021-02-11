@@ -76,14 +76,13 @@ public:
   virtual bool doAborting(const ros::Time& time) override;
 
 protected:
-
-  using Value = typename rosdyn::ChainState<N,MaxN>::Value;
-
   virtual bool enterInit() override;
   virtual bool enterStarting() override;
   virtual bool enterUpdate() override;
   virtual bool exitUpdate() override;
   virtual bool exitStopping() override;
+
+  using Value = typename rosdyn::ChainState<N,MaxN>::Value;
 
   const Value& getCommandPosition    ( ) const;
   const Value& getCommandVelocity    ( ) const;
