@@ -42,6 +42,8 @@ add_library(${PROJECT_NAME}
    src/${PROJECT_NAME}/cnr_controller_manager_proxy.cpp
 )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
+target_compile_options(${PROJECT_NAME} PUBLIC -Wall -faligned-new
+        $<$<CONFIG:Release>:-Ofast -funroll-loops -ffast-math -march=native -mavx -mfma>)
 
 
 #############

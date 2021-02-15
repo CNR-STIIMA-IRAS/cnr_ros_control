@@ -11,7 +11,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 execute_process(COMMAND uname -r OUTPUT_VARIABLE UNAME_RESULT OUTPUT_STRIP_TRAILING_WHITESPACE)
 message(-- " Kernel version: " ${UNAME_RESULT})
-if(UNAME_RESULT MATCHES "^([^rt]*)rt") 
+if(UNAME_RESULT MATCHES "^([^rt]*)rt")
   set(PREEMPTIVE_RT ON CACHE BOOL "Compile library for preemptive machines")
 else()
   set(PREEMPTIVE_RT OFF CACHE BOOL "Compile library for preemptive machines")
@@ -47,7 +47,8 @@ include_directories(include ${catkin_INCLUDE_DIRS} )
 ## Declare a C++ library
 add_library(${PROJECT_NAME} src/${PROJECT_NAME}/cnr_robot_hw_nodelet.cpp )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} )
-target_compile_options(${PROJECT_NAME} PUBLIC -Wall -faligned-new $<$<CONFIG:RELEASE>:-Ofast>  )
+target_compile_options(${PROJECT_NAME} PUBLIC -Wall -faligned-new
+        $<$<CONFIG:Release>:-Ofast -funroll-loops -ffast-math -march=native -mavx -mfma>)
 if(PREEMPTIVE_RT)
   target_compile_definitions(${PROJECT_NAME} PUBLIC -DPREEMPTIVE_RT=1)
 else()

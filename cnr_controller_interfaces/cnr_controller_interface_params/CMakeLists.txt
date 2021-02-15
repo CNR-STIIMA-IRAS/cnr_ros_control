@@ -22,6 +22,8 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 
 ## Declare a C++ library
 add_library(${PROJECT_NAME} src/${PROJECT_NAME}/cnr_controller_interface_params.cpp)
+target_compile_options(${PROJECT_NAME} PUBLIC -Wall -faligned-new
+        $<$<CONFIG:Release>:-Ofast -funroll-loops -ffast-math -march=native -mavx -mfma>)
 
 if(${CMAKE_VERSION} VERSION_GREATER  "3.16.0")
   target_precompile_headers(${PROJECT_NAME} PUBLIC <vector> <string>

@@ -41,7 +41,11 @@ include_directories(
 add_library(${PROJECT_NAME} src/cnr_controller_interface/cnr_controller_interface.cpp
                             src/cnr_controller_interface/internal/cnr_handles.cpp )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_SYSTEM_LIBRARY} Eigen3::Eigen)
-if(${CMAKE_VERSION} VERSION_GREATER  "3.16.0") 
+target_compile_options(${PROJECT_NAME} PUBLIC -Wall -faligned-new
+        $<$<CONFIG:Release>:-Ofast -funroll-loops -ffast-math -march=native -mavx -mfma>)
+
+
+if(${CMAKE_VERSION} VERSION_GREATER  "3.16.0")
 	target_precompile_headers(${PROJECT_NAME} PUBLIC
     <map>
     <stdexcept>
