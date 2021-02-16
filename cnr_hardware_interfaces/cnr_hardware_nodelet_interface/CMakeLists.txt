@@ -48,7 +48,7 @@ include_directories(include ${catkin_INCLUDE_DIRS} )
 add_library(${PROJECT_NAME} src/${PROJECT_NAME}/cnr_robot_hw_nodelet.cpp )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} )
 target_compile_options(${PROJECT_NAME} PUBLIC -Wall -faligned-new
-        $<$<CONFIG:Release>:-Ofast -funroll-loops -ffast-math -march=native -mavx -mfma>)
+        $<$<CONFIG:Release>:-Ofast -funroll-loops -ffast-math >)
 if(PREEMPTIVE_RT)
   target_compile_definitions(${PROJECT_NAME} PUBLIC -DPREEMPTIVE_RT=1)
 else()

@@ -60,11 +60,14 @@ namespace control
  *
  * Base class to log the controller status
  */
-template<int N, int MaxN, class H, class T>
-class JointCommandController: public cnr::control::JointController<N,MaxN,H,T>
+template<class H, class T>
+class JointCommandController: public cnr::control::JointController<H,T>
 {
 public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
   enum InputType {Q_PRIORITY, QD_PRIORITY};
+
   JointCommandController() = default;
   virtual ~JointCommandController();
 
@@ -82,22 +85,20 @@ protected:
   virtual bool exitUpdate() override;
   virtual bool exitStopping() override;
 
-  using Value = typename rosdyn::ChainState<N,MaxN>::Value;
-
-  const Value& getCommandPosition    ( ) const;
-  const Value& getCommandVelocity    ( ) const;
-  const Value& getCommandAcceleration( ) const;
-  const Value& getCommandEffort      ( ) const;
+  const rosdyn::VectorXd& getCommandPosition    ( ) const;
+  const rosdyn::VectorXd& getCommandVelocity    ( ) const;
+  const rosdyn::VectorXd& getCommandAcceleration( ) const;
+  const rosdyn::VectorXd& getCommandEffort      ( ) const;
 
   double getCommandPosition    (size_t idx) const;
   double getCommandVelocity    (size_t idx) const;
   double getCommandAcceleration(size_t idx) const;
   double getCommandEffort      (size_t idx) const;
 
-  void setCommandPosition     (const Value& in);
-  void setCommandVelocity     (const Value& in);
-  void setCommandAcceleration (const Value& in);
-  void setCommandEffort       (const Value& in);
+  void setCommandPosition     (const rosdyn::VectorXd& in);
+  void setCommandVelocity     (const rosdyn::VectorXd& in);
+  void setCommandAcceleration (const rosdyn::VectorXd& in);
+  void setCommandEffort       (const rosdyn::VectorXd& in);
 
   void setCommandPosition     (const double& in, size_t idx);
   void setCommandVelocity     (const double& in, size_t idx);
@@ -111,9 +112,9 @@ protected:
   mutable std::mutex m_mtx;
 
 private:
-  InputType                  m_priority;
-  rosdyn::ChainState<N,MaxN> m_target;
-  rosdyn::ChainState<N,MaxN> m_last_target;
+  InputType          m_priority;
+  rosdyn::ChainState m_target;
+  rosdyn::ChainState m_last_target;
 
   double m_override;
   void overrideCallback(const std_msgs::Int64ConstPtr& msg);

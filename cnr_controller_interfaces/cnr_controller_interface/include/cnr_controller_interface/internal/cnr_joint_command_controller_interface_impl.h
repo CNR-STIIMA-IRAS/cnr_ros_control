@@ -54,56 +54,56 @@ namespace control
 {
 
 
-template<int N,int MaxN,class H,class T>
-inline JointCommandController<N,MaxN,H,T>::~JointCommandController()
+template<class H,class T>
+inline JointCommandController<H,T>::~JointCommandController()
 {
   CNR_TRACE_START(this->m_logger);
   this->stopUpdateTransformationsThread();
   CNR_TRACE(this->m_logger, "OK");
 }
 
-template<int N,int MaxN,class H,class T>
-inline bool JointCommandController<N,MaxN,H,T>::doInit()
+template<class H,class T>
+inline bool JointCommandController<H,T>::doInit()
 {
   return true;
 }
 
-template<int N,int MaxN,class H,class T>
-inline bool JointCommandController<N,MaxN,H,T>::doStarting(const ros::Time& /*time*/)
+template<class H,class T>
+inline bool JointCommandController<H,T>::doStarting(const ros::Time& /*time*/)
 {
   return true;
 }
 
-template<int N,int MaxN,class H,class T>
-inline bool JointCommandController<N,MaxN,H,T>::doUpdate(const ros::Time& /*time*/, const ros::Duration& /*period*/)
+template<class H,class T>
+inline bool JointCommandController<H,T>::doUpdate(const ros::Time& /*time*/, const ros::Duration& /*period*/)
 {
   return true;
 }
 
-template<int N,int MaxN,class H,class T>
-inline bool JointCommandController<N,MaxN,H,T>::doStopping(const ros::Time& /*time*/)
+template<class H,class T>
+inline bool JointCommandController<H,T>::doStopping(const ros::Time& /*time*/)
 {
   this->stopUpdateTransformationsThread();
   return true;
 }
 
-template<int N,int MaxN,class H,class T>
-inline bool JointCommandController<N,MaxN,H,T>::doWaiting(const ros::Time& /*time*/)
+template<class H,class T>
+inline bool JointCommandController<H,T>::doWaiting(const ros::Time& /*time*/)
 {
   return true;
 }
 
-template<int N,int MaxN,class H,class T>
-inline bool JointCommandController<N,MaxN,H,T>::doAborting(const ros::Time& /*time*/)
+template<class H,class T>
+inline bool JointCommandController<H,T>::doAborting(const ros::Time& /*time*/)
 {
   return true;
 }
 
-template<int N,int MaxN,class H,class T>
-inline bool JointCommandController<N,MaxN,H,T>::enterInit()
+template<class H,class T>
+inline bool JointCommandController<H,T>::enterInit()
 {
   CNR_TRACE_START(this->m_logger);
-  if(!JointController<N,MaxN,H,T>::enterInit())
+  if(!JointController<H,T>::enterInit())
   {
     CNR_RETURN_FALSE(this->m_logger);
   }
@@ -113,11 +113,11 @@ inline bool JointCommandController<N,MaxN,H,T>::enterInit()
   m_last_target.init(this->m_chain);
 
   this->template add_subscriber<std_msgs::Int64>("/speed_ovr" , 1,
-                     boost::bind(&JointCommandController<N,MaxN,H,T>::overrideCallback, this, _1), false);
+                     boost::bind(&JointCommandController<H,T>::overrideCallback, this, _1), false);
   this->template add_subscriber<std_msgs::Int64>("/safe_ovr_1", 1,
-                     boost::bind(&JointCommandController<N,MaxN,H,T>::safeOverrideCallback_1, this, _1), false);
+                     boost::bind(&JointCommandController<H,T>::safeOverrideCallback_1, this, _1), false);
   this->template add_subscriber<std_msgs::Int64>("/safe_ovr_2", 1,
-                 boost::bind(&JointCommandController<N,MaxN,H,T>::safeOverrideCallback_2, this, _1), false);
+                 boost::bind(&JointCommandController<H,T>::safeOverrideCallback_2, this, _1), false);
 
   if(!(this->getControllerNh().getParam("max_velocity_multiplier", m_max_velocity_multiplier)) )
   {
@@ -131,11 +131,11 @@ inline bool JointCommandController<N,MaxN,H,T>::enterInit()
   CNR_RETURN_TRUE(this->m_logger);
 }
 
-template<int N,int MaxN,class H,class T>
-inline bool JointCommandController<N,MaxN,H,T>::enterStarting()
+template<class H,class T>
+inline bool JointCommandController<H,T>::enterStarting()
 {
   CNR_TRACE_START(this->m_logger);
-  if(!JointController<N,MaxN,H,T>::enterStarting())
+  if(!JointController<H,T>::enterStarting())
   {
     CNR_RETURN_FALSE(this->m_logger);
   }
@@ -148,11 +148,11 @@ inline bool JointCommandController<N,MaxN,H,T>::enterStarting()
   CNR_RETURN_TRUE(this->m_logger);
 }
 
-template<int N,int MaxN,class H,class T>
-inline bool JointCommandController<N,MaxN,H,T>::enterUpdate()
+template<class H,class T>
+inline bool JointCommandController<H,T>::enterUpdate()
 {
   CNR_TRACE_START_THROTTLE_DEFAULT(this->m_logger);
-  if(!JointController<N,MaxN,H,T>::enterUpdate())
+  if(!JointController<H,T>::enterUpdate())
   {
     CNR_RETURN_FALSE(this->m_logger);
   }
@@ -160,8 +160,8 @@ inline bool JointCommandController<N,MaxN,H,T>::enterUpdate()
   CNR_RETURN_TRUE_THROTTLE_DEFAULT(this->m_logger);
 }
 
-template<int N,int MaxN,class H,class T>
-inline bool JointCommandController<N,MaxN,H,T>::exitUpdate()
+template<class H,class T>
+inline bool JointCommandController<H,T>::exitUpdate()
 #define SP std::fixed  << std::setprecision(5)
 #define TP(X) eigen_utils::to_string(X)
 {
@@ -235,7 +235,7 @@ inline bool JointCommandController<N,MaxN,H,T>::exitUpdate()
   }
 
   CNR_WARN_COND_THROTTLE(this->m_logger, print_report, throttle_time, report.str() );
-  if(!JointController<N,MaxN,H,T>::exitUpdate())
+  if(!JointController<H,T>::exitUpdate())
   {
     CNR_RETURN_FALSE(this->m_logger);
   }
@@ -245,8 +245,8 @@ inline bool JointCommandController<N,MaxN,H,T>::exitUpdate()
 #undef SP
 }
 
-template<int N,int MaxN,class H,class T>
-inline bool JointCommandController<N,MaxN,H,T>::exitStopping()
+template<class H,class T>
+inline bool JointCommandController<H,T>::exitStopping()
 {
   CNR_TRACE_START(this->m_logger);
 
@@ -257,7 +257,7 @@ inline bool JointCommandController<N,MaxN,H,T>::exitStopping()
   eigen_utils::setZero(m_target.qd());
   this->m_handler.update(m_target, this->m_chain);
 
-  if(!JointController<N,MaxN,H,T>::exitStopping())
+  if(!JointController<H,T>::exitStopping())
   {
     CNR_RETURN_FALSE(this->m_logger);
   }
@@ -266,14 +266,14 @@ inline bool JointCommandController<N,MaxN,H,T>::exitStopping()
   CNR_RETURN_TRUE(this->m_logger);
 }
 
-template<int N,int MaxN,class H,class T>
-inline double JointCommandController<N,MaxN,H,T>::getTargetOverride() const
+template<class H,class T>
+inline double JointCommandController<H,T>::getTargetOverride() const
 {
   return m_override * m_safe_override_1 * m_safe_override_2;
 }
 
-template<int N,int MaxN,class H,class T>
-inline void JointCommandController<N,MaxN,H,T>::overrideCallback(const std_msgs::Int64ConstPtr& msg)
+template<class H,class T>
+inline void JointCommandController<H,T>::overrideCallback(const std_msgs::Int64ConstPtr& msg)
 {
   double ovr;
   if(msg->data > 100)
@@ -285,8 +285,8 @@ inline void JointCommandController<N,MaxN,H,T>::overrideCallback(const std_msgs:
   m_override = ovr;
 }
 
-template<int N,int MaxN,class H,class T>
-inline void JointCommandController<N,MaxN,H,T>::safeOverrideCallback_1(const std_msgs::Int64ConstPtr& msg)
+template<class H,class T>
+inline void JointCommandController<H,T>::safeOverrideCallback_1(const std_msgs::Int64ConstPtr& msg)
 {
   double ovr;
   if(msg->data > 100)
@@ -298,8 +298,8 @@ inline void JointCommandController<N,MaxN,H,T>::safeOverrideCallback_1(const std
   m_safe_override_1 = ovr;
 }
 
-template<int N,int MaxN,class H,class T>
-inline void JointCommandController<N,MaxN,H,T>::safeOverrideCallback_2(const std_msgs::Int64ConstPtr& msg)
+template<class H,class T>
+inline void JointCommandController<H,T>::safeOverrideCallback_2(const std_msgs::Int64ConstPtr& msg)
 {
   double ovr;
   if(msg->data > 100)
@@ -312,123 +312,123 @@ inline void JointCommandController<N,MaxN,H,T>::safeOverrideCallback_2(const std
 }
 
 
-template<int N,int MaxN,class H,class T>
-inline const typename JointCommandController<N,MaxN,H,T>::Value& JointCommandController<N,MaxN,H,T>::getCommandPosition( ) const
+template<class H,class T>
+inline const rosdyn::VectorXd& JointCommandController<H,T>::getCommandPosition( ) const
 {
   std::lock_guard<std::mutex> lock(m_mtx);
   return m_target.q();
 }
 
-template<int N,int MaxN,class H,class T>
-inline const typename JointCommandController<N,MaxN,H,T>::Value& JointCommandController<N,MaxN,H,T>::getCommandVelocity( ) const
+template<class H,class T>
+inline const rosdyn::VectorXd& JointCommandController<H,T>::getCommandVelocity( ) const
 {
   std::lock_guard<std::mutex> lock(m_mtx);
   return m_target.qd();
 }
 
-template<int N,int MaxN,class H,class T>
-inline const typename JointCommandController<N,MaxN,H,T>::Value& JointCommandController<N,MaxN,H,T>::getCommandAcceleration( ) const
+template<class H,class T>
+inline const rosdyn::VectorXd& JointCommandController<H,T>::getCommandAcceleration( ) const
 {
   std::lock_guard<std::mutex> lock(m_mtx);
   return m_target.qdd();
 }
 
-template<int N,int MaxN,class H,class T>
-inline const typename JointCommandController<N,MaxN,H,T>::Value& JointCommandController<N,MaxN,H,T>::getCommandEffort( ) const
+template<class H,class T>
+inline const rosdyn::VectorXd& JointCommandController<H,T>::getCommandEffort( ) const
 {
   std::lock_guard<std::mutex> lock(m_mtx);
   return m_target.effort();
 }
 
-template<int N,int MaxN,class H,class T>
-inline double JointCommandController<N,MaxN,H,T>::getCommandPosition(size_t idx) const
+template<class H,class T>
+inline double JointCommandController<H,T>::getCommandPosition(size_t idx) const
 {
   std::lock_guard<std::mutex> lock(m_mtx);
   return m_target.q(idx);
 }
 
-template<int N,int MaxN,class H,class T>
-inline double JointCommandController<N,MaxN,H,T>::getCommandVelocity(size_t idx) const
+template<class H,class T>
+inline double JointCommandController<H,T>::getCommandVelocity(size_t idx) const
 {
   std::lock_guard<std::mutex> lock(m_mtx);
   return m_target.qd(idx);
 }
 
-template<int N,int MaxN,class H,class T>
-inline double JointCommandController<N,MaxN,H,T>::getCommandAcceleration(size_t idx) const
+template<class H,class T>
+inline double JointCommandController<H,T>::getCommandAcceleration(size_t idx) const
 {
   std::lock_guard<std::mutex> lock(m_mtx);
   return m_target.qdd(idx);
 }
 
-template<int N,int MaxN,class H,class T>
-inline double JointCommandController<N,MaxN,H,T>::getCommandEffort(size_t idx) const
+template<class H,class T>
+inline double JointCommandController<H,T>::getCommandEffort(size_t idx) const
 {
   std::lock_guard<std::mutex> lock(m_mtx);
   return m_target.effort(idx);
 }
 
-template<int N,int MaxN,class H,class T>
-inline void JointCommandController<N,MaxN,H,T>::setCommandPosition(const JointCommandController<N,MaxN,H,T>::Value& in)
+template<class H,class T>
+inline void JointCommandController<H,T>::setCommandPosition(const rosdyn::VectorXd& in)
 {
   std::lock_guard<std::mutex> lock(m_mtx);
   m_target.q() = in;
 }
 
-template<int N,int MaxN,class H,class T>
-inline void JointCommandController<N,MaxN,H,T>::setCommandVelocity(const JointCommandController<N,MaxN,H,T>::Value& in)
+template<class H,class T>
+inline void JointCommandController<H,T>::setCommandVelocity(const rosdyn::VectorXd& in)
 {
   std::lock_guard<std::mutex> lock(m_mtx);
   m_target.qd()     = in;
 }
 
-template<int N,int MaxN,class H,class T>
-inline void JointCommandController<N,MaxN,H,T>::setCommandAcceleration(const JointCommandController<N,MaxN,H,T>::Value& in)
+template<class H,class T>
+inline void JointCommandController<H,T>::setCommandAcceleration(const rosdyn::VectorXd& in)
 {
   std::lock_guard<std::mutex> lock(m_mtx);
   m_target.qdd()    = in;
 }
 
-template<int N,int MaxN,class H,class T>
-inline void JointCommandController<N,MaxN,H,T>::setCommandEffort(const JointCommandController<N,MaxN,H,T>::Value& in)
+template<class H,class T>
+inline void JointCommandController<H,T>::setCommandEffort(const rosdyn::VectorXd& in)
 {
   std::lock_guard<std::mutex> lock(m_mtx);
   m_target.effort() = in;
 }
 
-template<int N,int MaxN,class H,class T>
-inline void JointCommandController<N,MaxN,H,T>::setCommandPosition(const double& in, size_t idx)
+template<class H,class T>
+inline void JointCommandController<H,T>::setCommandPosition(const double& in, size_t idx)
 {
   std::lock_guard<std::mutex> lock(m_mtx);
   m_target.q(idx) = in;
 }
 
-template<int N,int MaxN,class H,class T>
-inline void JointCommandController<N,MaxN,H,T>::setCommandVelocity(const double& in, size_t idx)
+template<class H,class T>
+inline void JointCommandController<H,T>::setCommandVelocity(const double& in, size_t idx)
 {
   std::lock_guard<std::mutex> lock(m_mtx);
   m_target.qd(idx) = in;
 }
 
-template<int N,int MaxN,class H,class T>
-inline void JointCommandController<N,MaxN,H,T>::setCommandAcceleration(const double& in, size_t idx)
+template<class H,class T>
+inline void JointCommandController<H,T>::setCommandAcceleration(const double& in, size_t idx)
 {
   std::lock_guard<std::mutex> lock(m_mtx);
   m_target.qdd(idx) = in;
 }
 
-template<int N,int MaxN,class H,class T>
-inline void JointCommandController<N,MaxN,H,T>::setCommandEffort(const double& in, size_t idx)
+template<class H,class T>
+inline void JointCommandController<H,T>::setCommandEffort(const double& in, size_t idx)
 {
   std::lock_guard<std::mutex> lock(m_mtx);
   m_target.effort(idx) = in;
 }
 
-template<int N,int MaxN,class H,class T>
-inline void JointCommandController<N,MaxN,H,T>::updateTransformationsThread(int ffwd_kin_type, double hz)
+template<class H,class T>
+inline void JointCommandController<H,T>::updateTransformationsThread(int ffwd_kin_type, double hz)
 {
-  rosdyn::ChainState<N,MaxN> rstate;
-  rosdyn::ChainState<N,MaxN> target;
+  rosdyn::ChainState rstate;
+  rosdyn::ChainState target;
 
   CNR_INFO(this->logger(), "Before First state & target update ;)"
               << "\nstate:\n" << std::to_string(this->chainState())

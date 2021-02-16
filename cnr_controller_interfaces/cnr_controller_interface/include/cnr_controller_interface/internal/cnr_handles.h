@@ -13,14 +13,12 @@ namespace cnr
 namespace control
 {
 
-template<int N, int MaxN>
-const rosdyn::ChainState<N,MaxN> * const getPtr(const rosdyn::ChainState<N,MaxN>& in)
+inline const rosdyn::ChainState* const getPtr(const rosdyn::ChainState& in)
 {
   return &in;
 }
 
-template<int N, int MaxN>
-rosdyn::ChainState<N,MaxN>* getPtr( rosdyn::ChainState<N,MaxN>& in)
+inline rosdyn::ChainState* getPtr(rosdyn::ChainState& in)
 {
   return &in;
 }
@@ -52,11 +50,8 @@ struct Handler : public HandlerBase
 {
   std::map<std::string, Handle> handles_;
 
-  template<int N, int MaxN>
-  void flush(rosdyn::ChainState<N,MaxN>& /*ks*/, const rosdyn::Chain& /*chain*/)  {};
-
-  template<int N, int MaxN>
-  void update(const rosdyn::ChainState<N,MaxN>& /*ks*/, const rosdyn::Chain& /*chain*/) {};
+  void flush(rosdyn::ChainState& /*ks*/, const rosdyn::Chain& /*chain*/)  {};
+  void update(const rosdyn::ChainState& /*ks*/, const rosdyn::Chain& /*chain*/) {};
 };
 
 
@@ -69,8 +64,7 @@ struct Handler<hardware_interface::JointStateHandle, hardware_interface::JointSt
 {
   std::map<std::string, hardware_interface::JointStateHandle> handles_;
 
-  template<int N, int MaxN>
-  void flush(rosdyn::ChainState<N,MaxN>& ks, const rosdyn::Chain& chain)
+  void flush(rosdyn::ChainState& ks, const rosdyn::Chain& chain)
   {
     if(!initialized_) init(handles_, chain);
     for(auto const & ax : indexes_)
@@ -82,8 +76,7 @@ struct Handler<hardware_interface::JointStateHandle, hardware_interface::JointSt
     }
   }
 
-  template<int N, int MaxN>
-  void update(const rosdyn::ChainState<N,MaxN>& /*ks*/, const rosdyn::Chain& /*chain*/)
+  void update(const rosdyn::ChainState& /*ks*/, const rosdyn::Chain& /*chain*/)
   {
   }
 };
@@ -97,8 +90,7 @@ struct Handler<hardware_interface::VelEffJointHandle, hardware_interface::VelEff
 {
   std::map<std::string, hardware_interface::VelEffJointHandle> handles_;
 
-  template<int N, int MaxN>
-  void flush(rosdyn::ChainState<N,MaxN>& ks, const rosdyn::Chain& chain)
+  void flush(rosdyn::ChainState& ks, const rosdyn::Chain& chain)
   {
     if(!initialized_) init(handles_, chain);
     for(auto const ax : indexes_)
@@ -110,8 +102,7 @@ struct Handler<hardware_interface::VelEffJointHandle, hardware_interface::VelEff
     }
   }
 
-  template<int N, int MaxN>
-  void update(const rosdyn::ChainState<N,MaxN>& ks, const rosdyn::Chain& chain)
+  void update(const rosdyn::ChainState& ks, const rosdyn::Chain& chain)
   {
     if(!initialized_) init(handles_, chain);
     for(auto const & ax : indexes_)
@@ -130,8 +121,7 @@ struct Handler<hardware_interface::PosVelEffJointHandle, hardware_interface::Pos
 {
   std::map<std::string, hardware_interface::PosVelEffJointHandle> handles_;
 
-  template<int N, int MaxN>
-  void flush(rosdyn::ChainState<N,MaxN>& ks, const rosdyn::Chain& chain)
+  void flush(rosdyn::ChainState& ks, const rosdyn::Chain& chain)
   {
     if(!initialized_) init(handles_, chain);
     for(auto const & ax : indexes_)
@@ -143,8 +133,8 @@ struct Handler<hardware_interface::PosVelEffJointHandle, hardware_interface::Pos
     }
   }
 
-  template<int N, int MaxN>
-  void update(const rosdyn::ChainState<N,MaxN>& ks, const rosdyn::Chain& chain)
+
+  void update(const rosdyn::ChainState& ks, const rosdyn::Chain& chain)
   {
     if(!initialized_) init(handles_, chain);
     for(auto const & ax : indexes_)
@@ -165,8 +155,7 @@ struct Handler<hardware_interface::JointHandle, hardware_interface::JointCommand
 {
   std::map<std::string, hardware_interface::JointHandle> handles_;
 
-  template<int N, int MaxN>
-  void flush(rosdyn::ChainState<N,MaxN>& ks, const rosdyn::Chain& chain)
+  void flush(rosdyn::ChainState& ks, const rosdyn::Chain& chain)
   {
     if(!initialized_) init(handles_, chain);
     for(auto const & ax : indexes_)
@@ -178,8 +167,7 @@ struct Handler<hardware_interface::JointHandle, hardware_interface::JointCommand
     }
   }
 
-  template<int N, int MaxN>
-  void update(const rosdyn::ChainState<N,MaxN>& ks, const rosdyn::Chain& chain)
+  void update(const rosdyn::ChainState& ks, const rosdyn::Chain& chain)
   {
     if(!initialized_) init(handles_, chain);
     for(auto const & ax : indexes_)
@@ -197,8 +185,7 @@ struct Handler<hardware_interface::JointHandle, hardware_interface::EffortJointI
 {
   std::map<std::string, hardware_interface::JointHandle> handles_;
 
-  template<int N, int MaxN>
-  void flush(rosdyn::ChainState<N,MaxN>& ks, const rosdyn::Chain& chain)
+  void flush(rosdyn::ChainState& ks, const rosdyn::Chain& chain)
   {
     if(!initialized_) init(handles_, chain);
     for(auto const & ax : indexes_)
@@ -210,8 +197,8 @@ struct Handler<hardware_interface::JointHandle, hardware_interface::EffortJointI
     }
   }
 
-  template<int N, int MaxN>
-  void update(const rosdyn::ChainState<N,MaxN>& ks, const rosdyn::Chain& chain)
+
+  void update(const rosdyn::ChainState& ks, const rosdyn::Chain& chain)
   {
     if(!initialized_) init(handles_, chain);
     for(auto const & ax : indexes_)
@@ -229,8 +216,8 @@ struct Handler<hardware_interface::JointHandle, hardware_interface::VelocityJoin
 {
   std::map<std::string, hardware_interface::JointHandle> handles_;
 
-  template<int N, int MaxN>
-  void flush(rosdyn::ChainState<N,MaxN>& ks, const rosdyn::Chain& chain)
+
+  void flush(rosdyn::ChainState& ks, const rosdyn::Chain& chain)
   {
     if(!initialized_) init(handles_, chain);
     for(auto const & ax : indexes_)
@@ -242,8 +229,8 @@ struct Handler<hardware_interface::JointHandle, hardware_interface::VelocityJoin
     }
   }
 
-  template<int N, int MaxN>
-  void update(const rosdyn::ChainState<N,MaxN>& ks, const rosdyn::Chain& chain)
+
+  void update(const rosdyn::ChainState& ks, const rosdyn::Chain& chain)
   {
     if(!initialized_) init(handles_, chain);
     for(auto const & ax : indexes_)
@@ -261,8 +248,8 @@ struct Handler<hardware_interface::JointHandle, hardware_interface::PositionJoin
 {
   std::map<std::string, hardware_interface::JointHandle> handles_;
 
-  template<int N, int MaxN>
-  void flush(rosdyn::ChainState<N,MaxN>& ks, const rosdyn::Chain& chain)
+
+  void flush(rosdyn::ChainState& ks, const rosdyn::Chain& chain)
   {
     if(!initialized_) init(handles_, chain);
     for(auto const & ax : indexes_)
@@ -274,8 +261,8 @@ struct Handler<hardware_interface::JointHandle, hardware_interface::PositionJoin
     }
   }
 
-  template<int N, int MaxN>
-  void update(const rosdyn::ChainState<N,MaxN>& ks, const rosdyn::Chain& chain)
+
+  void update(const rosdyn::ChainState& ks, const rosdyn::Chain& chain)
   {
     if(!initialized_) init(handles_, chain);
     for(auto const & ax : indexes_)

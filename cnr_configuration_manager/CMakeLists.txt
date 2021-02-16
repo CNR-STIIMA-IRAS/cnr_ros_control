@@ -66,13 +66,13 @@ add_library(${PROJECT_NAME} src/${PROJECT_NAME}/cnr_configuration_loader.cpp
                             src/${PROJECT_NAME}/cnr_configuration_manager.cpp
                             src/${PROJECT_NAME}/signal_handler.cpp )
 target_compile_options(${PROJECT_NAME} PUBLIC -Wall -faligned-new
-        $<$<CONFIG:Release>:-Ofast -funroll-loops -ffast-math -march=native -mavx -mfma>)
+        $<$<CONFIG:Release>:-Ofast -funroll-loops -ffast-math >)
 
 add_executable        (${PROJECT_NAME}_node src/configuration_manager_node.cpp )
 add_dependencies      (${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries (${PROJECT_NAME}_node ${PROJECT_NAME} ${catkin_LIBRARIES} )
 target_compile_options(${PROJECT_NAME}_node PUBLIC -Wall -faligned-new
-        $<$<CONFIG:Release>:-Ofast -funroll-loops -ffast-math -march=native -mavx -mfma>)
+        $<$<CONFIG:Release>:-Ofast -funroll-loops -ffast-math >)
 
 if(${CMAKE_VERSION} VERSION_GREATER "3.16.0")
 	target_precompile_headers (${PROJECT_NAME} PUBLIC <ros/ros.h>

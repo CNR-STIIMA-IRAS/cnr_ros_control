@@ -44,38 +44,16 @@
 #include <ros/ros.h>
 
 #include <cnr_logger/cnr_logger.h>
+#include <rosdyn_core/primitives.h>
 #include <rosdyn_utilities/chain_state.h>
 
 #include <cnr_controller_interface/cnr_controller_interface.h>
 #include <cnr_controller_interface/internal/cnr_handles.h>
 
-#if !defined(MAX_NUM_AXES) || MAX_NUM_AXES==0
-  #define MAX_NUM_AXES 20
-#endif
-
 namespace cnr
 {
 namespace control
 {
-
-//! This constant is used in the templated-inherited controller,
-//! when a dynamic-sized allocation is selected, with pre-allocated memory
-constexpr int max_num_axes = MAX_NUM_AXES;
-
-typedef Eigen::Matrix<double,-1,1, Eigen::ColMajor, max_num_axes> Vector;
-
-template<int N, int MaxN=N, std::enable_if_t<N==1,int> =0 >
-Vector to(const typename rosdyn::ChainState<N,MaxN>::Value& v);
-
-template<int N, int MaxN=N, std::enable_if_t<N==1,int> =0 >
-typename rosdyn::ChainState<N,MaxN>::Value  to(const Vector& v);
-
-template<int N, int MaxN=N, std::enable_if_t<N!=1,int> =0 >
-Vector to(const typename rosdyn::ChainState<N,MaxN>::Value& v);
-
-template<int N, int MaxN, std::enable_if_t<N!=1,int> =0 >
-typename rosdyn::ChainState<N,MaxN>::Value to(const Vector& v);
-
 
 /**
  * @brief The class is designed to get the feedback of a set of joints,
@@ -89,10 +67,12 @@ typename rosdyn::ChainState<N,MaxN>::Value to(const Vector& v);
  * takes too long, breaking the soft-realtime of the controller
  *
  */
-template<int N, int MaxN, class H, class T>
+template<class H, class T>
 class JointController: public cnr::control::Controller<T>
 {
 public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
   virtual ~JointController();
 
   virtual bool doInit() override;
@@ -116,25 +96,23 @@ protected:
   urdf::ModelInterfaceSharedPtr  m_urdf_model;
   rosdyn::Chain                  m_chain;
 
-  const rosdyn::ChainState<N,MaxN>& chainState() const;
-  rosdyn::ChainState<N,MaxN>& chainState();
+  const rosdyn::ChainState& chainState() const;
+  rosdyn::ChainState&       chainState();
 
-  using Value = typename rosdyn::ChainState<N,MaxN>::Value;
-
-  const Value& getPosition    ( ) const;
-  const Value& getVelocity    ( ) const;
-  const Value& getAcceleration( ) const;
-  const Value& getEffort      ( ) const;
+  const rosdyn::VectorXd& getPosition    ( ) const;
+  const rosdyn::VectorXd& getVelocity    ( ) const;
+  const rosdyn::VectorXd& getAcceleration( ) const;
+  const rosdyn::VectorXd& getEffort      ( ) const;
 
   double getPosition    (int idx) const;
   double getVelocity    (int idx) const;
   double getAcceleration(int idx) const;
   double getEffort      (int idx) const;
 
-  const Eigen::Affine3d& getToolPose( ) const;
-  const Eigen::Vector6d& getTwist( ) const;
-  const Eigen::Vector6d& getTwistd( ) const;
-  const Eigen::Matrix<double,6,N, Eigen::ColMajor,6, MaxN>& getJacobian( ) const;
+  const Eigen::Affine3d&   getToolPose( ) const;
+  const Eigen::Vector6d&   getTwist( ) const;
+  const Eigen::Vector6d&   getTwistd( ) const;
+  const rosdyn::Matrix6Xd& getJacobian( ) const;
 
   void startUpdateTransformationsThread(int ffwd_kin_type, double hz = 10.0);
   void stopUpdateTransformationsThread();
@@ -146,13 +124,10 @@ protected:
   mutable std::mutex  mtx_;
 
 private:
-  rosdyn::ChainState<N,MaxN>  m_rstate;
-  Eigen::IOFormat             m_cfrmt;
+  rosdyn::Link       m_root_link;  //link primitivo da cui parte la catena cinematica(world ad esempio)
+  rosdyn::ChainState m_rstate;
+  Eigen::IOFormat    m_cfrmt;
 };
-
-
-
-
 
 }  // control
 }  // cnr

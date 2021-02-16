@@ -42,7 +42,7 @@ add_library(${PROJECT_NAME} src/cnr_controller_interface/cnr_controller_interfac
                             src/cnr_controller_interface/internal/cnr_handles.cpp )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_SYSTEM_LIBRARY} Eigen3::Eigen)
 target_compile_options(${PROJECT_NAME} PUBLIC -Wall -faligned-new
-        $<$<CONFIG:Release>:-Ofast -funroll-loops -ffast-math -march=native -mavx -mfma>)
+        $<$<CONFIG:Release>:-Ofast -funroll-loops -ffast-math >)
 
 
 if(${CMAKE_VERSION} VERSION_GREATER  "3.16.0")

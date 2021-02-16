@@ -53,52 +53,52 @@ namespace cnr
 namespace control
 {
 
-template<int N,int MaxN,class H,class T>
-JointController<N,MaxN,H,T>::~JointController()
+template<class H,class T>
+JointController<H,T>::~JointController()
 {
   CNR_TRACE_START(this->m_logger);
   stopUpdateTransformationsThread();
   CNR_TRACE(this->m_logger, "OK");
 }
 
-template<int N,int MaxN,class H,class T>
-bool JointController<N,MaxN,H,T>::doInit()
+template<class H,class T>
+bool JointController<H,T>::doInit()
 {
   return true;
 }
-template<int N,int MaxN,class H,class T>
-bool JointController<N,MaxN,H,T>::doStarting(const ros::Time& /*time*/)
-{
-  return true;
-}
-
-template<int N,int MaxN,class H,class T>
-bool JointController<N,MaxN,H,T>::doUpdate(const ros::Time& /*time*/, const ros::Duration& /*period*/)
+template<class H,class T>
+bool JointController<H,T>::doStarting(const ros::Time& /*time*/)
 {
   return true;
 }
 
-template<int N,int MaxN,class H,class T>
-bool JointController<N,MaxN,H,T>::doStopping(const ros::Time& /*time*/)
+template<class H,class T>
+bool JointController<H,T>::doUpdate(const ros::Time& /*time*/, const ros::Duration& /*period*/)
+{
+  return true;
+}
+
+template<class H,class T>
+bool JointController<H,T>::doStopping(const ros::Time& /*time*/)
 {
   stopUpdateTransformationsThread();
   return true;
 }
 
-template<int N,int MaxN,class H,class T>
-bool JointController<N,MaxN,H,T>::doWaiting(const ros::Time& /*time*/)
+template<class H,class T>
+bool JointController<H,T>::doWaiting(const ros::Time& /*time*/)
 {
   return true;
 }
 
-template<int N,int MaxN,class H,class T>
-bool JointController<N,MaxN,H,T>::doAborting(const ros::Time& /*time*/)
+template<class H,class T>
+bool JointController<H,T>::doAborting(const ros::Time& /*time*/)
 {
   return true;
 }
 
-template<int N,int MaxN,class H,class T>
-bool JointController<N,MaxN,H,T>::enterInit()
+template<class H,class T>
+bool JointController<H,T>::enterInit()
 {
   size_t l = __LINE__;
   try
@@ -178,11 +178,9 @@ bool JointController<N,MaxN,H,T>::enterInit()
       CNR_RETURN_FALSE(this->m_logger);
     }
 
-    rosdyn::LinkPtr root_link(new rosdyn::Link());  //link primitivo da cui parte la catena cinematica(world ad esempio)
-    root_link->fromUrdf(m_urdf_model->root_link_);
-
+    m_root_link.fromUrdf(m_urdf_model->root_link_.get());
     std::string error;
-    if(!m_chain.init(error,root_link,base_link, tool_link))
+    if(!m_chain.init(error,&m_root_link,base_link, tool_link))
     {
       CNR_ERROR(this->m_logger, "Failing in creating the Chain from the URDF model:\n\t" + error + "");
       CNR_RETURN_FALSE(this->m_logger);
@@ -272,8 +270,8 @@ Error: " + std::string(e.what()));
   CNR_RETURN_TRUE(this->m_logger);
 }
 
-template<int N,int MaxN,class H,class T>
-bool JointController<N,MaxN,H,T>::enterStarting()
+template<class H,class T>
+bool JointController<H,T>::enterStarting()
 {
   CNR_TRACE_START(this->m_logger);
   if(!Controller<T>::enterStarting())
@@ -284,15 +282,15 @@ bool JointController<N,MaxN,H,T>::enterStarting()
   CNR_DEBUG(this->m_logger, "Starting HW Status\n" << std::to_string(m_handler) );
   m_handler.flush(m_rstate, m_chain);
 
-  int ffwd = rosdyn::ChainState<N,MaxN>::SECOND_ORDER | rosdyn::ChainState<N,MaxN>::FFWD_STATIC;
+  int ffwd = rosdyn::ChainState::SECOND_ORDER | rosdyn::ChainState::FFWD_STATIC;
 
   startUpdateTransformationsThread(ffwd, 1.0/this->m_sampling_period);
 
   CNR_RETURN_TRUE(this->m_logger);
 }
 
-template<int N,int MaxN,class H,class T>
-bool JointController<N,MaxN,H,T>::exitStarting()
+template<class H,class T>
+bool JointController<H,T>::exitStarting()
 {
   CNR_TRACE_START(this->m_logger);
 
@@ -304,8 +302,8 @@ bool JointController<N,MaxN,H,T>::exitStarting()
   CNR_RETURN_TRUE(this->m_logger);
 }
 
-template<int N,int MaxN,class H,class T>
-bool JointController<N,MaxN,H,T>::enterUpdate()
+template<class H,class T>
+bool JointController<H,T>::enterUpdate()
 {
   CNR_TRACE_START_THROTTLE_DEFAULT(this->m_logger);
   if(!Controller<T>::enterUpdate())
@@ -321,27 +319,27 @@ bool JointController<N,MaxN,H,T>::enterUpdate()
   CNR_RETURN_TRUE_THROTTLE_DEFAULT(this->m_logger);
 }
 
-template<int N,int MaxN,class H,class T>
-inline void JointController<N,MaxN,H,T>::startUpdateTransformationsThread(int ffwd_kin_type, double hz)
+template<class H,class T>
+inline void JointController<H,T>::startUpdateTransformationsThread(int ffwd_kin_type, double hz)
 {
   stop_update_transformations_ = false;
   update_transformations_runnig_ = false;
   update_transformations_ = std::thread(
-        &JointController<N,MaxN,H,T>::updateTransformationsThread, this, ffwd_kin_type, hz);
+        &JointController<H,T>::updateTransformationsThread, this, ffwd_kin_type, hz);
 }
 
-template<int N,int MaxN,class H,class T>
-inline void JointController<N,MaxN,H,T>::stopUpdateTransformationsThread()
+template<class H,class T>
+inline void JointController<H,T>::stopUpdateTransformationsThread()
 {
   stop_update_transformations_ = true;
   if(update_transformations_.joinable())
     update_transformations_.join();
 }
 
-template<int N,int MaxN,class H,class T>
-inline void JointController<N,MaxN,H,T>::updateTransformationsThread(int ffwd_kin_type, double hz)
+template<class H,class T>
+inline void JointController<H,T>::updateTransformationsThread(int ffwd_kin_type, double hz)
 {
-  rosdyn::ChainState<N,MaxN> rstate;
+  rosdyn::ChainState rstate;
 
   ros::Rate rt(hz);
   while(!stop_update_transformations_)
@@ -366,100 +364,100 @@ inline void JointController<N,MaxN,H,T>::updateTransformationsThread(int ffwd_ki
 
 
 
-template<int N,int MaxN,class H,class T>
-inline const rosdyn::ChainState<N,MaxN>& JointController<N,MaxN,H,T>::chainState() const
+template<class H,class T>
+inline const rosdyn::ChainState& JointController<H,T>::chainState() const
 {
   std::lock_guard<std::mutex> lock(this->mtx_);
   return m_rstate;
 }
 
-template<int N,int MaxN,class H,class T>
-inline rosdyn::ChainState<N,MaxN>& JointController<N,MaxN,H,T>::chainState()
+template<class H,class T>
+inline rosdyn::ChainState& JointController<H,T>::chainState()
 {
   std::lock_guard<std::mutex> lock(this->mtx_);
   return m_rstate;
 }
 
 
-template<int N,int MaxN,class H,class T>
-inline const typename JointController<N,MaxN,H,T>::Value& JointController<N,MaxN,H,T>::getPosition( ) const
+template<class H,class T>
+inline const rosdyn::VectorXd& JointController<H,T>::getPosition( ) const
 {
   std::lock_guard<std::mutex> lock(this->mtx_);
   return m_rstate.q();
 }
 
-template<int N,int MaxN,class H,class T>
-inline const typename JointController<N,MaxN,H,T>::Value& JointController<N,MaxN,H,T>::getVelocity( ) const
+template<class H,class T>
+inline const rosdyn::VectorXd& JointController<H,T>::getVelocity( ) const
 {
   std::lock_guard<std::mutex> lock(this->mtx_);
   return m_rstate.qd();
 }
 
-template<int N,int MaxN,class H,class T>
-inline const typename JointController<N,MaxN,H,T>::Value& JointController<N,MaxN,H,T>::getAcceleration( ) const
+template<class H,class T>
+inline const rosdyn::VectorXd& JointController<H,T>::getAcceleration( ) const
 {
   std::lock_guard<std::mutex> lock(this->mtx_);
   return m_rstate.qdd();
 }
 
-template<int N,int MaxN,class H,class T>
-inline const typename JointController<N,MaxN,H,T>::Value& JointController<N,MaxN,H,T>::getEffort( ) const
+template<class H,class T>
+inline const rosdyn::VectorXd& JointController<H,T>::getEffort( ) const
 {
   std::lock_guard<std::mutex> lock(this->mtx_);
   return m_rstate.effort();
 }
 
-template<int N,int MaxN,class H,class T>
-inline double JointController<N,MaxN,H,T>::getPosition(int idx) const
+template<class H,class T>
+inline double JointController<H,T>::getPosition(int idx) const
 {
   std::lock_guard<std::mutex> lock(this->mtx_);
   return m_rstate.q(idx);
 }
 
-template<int N,int MaxN,class H,class T>
-inline double JointController<N,MaxN,H,T>::getVelocity(int idx) const
+template<class H,class T>
+inline double JointController<H,T>::getVelocity(int idx) const
 {
   std::lock_guard<std::mutex> lock(this->mtx_);
   return m_rstate.qd(idx);
 }
 
-template<int N,int MaxN,class H,class T>
-inline double JointController<N,MaxN,H,T>::getAcceleration(int idx) const
+template<class H,class T>
+inline double JointController<H,T>::getAcceleration(int idx) const
 {
   std::lock_guard<std::mutex> lock(this->mtx_);
   return m_rstate.qdd(idx);
 }
 
-template<int N,int MaxN,class H,class T>
-inline double JointController<N,MaxN,H,T>::getEffort(int idx) const
+template<class H,class T>
+inline double JointController<H,T>::getEffort(int idx) const
 {
   std::lock_guard<std::mutex> lock(this->mtx_);
   return m_rstate.effort(idx);
 }
 
-template<int N,int MaxN,class H,class T>
-inline const Eigen::Affine3d& JointController<N,MaxN,H,T>::getToolPose( ) const
+template<class H,class T>
+inline const Eigen::Affine3d& JointController<H,T>::getToolPose( ) const
 {
   std::lock_guard<std::mutex> lock(this->mtx_);
   return m_rstate.toolPose();
 }
 
-template<int N,int MaxN,class H,class T>
-inline const Eigen::Vector6d& JointController<N,MaxN,H,T>::getTwist( ) const
+template<class H,class T>
+inline const Eigen::Vector6d& JointController<H,T>::getTwist( ) const
 {
   std::lock_guard<std::mutex> lock(this->mtx_);
   return m_rstate.twist();
 }
 
-template<int N,int MaxN,class H,class T>
-inline const Eigen::Vector6d& JointController<N,MaxN,H,T>::getTwistd( ) const
+template<class H,class T>
+inline const Eigen::Vector6d& JointController<H,T>::getTwistd( ) const
 {
   std::lock_guard<std::mutex> lock(this->mtx_);
   return m_rstate.twistd();
 }
 
-template<int N,int MaxN,class H,class T>
-inline const Eigen::Matrix<double,6,N, Eigen::ColMajor,6, MaxN>& JointController<N,MaxN,H,T>::getJacobian( ) const
+template<class H,class T>
+inline const rosdyn::Matrix6Xd& JointController<H,T>::getJacobian( ) const
 {
   std::lock_guard<std::mutex> lock(this->mtx_);
   return m_rstate.jacobian();
