@@ -621,13 +621,17 @@ size_t Controller<T>::add_subscriber(const std::string &topic,
 template<class T>
 std::shared_ptr<ros::Subscriber> Controller<T>::getSubscriber(const size_t& idx)
 {
-  return m_sub.at(idx);
+  if(idx<m_sub.size())
+    return m_sub.at(idx);
+  return nullptr;
 }
 
 template<class T>
 std::shared_ptr<ros::Publisher> Controller<T>::getPublisher(const size_t& idx)
 {
-  return m_pub.at(idx);
+  if(idx<m_pub.size())
+    return m_pub.at(idx);
+  return nullptr;
 }
 
 template<class T>
