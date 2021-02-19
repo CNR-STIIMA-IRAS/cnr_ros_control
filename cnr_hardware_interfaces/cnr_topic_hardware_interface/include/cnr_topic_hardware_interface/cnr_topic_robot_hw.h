@@ -100,7 +100,6 @@ protected:
   bool          m_topic_received;
 
   ros::Time     m_start_time;
-  std::mutex    m_mutex;
 
   enum status { created, initialized, run, error };
 

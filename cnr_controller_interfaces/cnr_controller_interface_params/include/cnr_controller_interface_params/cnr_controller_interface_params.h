@@ -44,23 +44,23 @@ inline std::string to_string(const std::vector< T >& what)
 template<>
 inline std::string to_string(const std::vector<std::string>& what)
 {
-  std::string ret = "< ";
-  for (const auto & w : what) ret += w + " ";
-  ret += " >";
+  std::string ret = "[";
+  for (const auto & w : what) ret += w + ",";
+  ret += "]";
   return ret;
 }
 
 template< typename T >
 inline std::string to_string(const T& what)
 {
-  std::string ret = "< " + std::to_string(what) + " >";
+  std::string ret = "[" + std::to_string(what) + "]";
   return ret;
 }
 
 template< >
 inline std::string to_string(const std::string& what)
 {
-  std::string ret = "< " + what + " >";
+  std::string ret = "[" + what + "]";
   return ret;
 }
 

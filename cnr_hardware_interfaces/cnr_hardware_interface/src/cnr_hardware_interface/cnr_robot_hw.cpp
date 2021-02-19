@@ -306,7 +306,7 @@ bool RobotHW::enterInit(ros::NodeHandle& root_nh, ros::NodeHandle& robothw_nh)
     CNR_RETURN_FALSE(m_logger, "Neither '" +  m_robothw_nh.getNamespace() + "/controlled_joint(s)' nor '"
                         +  m_robothw_nh.getNamespace() + "/controlled_resources(s)' are specified. Abort" );
   }
-  CNR_DEBUG(m_logger, "Resources (" << m_resource_names.size() << "): " << cnr_hardware_interface::to_string(m_resource_names));
+  CNR_DEBUG(m_logger, "Resources: " << cnr_hardware_interface::to_string(m_resource_names));
 
   if(!m_robothw_nh.getParam("sampling_period", m_sampling_period))
   {

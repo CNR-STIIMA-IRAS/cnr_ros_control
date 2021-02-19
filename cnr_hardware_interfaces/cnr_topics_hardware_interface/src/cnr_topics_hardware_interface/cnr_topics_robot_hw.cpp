@@ -69,7 +69,8 @@ void setParam(TopicsRobotHW* hw, const std::string& ns)
   if (hw->m_resources.count(TWIST_RESOURCE)) hw->m_twist_resource              ->setParam(ns);
 }
 
-std::vector<std::string> getResourceNames(const std::map< cnr_hardware_interface::RESOURCE_ID, std::shared_ptr< cnr_hardware_interface::Resource > >& resources)
+std::vector<std::string> getResourceNames(const std::map< cnr_hardware_interface::RESOURCE_ID,
+                                            std::shared_ptr< cnr_hardware_interface::Resource > >& resources)
 {
   std::vector<std::string> ret;
   for (auto const & resource : resources)
@@ -294,10 +295,11 @@ bool TopicsRobotHW::doInit()
       CNR_FATAL_RETURN("No claimed resources. ?!?!?");
     }
 
-    CNR_DEBUG(m_logger, "Create the TopicsRobotHW (claimed resources: " << m_resources.size() << ", max missing messages: " << maximum_missing_cycles);
+    CNR_DEBUG(m_logger, "Create the TopicsRobotHW (claimed resources: " << m_resources.size()
+                  << ", max missing messages: " << maximum_missing_cycles<<")");
 
 
-    m_resource_names = getResourceNames(m_resources);
+    //setResourceNames(getResourceNames(m_resources));
     m_joint_resource = nullptr;
     m_missing_messages = 0;
     m_max_missing_messages = maximum_missing_cycles;

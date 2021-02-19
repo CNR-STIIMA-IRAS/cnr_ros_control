@@ -34,7 +34,9 @@
  */
 #include <pluginlib/class_list_macros.h>
 
+
 #include <cnr_controller_interface_params/cnr_controller_interface_params.h>
+#include <cnr_hardware_interface/internal/vector_to_string.h>
 #include <cnr_hardware_interface/cnr_robot_hw.h>
 #include <cnr_fake_hardware_interface/cnr_fake_robot_hw.h>
 
@@ -46,11 +48,11 @@ namespace cnr_hardware_interface
 
 void setParam(FakeRobotHW* hw, const std::string& ns)
 {
-  hw->m_robothw_nh.setParam("status/" + ns + "/feedback/name", hw->m_resource_names);
+  hw->m_robothw_nh.setParam("status/" + ns + "/feedback/name", hw->resourceNames());
   hw->m_robothw_nh.setParam("status/" + ns + "/feedback/position", hw->m_pos);
   hw->m_robothw_nh.setParam("status/" + ns + "/feedback/velocity", hw->m_vel);
   hw->m_robothw_nh.setParam("status/" + ns + "/feedback/effort", hw->m_eff);
-  hw->m_robothw_nh.setParam("status/" + ns + "/command/name", hw->m_resource_names);
+  hw->m_robothw_nh.setParam("status/" + ns + "/command/name", hw->resourceNames());
   hw->m_robothw_nh.setParam("status/" + ns + "/command/position", hw->m_cmd_pos);
   hw->m_robothw_nh.setParam("status/" + ns + "/command/velocity", hw->m_cmd_vel);
   hw->m_robothw_nh.setParam("status/" + ns + "/command/effort", hw->m_cmd_eff);
@@ -80,10 +82,10 @@ bool FakeRobotHW::doInit()
 {
   CNR_TRACE_START(m_logger);
 
-  CNR_DEBUG(m_logger, "Resources (" << m_resource_names.size() << "): " << cnr::control::to_string(m_resource_names));
-  m_pos.resize(m_resource_names.size());
-  m_vel.resize(m_resource_names.size());
-  m_eff.resize(m_resource_names.size());
+  CNR_DEBUG(m_logger, "Resources (" << resourceNumber() << "): " << cnr_hardware_interface::to_string(resourceNames()));
+  m_pos.resize(resourceNumber());
+  m_vel.resize(resourceNumber());
+  m_eff.resize(resourceNumber());
 
   std::fill(m_pos.begin(), m_pos.end(), 0.0);
   std::fill(m_vel.begin(), m_vel.end(), 0.0);
@@ -120,18 +122,18 @@ bool FakeRobotHW::doInit()
     timeout = 10;
   }
 
-  m_cmd_pos.resize(m_resource_names.size());
-  m_cmd_vel.resize(m_resource_names.size());
-  m_cmd_eff.resize(m_resource_names.size());
+  m_cmd_pos.resize(resourceNumber());
+  m_cmd_vel.resize(resourceNumber());
+  m_cmd_eff.resize(resourceNumber());
 
   m_cmd_pos = m_pos;
   m_cmd_vel = m_vel;
   m_cmd_pos = m_eff;
 
-  for (const std::string& joint_name : m_resource_names)
+  for(size_t i=0;i<resourceNumber();i++)
   {
-
-    auto i = &joint_name - &m_resource_names[0];
+    std::string joint_name = resourceNames().at(i);
+    //auto i = &joint_name - &m_resource_names[0];
 
     hardware_interface::JointStateHandle state_handle(joint_name, &(m_pos.at(i)), &(m_vel.at(i)), &(m_eff.at(i)));
 
@@ -169,7 +171,7 @@ bool FakeRobotHW::doWrite(const ros::Time& /*time*/, const ros::Duration& period
     m_vel = m_cmd_vel;
     if(!m_p_jh_active)
     {
-      for(size_t iAx=0; iAx<m_resource_names.size(); iAx++)
+      for(size_t iAx=0; iAx<resourceNumber(); iAx++)
       {
         m_pos.at(iAx) = m_pos.at(iAx) + m_cmd_vel.at(iAx) * period.toSec();
       }
@@ -177,7 +179,7 @@ bool FakeRobotHW::doWrite(const ros::Time& /*time*/, const ros::Duration& period
   }
   else
   {
-    m_vel.resize(m_resource_names.size());
+    m_vel.resize(resourceNumber());
     std::fill(m_vel.begin(), m_vel.end(), 0.0);
   }
 
@@ -187,7 +189,7 @@ bool FakeRobotHW::doWrite(const ros::Time& /*time*/, const ros::Duration& period
   }
   else
   {
-    m_eff.resize(m_resource_names.size());
+    m_eff.resize(resourceNumber());
     std::fill(m_eff.begin(), m_eff.end(), 0.0);
   }
   CNR_RETURN_TRUE_THROTTLE_DEFAULT(m_logger);
@@ -233,6 +235,7 @@ bool FakeRobotHW::doPrepareSwitch(const std::list< hardware_interface::Controlle
     for (const hardware_interface::InterfaceResources& res : controller.claimed_resources)
     {
       resources.push_back(res.hardware_interface);
+      CNR_DEBUG(m_logger, "Claimed resource: " << res.hardware_interface);
       p_jh_active = (res.hardware_interface == "hardware_interface::PositionJointInterface")
                     || (res.hardware_interface == "hardware_interface::PosVelEffJointInterface")
                     ? true : p_jh_active;
@@ -266,21 +269,21 @@ bool FakeRobotHW::doCheckForConflict(const std::list< hardware_interface::Contro
   // One controller can control more than one joint.
   // A joint can be used only by a controller.
 
-  std::vector<bool> global_joint_used(m_resource_names.size());
+  std::vector<bool> global_joint_used(resourceNumber());
   std::fill(global_joint_used.begin(), global_joint_used.end(), false);
 
   for (hardware_interface::ControllerInfo controller : info)
   {
-    std::vector<bool> single_controller_joint_used(m_resource_names.size());
+    std::vector<bool> single_controller_joint_used(resourceNumber());
     std::fill(single_controller_joint_used.begin(), single_controller_joint_used.end(), false);
 
     for (hardware_interface::InterfaceResources res : controller.claimed_resources)
     {
       for (std::string name : res.resources)
       {
-        for (unsigned int iJ = 0; iJ < m_resource_names.size(); iJ++)
+        for (unsigned int iJ = 0; iJ < resourceNumber(); iJ++)
         {
-          if (!name.compare(m_resource_names.at(iJ)))
+          if (!name.compare(resourceNames().at(iJ)))
           {
             if (global_joint_used.at(iJ)) // if already used by another
             {
@@ -296,7 +299,7 @@ bool FakeRobotHW::doCheckForConflict(const std::list< hardware_interface::Contro
         }
       }
     }
-    for (unsigned int iJ = 0; iJ < m_resource_names.size(); iJ++)
+    for (unsigned int iJ = 0; iJ < resourceNumber(); iJ++)
     {
       global_joint_used.at(iJ) = global_joint_used.at(iJ) || single_controller_joint_used.at(iJ);
     }

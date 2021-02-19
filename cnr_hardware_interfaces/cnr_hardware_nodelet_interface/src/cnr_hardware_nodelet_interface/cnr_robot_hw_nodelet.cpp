@@ -417,9 +417,6 @@ void RobotHwNodelet::diagnosticsThread()
     CNR_FATAL(m_logger, "Hardware interface is in error state. Exception: " <<  e.what());
     m_diagnostics_thread_state = ON_ERROR;
   }
-
-  
-
   m_diagnostics_thread_state = EXPIRED;
   CNR_WARN(m_logger, "Diagnositcs Thread Expired");
   return;
@@ -486,7 +483,6 @@ void RobotHwNodelet::controlUpdateThread()
 #endif
 
     timeSpanStrakcer("cycle")->time_span();
-
     if (m_stop_update_thread)
     {
       CNR_WARN(m_logger, "Exiting update thread of the hardware interface because a stop has been triggered.");

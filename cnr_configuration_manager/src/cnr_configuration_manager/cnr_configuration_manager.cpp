@@ -70,8 +70,8 @@ namespace cnr_configuration_manager
 ConfigurationManager::ConfigurationManager(std::shared_ptr<cnr_logger::TraceLogger>& logger,
                                            const ros::NodeHandle& nh) noexcept(false)
 : m_nh(nh)
-, m_active_configuration_name("None")
 , m_logger(logger)
+, m_active_configuration_name("None")
 , m_conf_loader(m_logger, m_nh)
 {
 
@@ -271,8 +271,7 @@ bool ConfigurationManager::run()
       bool full_check = (((cnt++) % decimator) == 0);
       if (!isOk(false))
       {
-        CNR_WARN_THROTTLE(m_logger, 2,
-    "\n\nRaised an Error by one of the Hw! Stop Configuration start!\n\n");
+        CNR_WARN_THROTTLE(m_logger, 2, "\n\nRaised an Error by one of the Hw! Stop Configuration start!\n\n");
         configuration_msgs::StopConfiguration srv;
         srv.request.strictness = 1;
         if (!stopCallback(srv.request, srv.response))
@@ -332,9 +331,8 @@ bool ConfigurationManager::isOk(bool nodelet_check)
         return false;
       }
 
-      if ((hw_status == cnr_hardware_interface::ERROR)
-       || (hw_status == cnr_hardware_interface::CTRL_ERROR)
-       || (hw_status == cnr_hardware_interface::SRV_ERROR))
+      if((hw_status == cnr_hardware_interface::ERROR) || (hw_status == cnr_hardware_interface::CTRL_ERROR)
+        || (hw_status == cnr_hardware_interface::SRV_ERROR))
       {
         CNR_FATAL(m_logger, prefix <<
                              "The status of the HW '" << hw << "' is " << cnr_hardware_interface::to_string(hw_status));
@@ -482,8 +480,8 @@ bool ConfigurationManager::callback(const ConfigurationStruct& next_configuratio
   CNR_INFO(m_logger, "Check coherence between nodelet status and configuration manager status");
   if (!equal(hw_active_names, hw_names_from_nodelet))
   {
-    CNR_WARN(m_logger,
-"Active configuration and the nodelet status is different. We force the unload of all the nodelet.. cross the fingers");
+    CNR_WARN(m_logger,"Active configuration and the nodelet status is different."
+                        "We force the unload of all the nodelet.. cross the fingers");
     if (!m_conf_loader.purgeHw(watchdog))
     {
       CNR_RETURN_FALSE(m_logger, "The purge of the nodelets failed: " + m_conf_loader.error());
@@ -524,6 +522,7 @@ bool ConfigurationManager::callback(const ConfigurationStruct& next_configuratio
       }
       r.sleep();
     }
+    return false;
   };
 
   std::vector<std::future<bool>> oks; 

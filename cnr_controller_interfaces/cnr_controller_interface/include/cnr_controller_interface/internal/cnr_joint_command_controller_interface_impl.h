@@ -427,12 +427,23 @@ inline void JointCommandController<H,T>::setCommandEffort(const double& in, size
 template<class H,class T>
 inline void JointCommandController<H,T>::updateTransformationsThread(int ffwd_kin_type, double hz)
 {
+  CNR_TRACE_START(this->logger());
   rosdyn::ChainState rstate;
   rosdyn::ChainState target;
 
-  CNR_INFO(this->logger(), "Before First state & target update ;)"
-              << "\nstate:\n" << std::to_string(this->chainState())
-                << "\ntarget:\n" << std::to_string(this->m_target));
+  {
+    std::lock_guard<std::mutex> lock(this->mtx_);
+    if(!rstate.init(this->m_chain))
+    {
+       CNR_FATAL(this->m_logger, "Chain failure!");
+       CNR_RETURN_NOTOK(this->m_logger, void());
+    }
+    if(!target.init(this->m_chain))
+    {
+       CNR_FATAL(this->m_logger, "Chain failure!");
+       CNR_RETURN_NOTOK(this->m_logger, void());
+    }
+  }
 
   ros::Rate rt(hz);
   while(!this->stop_update_transformations_)
@@ -458,6 +469,7 @@ inline void JointCommandController<H,T>::updateTransformationsThread(int ffwd_ki
     }
     rt.sleep();
   }
+  CNR_RETURN_OK(this->m_logger, void());
 }
 
 

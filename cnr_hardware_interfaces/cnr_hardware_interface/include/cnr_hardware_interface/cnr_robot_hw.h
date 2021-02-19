@@ -123,11 +123,11 @@ public:
   {
     return true;
   }
-  virtual bool doRead(const ros::Time& time, const ros::Duration& /*period*/)
+  virtual bool doRead(const ros::Time& /*time*/, const ros::Duration& /*period*/)
   {
     return true;
   }
-  virtual bool doWrite(const ros::Time& time, const ros::Duration& /*period*/)
+  virtual bool doWrite(const ros::Time& /*time*/, const ros::Duration& /*period*/)
   {
     return true;
   }
@@ -148,6 +148,8 @@ public:
   {
     m_resource_names = resource_names;
   }
+  const std::vector<std::string>& resourceNames() const {return m_resource_names;}
+  size_t resourceNumber() const {return m_resource_names.size();}
   // =======================================================
 
   // ======================================================= utils
@@ -207,8 +209,12 @@ protected:
   mutable std::vector<std::string>                 m_status_history;
   
   std::list< hardware_interface::ControllerInfo >  m_active_controllers;
-  std::vector< std::string >                       m_resource_names;
   bool                                             m_shutted_down;
+
+
+
+private:
+    std::vector<std::string> m_resource_names;
 };
 
 typedef std::shared_ptr<RobotHW> RobotHWSharedPtr;

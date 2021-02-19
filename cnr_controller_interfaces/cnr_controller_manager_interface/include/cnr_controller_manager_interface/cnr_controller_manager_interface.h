@@ -65,9 +65,9 @@ namespace cnr_controller_manager_interface
 class ControllerManagerInterface : public cnr_controller_manager_interface::ControllerManagerBase
 {
 private:
-  ros::ServiceClient                       load_;
-  ros::ServiceClient                       unload_;
-  ros::ServiceClient                       doswitch_;
+  ros::ServiceClient load_;
+  ros::ServiceClient unload_;
+  ros::ServiceClient doswitch_;
 
   bool loadRequest(controller_manager_msgs::LoadController& msg,
                    std::string& error,

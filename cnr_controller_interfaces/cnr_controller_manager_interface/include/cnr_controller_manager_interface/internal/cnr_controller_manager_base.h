@@ -84,12 +84,12 @@ class ControllerManagerBase
 {
 protected:
   
-  std::mutex                               mtx_;
-  ros::NodeHandle                          nh_;
-  ros::ServiceClient                       list_;
-  ros::ServiceClient                       list_types_;
-  std::shared_ptr<cnr_logger::TraceLogger> logger_;
-  std::string                              error_;
+  std::mutex                 mtx_;
+  ros::NodeHandle            nh_;
+  ros::ServiceClient         list_;
+  ros::ServiceClient         list_types_;
+  cnr_logger::TraceLoggerPtr logger_;
+  std::string                error_;
 
 
 public:

@@ -191,7 +191,21 @@ bool JointController<H,T>::enterInit()
     //=======================================
     // SELECT ACTIVE JOINT FOR THE CHAIN
     //=======================================
-    m_chain.setInputJointsName(joint_names);
+    CNR_DEBUG(this->m_logger, "Controlled joint names: " << cnr::control::to_string(joint_names));
+    CNR_DEBUG(this->m_logger, "Default Chain Active Joint Names: " << cnr::control::to_string(this->m_chain.getActiveJointsName()));
+
+    int ok_coherence_jnames_and_chain = m_chain.setInputJointsName(joint_names);
+    if(ok_coherence_jnames_and_chain!=1)
+    {
+      CNR_ERROR(this->m_logger, "Mismatch between the chain names and the controlled joint names. Abort.");
+      CNR_RETURN_FALSE(this->m_logger);
+    }
+    if(m_chain.getActiveJointsNumber()!=joint_names.size())
+    {
+      CNR_ERROR(this->m_logger, "Mismatch of the dimension of the chain names and the controlled joint names. Abort.");
+      CNR_RETURN_FALSE(this->m_logger);
+    }
+
     //=======================================
 
 
@@ -279,7 +293,11 @@ bool JointController<H,T>::enterStarting()
     CNR_RETURN_FALSE(this->m_logger);
   }
 
-  CNR_DEBUG(this->m_logger, "Starting HW Status\n" << std::to_string(m_handler) );
+  CNR_DEBUG(this->m_logger, "HW Status\n" << std::to_string(m_handler) );
+  CNR_DEBUG(this->m_logger, "Chain: " << std::to_string(m_chain.getActiveJointsNumber()) );
+  CNR_DEBUG(this->m_logger, "First joint name: " << m_chain.getActiveJointsName().front() );
+  CNR_DEBUG(this->m_logger, "Last joint name: " << m_chain.getActiveJointsName().back() );
+
   m_handler.flush(m_rstate, m_chain);
 
   int ffwd = rosdyn::ChainState::SECOND_ORDER | rosdyn::ChainState::FFWD_STATIC;
@@ -322,37 +340,48 @@ bool JointController<H,T>::enterUpdate()
 template<class H,class T>
 inline void JointController<H,T>::startUpdateTransformationsThread(int ffwd_kin_type, double hz)
 {
+  CNR_TRACE_START(this->m_logger);
   stop_update_transformations_ = false;
   update_transformations_runnig_ = false;
+  CNR_INFO(this->logger(), "Creating thread");
   update_transformations_ = std::thread(
         &JointController<H,T>::updateTransformationsThread, this, ffwd_kin_type, hz);
+  CNR_INFO(this->logger(), "Thread created");
+  CNR_RETURN_OK(this->m_logger, void());
 }
 
 template<class H,class T>
 inline void JointController<H,T>::stopUpdateTransformationsThread()
 {
+  CNR_TRACE_START(this->m_logger);
   stop_update_transformations_ = true;
   if(update_transformations_.joinable())
     update_transformations_.join();
+  CNR_RETURN_OK(this->m_logger, void());
 }
 
 template<class H,class T>
 inline void JointController<H,T>::updateTransformationsThread(int ffwd_kin_type, double hz)
 {
+  CNR_TRACE_START(this->m_logger);
   rosdyn::ChainState rstate;
+
+  {
+    std::lock_guard<std::mutex> lock(this->mtx_);
+    if(!rstate.init(m_chain))
+    {
+       CNR_FATAL(this->m_logger, "Chain failure!");
+       CNR_RETURN_NOTOK(this->m_logger, void());
+    }
+  }
 
   ros::Rate rt(hz);
   while(!stop_update_transformations_)
   {
-    {
-//      std::lock_guard<std::mutex> lock(mtx_);
-      rstate.copy(m_rstate, m_rstate.ONLY_JOINT);
-    }
+    rstate.copy(m_rstate, m_rstate.ONLY_JOINT);
     rstate.updateTransformations(m_chain, ffwd_kin_type);
-    {
-//      std::lock_guard<std::mutex> lock(mtx_);
-      m_rstate.copy(rstate, m_rstate.ONLY_CART);
-    }
+    m_rstate.copy(rstate, m_rstate.ONLY_CART);
+
     if(!this->update_transformations_runnig_)
     {
       CNR_INFO(this->logger(), "First state update ;)");
@@ -360,6 +389,7 @@ inline void JointController<H,T>::updateTransformationsThread(int ffwd_kin_type,
     }
     rt.sleep();
   }
+  CNR_RETURN_OK(this->m_logger, void());
 }
 
 

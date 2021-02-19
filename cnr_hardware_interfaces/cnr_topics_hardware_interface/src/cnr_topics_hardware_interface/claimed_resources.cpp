@@ -59,7 +59,8 @@ void JointClaimedResource::callback(const sensor_msgs::JointStateConstPtr& msg, 
     return;
   }
 
-  if (!name_sorting::permutationName(m_resource_names_map.at(topic), names, pos, vel, eff, "JOINT CLAIMED RESOURCE - TOPICS HW INTERFACE"))
+  std::stringstream report;
+  if (!name_sorting::permutationName(m_resource_names_map.at(topic), names, pos, vel, eff, &report))
   {
     m_topics_received[topic] = false;
     ROS_WARN_THROTTLE(0.1, "[%s] feedback joint states names are wrong!", m_namespace.c_str());
