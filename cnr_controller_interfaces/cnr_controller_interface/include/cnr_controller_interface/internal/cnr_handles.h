@@ -50,8 +50,8 @@ struct Handler : public HandlerBase
 {
   std::map<std::string, Handle> handles_;
 
-  void flush(rosdyn::ChainState& /*ks*/, const rosdyn::Chain& /*chain*/)  {};
-  void update(const rosdyn::ChainState& /*ks*/, const rosdyn::Chain& /*chain*/) {};
+  void flush(rosdyn::ChainState& /*ks*/, const rosdyn::Chain& /*chain*/)  {}
+  void update(const rosdyn::ChainState& /*ks*/, const rosdyn::Chain& /*chain*/) {}
 };
 
 
@@ -248,7 +248,6 @@ struct Handler<hardware_interface::JointHandle, hardware_interface::PositionJoin
 {
   std::map<std::string, hardware_interface::JointHandle> handles_;
 
-
   void flush(rosdyn::ChainState& ks, const rosdyn::Chain& chain)
   {
     if(!initialized_) init(handles_, chain);
@@ -260,7 +259,6 @@ struct Handler<hardware_interface::JointHandle, hardware_interface::PositionJoin
       ks.effort(ax.second) = handles_.at(ax.first).getEffort();
     }
   }
-
 
   void update(const rosdyn::ChainState& ks, const rosdyn::Chain& chain)
   {

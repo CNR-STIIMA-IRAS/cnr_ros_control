@@ -394,7 +394,7 @@ bool Controller<T>::exitUpdate()
   if(m_sub.size() > 0)
   {
     ros::WallTime now = ros::WallTime::now();
-    ros::WallTime last_message_time;
+    ros::WallTime last_message_time = ros::WallTime::now();
     for(size_t idx=0; idx<m_sub.size(); idx++)
     {
       if(m_sub_time.at(idx) == nullptr)

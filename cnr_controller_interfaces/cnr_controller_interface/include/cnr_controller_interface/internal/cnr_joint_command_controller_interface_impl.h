@@ -143,6 +143,12 @@ inline bool JointCommandController<H,T>::enterStarting()
   m_target.setZero(this->m_chain);
   m_target.q() = this->getPosition();
 
+  this->m_handler.update(m_target, this->m_chain);
+
+  CNR_DEBUG(this->m_logger, "Target at Start: Position: " << m_target.q() );
+  CNR_DEBUG(this->m_logger, "Target at Start: Velocity: " << m_target.qd() );
+  CNR_DEBUG(this->m_logger, "Target at Start: Effort  : " << m_target.effort() );
+
   // in the exitStarting, the updateThread with the ffwd is launched
 
   CNR_RETURN_TRUE(this->m_logger);
@@ -173,14 +179,13 @@ inline bool JointCommandController<H,T>::exitUpdate()
   try
   {
     report << "==========\n";
-    report << "Priorty            : " << std::to_string(m_priority) << "\n";
+    report << "Priority           : " << std::to_string(m_priority) << "\n";
     report << "upper limit        : " << TP(this->m_chain.getQMax()) << "\n";
     report << "lower limit        : " << TP(this->m_chain.getQMin()) << "\n";
     report << "Speed Limit        : " << TP(this->m_chain.getDQMax()) << "\n";
     report << "Acceleration Limit : " << TP(this->m_chain.getDDQMax()) << "\n";
     report << "----------\n";
     // ============================== ==============================
-    ROS_DEBUG_ONCE("Set Target according to Priority");
     auto nominal_qd = m_target.q();
     if(m_priority == Q_PRIORITY)
     {
@@ -208,7 +213,6 @@ inline bool JointCommandController<H,T>::exitUpdate()
 
     // ============================== ==============================
     auto saturated_qd = nominal_qd;
-
     if(rosdyn::saturateSpeed(this->m_chain, saturated_qd, this->getVelocity(), this->getPosition(),
                                this->m_sampling_period, m_max_velocity_multiplier, true, &report))
     {

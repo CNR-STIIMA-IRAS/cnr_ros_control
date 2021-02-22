@@ -236,11 +236,10 @@ bool JointController<H,T>::enterInit()
       CNR_ERROR(this->m_logger, "Failing in setting the kin limits. Error: '" + error + "'");
       CNR_RETURN_FALSE(this->m_logger);
     }
-    else if(res==-1)
+    else if(res==0)
     {
       CNR_WARN(this->m_logger, "Warning in setting the kin limits.: '" + error + "'");
     }
-
 
 l = __LINE__;
     m_rstate.init(m_chain);
@@ -299,6 +298,10 @@ bool JointController<H,T>::enterStarting()
   CNR_DEBUG(this->m_logger, "Last joint name: " << m_chain.getActiveJointsName().back() );
 
   m_handler.flush(m_rstate, m_chain);
+
+  CNR_DEBUG(this->m_logger, "Position: " << m_rstate.q() );
+  CNR_DEBUG(this->m_logger, "Velocity: " << m_rstate.qd() );
+  CNR_DEBUG(this->m_logger, "Effort  : " << m_rstate.effort() );
 
   int ffwd = rosdyn::ChainState::SECOND_ORDER | rosdyn::ChainState::FFWD_STATIC;
 
