@@ -213,11 +213,15 @@ inline bool JointCommandController<H,T>::exitUpdate()
 
     // ============================== ==============================
     auto saturated_qd = nominal_qd;
-    if(rosdyn::saturateSpeed(this->m_chain, saturated_qd, this->getVelocity(), this->getPosition(),
+    if(rosdyn::saturateSpeed(this->m_chain, saturated_qd, m_last_target.qd(), m_last_target.q(),
                                this->m_sampling_period, m_max_velocity_multiplier, true, &report))
     {
       print_report = true;
     }
+    m_target.q()  = m_last_target.q() + saturated_qd * this->m_dt.toSec();
+    m_target.qd() = saturated_qd;
+
+    m_last_target.copy(m_target, m_target.ONLY_JOINT);
     // ==============================
   }
   catch(...)

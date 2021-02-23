@@ -271,6 +271,10 @@ Error: " + std::string(e.what()));
         "Controller '" + Controller<T>::getControllerNamespace() + std::string("'")
         + "The controlled joint named '" + m_chain.getJointName(iAx) + "' is managed by hardware_interface");
     }
+    CNR_DEBUG(this->m_logger, "Q sup  : " << eigen_utils::to_string(m_chain.getQMax()  ));
+    CNR_DEBUG(this->m_logger, "Q inf  : " << eigen_utils::to_string(m_chain.getQMin()  ));
+    CNR_DEBUG(this->m_logger, "Qd max : " << eigen_utils::to_string(m_chain.getDQMax() ));
+    CNR_DEBUG(this->m_logger, "Qdd max: " << eigen_utils::to_string(m_chain.getDDQMax()));
   }
   catch(std::exception& e)
   {
