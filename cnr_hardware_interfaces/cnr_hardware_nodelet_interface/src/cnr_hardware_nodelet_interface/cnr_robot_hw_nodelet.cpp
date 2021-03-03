@@ -398,7 +398,7 @@ void RobotHwNodelet::diagnosticsThread()
       bool hardware_interface_with_error = (m_hw == nullptr) || (m_hw->getStatus() == cnr_hardware_interface::ERROR);
       if (hardware_interface_with_error)
       {
-        CNR_FATAL(m_logger, "The Hardware interface '" << m_hw_name << "' is in error state, shutting down");
+        CNR_FATAL_THROTTLE(m_logger, 10, "The Hardware interface '" << m_hw_name << "' is in error state, shutting down");
       }
       if (m_update_thread_state == ON_ERROR)
       {
