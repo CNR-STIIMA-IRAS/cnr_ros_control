@@ -178,9 +178,10 @@ bool JointController<H,T>::enterInit()
       CNR_RETURN_FALSE(this->m_logger);
     }
 
-    m_root_link.fromUrdf(m_urdf_model->root_link_.get());
+    NEW_HEAP(m_root_link, rosdyn::Link() );
+    m_root_link->fromUrdf(GET(m_urdf_model->root_link_));
     std::string error;
-    if(!m_chain.init(error,&m_root_link,base_link, tool_link))
+    if(!m_chain.init(error,m_root_link,base_link, tool_link))
     {
       CNR_ERROR(this->m_logger, "Failing in creating the Chain from the URDF model:\n\t" + error + "");
       CNR_RETURN_FALSE(this->m_logger);
