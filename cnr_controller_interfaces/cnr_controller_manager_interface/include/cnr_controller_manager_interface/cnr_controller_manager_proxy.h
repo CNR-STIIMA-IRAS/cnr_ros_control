@@ -56,6 +56,16 @@ namespace cnr_controller_manager_interface
 
 /**
  * @brief The ControllerManagerProxy class
+ *
+ * The class implement the ros-style interface to access to the standard functionalities of the
+ * controller_manager::ControllerManager.
+ * It is a collection of fake-methods that "echo" the methods of the standard controller_manager::ControllerManager
+ *
+ * The class is a proxy for the ControllerManager (A). Indeed, it offers the same services
+ * of the ControllerManager, but it modifies the namespace. Therefore, if you call - as matter for example - the
+ * switchController(), it executes some fancy thigs before and after the actual switchController of the standard
+ * controller_manager::ControllerManager. As matter of example, it offers diganostics, it dump the status of the
+ * controllers on the ros parameters etc.
  */
 class ControllerManagerProxy : public ::cnr_controller_manager_interface::ControllerManager
 {

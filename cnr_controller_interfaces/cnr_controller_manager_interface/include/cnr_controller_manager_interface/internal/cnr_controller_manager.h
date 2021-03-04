@@ -56,7 +56,14 @@ namespace cnr_controller_manager_interface
 
 
 /**
- * @brief The ControllerManager class integrates an instance of the controller_manager::ControllerManager
+ * @brief The ControllerManager integrates an instance of the controller_manager::ControllerManager
+ *
+ * The class load/unload the controllers without the use of service, but just calling the proper function.
+ * The class can be seen as a "pImpl" (https://en.cppreference.com/w/cpp/language/pimpl) for the
+ * standard controller_manager::ControllerManager. Furthermore, the inheritance from
+ * cnr_controller_manager_interface::ControllerManagerBase allows to have a standard interface for passing the request
+ * through vectors of names.
+ *
  */
 class ControllerManager : public ControllerManagerBase
 {

@@ -325,7 +325,7 @@ bool ConfigurationManager::isOk(bool nodelet_check)
       const std::string& hw = component.first;
       cnr_hardware_interface::StatusHw hw_status;
 
-      if (!cnr_hardware_interface::get_state(m_nh, hw, hw_status, ros::Duration(0.01), error))
+      if(!cnr_hardware_interface::get_state(m_nh, hw, hw_status, ros::Duration(0.01), error))
       {
         CNR_FATAL(m_logger, prefix << "The HW " << hw << " has not any valid state: " << error);
         return false;
@@ -404,7 +404,7 @@ bool ConfigurationManager::isOk(bool nodelet_check)
   return true;
 }
 
-bool ConfigurationManager::checkRobotHwState(const std::string& hw, cnr_hardware_interface::StatusHw target)
+bool ConfigurationManager::checkRobotHwState(const std::string& hw, const cnr_hardware_interface::StatusHw& target)
 {
   cnr_hardware_interface::StatusHw hw_status;
   ros::NodeHandle n("/");
@@ -414,10 +414,10 @@ bool ConfigurationManager::checkRobotHwState(const std::string& hw, cnr_hardware
     CNR_FATAL_THROTTLE(m_logger, 5.0, "The HW " << hw << " has not any valid state: " << error);
     return false;
   }
-  if (hw_status != target)
+  if(hw_status != target)
   {
-    CNR_FATAL_THROTTLE(m_logger, 5.0, "The status of the HW '" << hw << "' is " << cnr_hardware_interface::to_string(hw_status)
-                      << " while it should be " << cnr_hardware_interface::to_string(target));
+//    CNR_FATAL_THROTTLE(m_logger, 5.0, "The status of the HW '" << hw << "' is " << cnr_hardware_interface::to_string(hw_status)
+//                      << " while it should be " << cnr_hardware_interface::to_string(target));
     return false;
   }
   return true;

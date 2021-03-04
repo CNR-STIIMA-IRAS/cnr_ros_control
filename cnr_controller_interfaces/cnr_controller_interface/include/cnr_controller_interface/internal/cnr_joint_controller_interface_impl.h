@@ -303,9 +303,9 @@ bool JointController<H,T>::enterStarting()
 
   m_handler.flush(m_rstate, m_chain);
 
-  CNR_DEBUG(this->m_logger, "Position: " << m_rstate.q() );
-  CNR_DEBUG(this->m_logger, "Velocity: " << m_rstate.qd() );
-  CNR_DEBUG(this->m_logger, "Effort  : " << m_rstate.effort() );
+  CNR_DEBUG(this->m_logger, "Position: " << eigen_utils::to_string(m_rstate.q()) );
+  CNR_DEBUG(this->m_logger, "Velocity: " << eigen_utils::to_string(m_rstate.qd()) );
+  CNR_DEBUG(this->m_logger, "Effort  : " << eigen_utils::to_string(m_rstate.effort()) );
 
   int ffwd = rosdyn::ChainState::SECOND_ORDER | rosdyn::ChainState::FFWD_STATIC;
 

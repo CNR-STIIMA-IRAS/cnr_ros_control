@@ -79,7 +79,6 @@ namespace cnr_controller_manager_interface
  * Indeed, this service cannot be accessed by the controller_manager::ControllerManager class thorugh a method
  * On the contrary, all the other services can be accessed alternatively or by a remote serice or by calling a method
  */
-
 class ControllerManagerBase
 {
 protected:

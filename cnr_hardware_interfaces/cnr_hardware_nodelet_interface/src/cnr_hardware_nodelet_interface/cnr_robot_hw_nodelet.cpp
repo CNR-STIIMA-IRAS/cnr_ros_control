@@ -318,7 +318,7 @@ bool RobotHwNodelet::exitOnInit()
   m_update_thread_state = ON_INIT;
   ros::Time start       = ros::Time::now();
   m_update_thread       = std::thread(&cnr_hardware_nodelet_interface::RobotHwNodelet::controlUpdateThread, this);
-  while (m_update_thread_state != RUNNING)
+  while(m_update_thread_state != RUNNING)
   {
     if (m_update_thread_state == ON_ERROR)
     {
@@ -396,7 +396,7 @@ void RobotHwNodelet::diagnosticsThread()
 
       // TO DO: ADD diagnosticsError HWNodelet
       bool hardware_interface_with_error = (m_hw == nullptr) || (m_hw->getStatus() == cnr_hardware_interface::ERROR);
-      if (hardware_interface_with_error)
+      if(hardware_interface_with_error)
       {
         CNR_FATAL_THROTTLE(m_logger, 10, "The Hardware interface '" << m_hw_name << "' is in error state, shutting down");
       }
@@ -527,7 +527,8 @@ void RobotHwNodelet::controlUpdateThread()
 
     if (m_hw->getStatus() == cnr_hardware_interface::ERROR)
     {
-      CNR_ERROR_THROTTLE(m_logger, 5.0, "RobotHw is in error");
+      CNR_ERROR_THROTTLE(m_logger, 1.0, "RobotHw is in error");
+      dump_state(cnr_hardware_interface::ERROR);
     }
   }
 
