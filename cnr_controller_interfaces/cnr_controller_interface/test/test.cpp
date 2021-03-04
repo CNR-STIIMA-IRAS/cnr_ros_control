@@ -50,19 +50,13 @@ std::shared_ptr<cnr_hardware_interface::FakeRobotHW> robot_hw;
 std::shared_ptr<cnr::control::Controller<hardware_interface::JointStateInterface> > ctrl;
 
 
-template<int N, int MaxN=N>
-using JointController = cnr::control::JointController<N,MaxN,
-            hardware_interface::JointStateHandle,hardware_interface::JointStateInterface>;
+using JointController = cnr::control::JointController<hardware_interface::JointStateHandle,hardware_interface::JointStateInterface>;
+using JointCommandController = cnr::control::JointCommandController<hardware_interface::PosVelEffJointHandle,hardware_interface::PosVelEffJointInterface>;
 
-
-template<int N, int MaxN=N>
-using JointCommandController = cnr::control::JointCommandController<N,MaxN,
-            hardware_interface::PosVelEffJointHandle,hardware_interface::PosVelEffJointInterface>;
-
-std::shared_ptr<JointController<-1> >        jc_ctrl_x;
-std::shared_ptr<JointController<6>  >        jc_ctrl_6;
-std::shared_ptr<JointCommandController<-1> > jc_ctrl_cmd_x;
-std::shared_ptr<JointCommandController<6>  > jc_ctrl_cmd_6;
+std::shared_ptr<JointController >        jc_ctrl_x;
+std::shared_ptr<JointController >        jc_ctrl_6;
+std::shared_ptr<JointCommandController > jc_ctrl_cmd_x;
+std::shared_ptr<JointCommandController > jc_ctrl_cmd_6;
 
 std::string to_string(const std::vector<std::string>& vv)
 {
@@ -99,28 +93,28 @@ TEST(TestSuite, GenericControllerConstructor)
 
 TEST(TestSuite, JointControllerXConstructor)
 {
-  EXPECT_NO_FATAL_FAILURE(jc_ctrl_x.reset(new JointController<-1>()));
+  EXPECT_NO_FATAL_FAILURE(jc_ctrl_x.reset(new JointController()));
   //EXPECT_FALSE(jc_ctrl_x->init(robot_hw->get<hardware_interface::JointStateInterface>(), *root_nh, *robot_nh));
   EXPECT_TRUE(jc_ctrl_x->init(robot_hw->get<hardware_interface::JointStateInterface>(), *robot_nh, *ctrl_nh));
 }
 
 TEST(TestSuite, JointController6Constructor)
 {
-  EXPECT_NO_FATAL_FAILURE(jc_ctrl_x.reset(new JointController<-1>()));
+  EXPECT_NO_FATAL_FAILURE(jc_ctrl_x.reset(new JointController()));
   //EXPECT_FALSE(jc_ctrl_x->init(robot_hw->get<hardware_interface::JointStateInterface>(), *root_nh, *robot_nh));
   EXPECT_TRUE(jc_ctrl_x->init(robot_hw->get<hardware_interface::JointStateInterface>(), *robot_nh, *ctrl_nh));
 }
 
 TEST(TestSuite, JointCommandControllerXConstructor)
 {
-  EXPECT_NO_FATAL_FAILURE(jc_ctrl_cmd_x.reset(new JointCommandController<-1>()));
+  EXPECT_NO_FATAL_FAILURE(jc_ctrl_cmd_x.reset(new JointCommandController()));
   //EXPECT_FALSE(jc_ctrl_x->init(robot_hw->get<hardware_interface::PosVelEffJointInterface>(), *root_nh, *robot_nh));
   EXPECT_TRUE(jc_ctrl_cmd_x->init(robot_hw->get<hardware_interface::PosVelEffJointInterface>(), *robot_nh, *ctrl_nh));
 }
 
 TEST(TestSuite, JointCommandControllerC6Constructor)
 {
-  EXPECT_NO_FATAL_FAILURE(jc_ctrl_cmd_6.reset(new JointCommandController<6>()));
+  EXPECT_NO_FATAL_FAILURE(jc_ctrl_cmd_6.reset(new JointCommandController()));
   //EXPECT_FALSE(jc_ctrl_6->init(robot_hw->get<hardware_interface::PosVelEffJointInterface>(), *root_nh, *robot_nh));
   EXPECT_TRUE(jc_ctrl_cmd_6->init(robot_hw->get<hardware_interface::PosVelEffJointInterface>(), *robot_nh, *ctrl_nh));
 }

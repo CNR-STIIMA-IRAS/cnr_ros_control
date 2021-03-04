@@ -124,7 +124,7 @@ protected:
   mutable std::mutex  mtx_;
 
 private:
-  rosdyn::Link       m_root_link;  //link primitivo da cui parte la catena cinematica(world ad esempio)
+  rosdyn::LinkPtr    m_root_link;  //link primitivo da cui parte la catena cinematica(world ad esempio)
   rosdyn::ChainState m_rstate;
   Eigen::IOFormat    m_cfrmt;
 };
