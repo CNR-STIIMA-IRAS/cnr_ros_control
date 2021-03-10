@@ -25,10 +25,10 @@ HandleIndexes get_index_map(const std::vector<std::string>& names, const rosdyn:
   {
     for(size_t iAx=0; iAx< ks.getActiveJointsName().size(); iAx++ )
     {
-      auto it = std::find(names.begin(), names.end(), ks.getJointName(iAx));
+      auto it = std::find(names.begin(), names.end(), ks.getMoveableJointName(iAx));
       if( it != names.end() )
       {
-        ret[ks.getJointName(iAx)] = iAx;
+        ret[ks.getMoveableJointName(iAx)] = iAx;
       }
     }
   }

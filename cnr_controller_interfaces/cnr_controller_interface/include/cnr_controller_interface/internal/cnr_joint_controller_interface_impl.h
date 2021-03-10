@@ -253,24 +253,25 @@ l = __LINE__;
         {
           throw std::runtime_error("The HW is malformed!");
         }
-        m_handler.handles_[m_chain.getJointName(iAx)] = Controller<T>::m_hw->getHandle(m_chain.getJointName(iAx));
+        m_handler.handles_[m_chain.getActiveJointName(iAx)] =
+              Controller<T>::m_hw->getHandle(m_chain.getActiveJointName(iAx));
       }
       catch(std::exception& e)
       {
         CNR_RETURN_FALSE(this->m_logger,
           "Controller '" + Controller<T>::getControllerNamespace() + "' failed in init. " + std::string("")
-          + "The controlled joint named '" + m_chain.getJointName(iAx) + "' is not managed by hardware_interface.\
-Error: " + std::string(e.what()));
+          + "The controlled joint named '"+m_chain.getActiveJointName(iAx)+"' is not managed by hardware_interface."
+              "Error: " + std::string(e.what()));
       }
       catch(...)
       {
         CNR_RETURN_FALSE(this->m_logger,
           "Controller '" + Controller<T>::getControllerNamespace() + "' failed in init. " + std::string("")
-          + "The controlled joint named '" + m_chain.getJointName(iAx) + "' is not managed by hardware_interface");
+          + "The controlled joint named '"+m_chain.getActiveJointName(iAx)+"' is not managed by hardware_interface");
       }
       CNR_DEBUG(this->m_logger,
         "Controller '" + Controller<T>::getControllerNamespace() + std::string("'")
-        + "The controlled joint named '" + m_chain.getJointName(iAx) + "' is managed by hardware_interface");
+        + "The controlled joint named '" + m_chain.getActiveJointName(iAx) + "' is managed by hardware_interface");
     }
     CNR_DEBUG(this->m_logger, "Q sup  : " << eigen_utils::to_string(m_chain.getQMax()  ));
     CNR_DEBUG(this->m_logger, "Q inf  : " << eigen_utils::to_string(m_chain.getQMin()  ));
