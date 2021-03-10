@@ -171,11 +171,13 @@ struct RetrieveKey
  *
  */
 template<class MSG>
-bool callRequest(ros::ServiceClient& clnt,
+bool callRequest(std::mutex& mtx, 
+                 ros::ServiceClient& clnt,
                  MSG& msg,
                  std::string& error,
                  const ros::Duration&  watchdog = ros::Duration(0.0))
 {
+  std::lock_guard<std::mutex> lock(mtx); 
   if (watchdog.toSec() > 0)
   {
     if (!clnt.waitForExistence(watchdog))
@@ -184,7 +186,7 @@ bool callRequest(ros::ServiceClient& clnt,
       return false;
     }
   }
-  if (!clnt.call(msg))
+  if(!clnt.call(msg))
   {
     error = "The service '" + clnt.getService() + "' is broken. Abort.";
     std::cout << msg.request << std::endl;

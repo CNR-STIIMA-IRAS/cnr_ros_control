@@ -2,7 +2,9 @@ cmake_minimum_required(VERSION 3.1)
 
 project(cnr_configuration_manager)
 
-set(CMAKE_BUILD_TYPE Debug)
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -63,28 +65,49 @@ include_directories(
 add_library(${PROJECT_NAME} src/${PROJECT_NAME}/cnr_configuration_loader.cpp
                             src/${PROJECT_NAME}/cnr_configuration_manager.cpp
                             src/${PROJECT_NAME}/signal_handler.cpp )
+target_compile_options(${PROJECT_NAME} PUBLIC -Wall -faligned-new
+        $<$<CONFIG:Release>:-Ofast -funroll-loops -ffast-math >)
 
-add_executable       (${PROJECT_NAME}_node src/configuration_manager_node.cpp )
-add_dependencies     (${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(${PROJECT_NAME}_node ${PROJECT_NAME} ${catkin_LIBRARIES} )
+add_executable        (${PROJECT_NAME}_node src/configuration_manager_node.cpp )
+add_dependencies      (${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries (${PROJECT_NAME}_node ${PROJECT_NAME} ${catkin_LIBRARIES} )
+target_compile_options(${PROJECT_NAME}_node PUBLIC -Wall -faligned-new
+        $<$<CONFIG:Release>:-Ofast -funroll-loops -ffast-math >)
+
+if(${CMAKE_VERSION} VERSION_GREATER "3.16.0")
+	target_precompile_headers (${PROJECT_NAME} PUBLIC <ros/ros.h>
+													  <controller_manager_msgs/LoadController.h>
+													  <controller_manager_msgs/UnloadController.h>
+													  <controller_manager_msgs/SwitchController.h>
+													  <controller_manager_msgs/ListControllers.h>
+													  <nodelet/nodelet.h>
+													  <nodelet/loader.h>
+													  <nodelet/NodeletLoadRequest.h>
+													  <nodelet/NodeletLoad.h>
+													  <nodelet/NodeletUnload.h>
+													  <nodelet/NodeletList.h>
+													  <std_srvs/Trigger.h>
+													  <boost/graph/graph_concepts.hpp>
+													  <actionlib/client/simple_action_client.h>
+													  <control_msgs/FollowJointTrajectoryAction.h>
+													  <bondcpp/bond.h>
+													  <mutex>
+													  <string> 
+													  <stdexcept>)
+endif()
+#target_compile_definitions(${PROJECT_NAME}_node PUBLIC  $<$<CONFIG:RELEASE>:NDEBUG> -fpermissive)
 
 add_executable(configuration_user_interface src/ui_configuration_manager.cpp)
 add_dependencies(configuration_user_interface ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(configuration_user_interface
-  ${catkin_LIBRARIES}
-)
+target_link_libraries(configuration_user_interface ${catkin_LIBRARIES})
 
 add_executable(joy_teach_pendant src/joy_teach_pendant.cpp)
 add_dependencies(joy_teach_pendant ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(joy_teach_pendant
-  ${catkin_LIBRARIES}
-)
+target_link_libraries(joy_teach_pendant ${catkin_LIBRARIES})
 
 add_executable(dispatcher src/dispatcher.cpp)
 add_dependencies(dispatcher ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(dispatcher
-  ${catkin_LIBRARIES}
-)
+target_link_libraries(dispatcher ${catkin_LIBRARIES})
 
 
 #############

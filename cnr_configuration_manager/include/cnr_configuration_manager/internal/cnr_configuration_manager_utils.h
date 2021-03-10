@@ -61,10 +61,10 @@ namespace cnr_configuration_manager
 
 struct ComponentData
 {
-  std::string name;
-  std::string state;
-  std::string type;
-  bool        hidden;
+  std::string name = "";
+  std::string state = "";
+  std::string type = "";
+  bool        hidden = true;
 };
 
 
@@ -212,7 +212,10 @@ inline
 std::vector<std::string> getHardwareInterfacesNames(const ConfigurationStruct& m)
 {
   std::vector<std::string> ret(m.components.size());
-  std::transform(m.components.begin(), m.components.end(), ret.begin(), RetrieveKey());
+  if(m.components.size()>0)
+  {
+    std::transform(m.components.begin(), m.components.end(), ret.begin(), RetrieveKey());
+  }
   return ret;
 }
 
@@ -220,11 +223,16 @@ inline
 std::vector<std::string> getNames(const std::vector< controller_manager_msgs::ControllerState >& controllers)
 {
   std::vector<std::string> ret;
-  for (auto & ctrl : controllers) ret.push_back(ctrl.name);
+  if(controllers.size()>0)
+  {
+    for (auto const & ctrl : controllers) 
+      ret.push_back(ctrl.name);
+  }
   return ret;
 }
 
-inline bool cast(const configuration_msgs::ConfigurationComponent& in, ::cnr_configuration_manager::ConfigurationStruct& out)
+inline
+bool cast(const configuration_msgs::ConfigurationComponent& in, cnr_configuration_manager::ConfigurationStruct& out)
 {
   out.data.name  = in.name;
   out.data.state = in.state;
@@ -327,30 +335,6 @@ std::string to_string(const std::map<std::string,ConfigurationStruct>& in )
   for(auto const & v : in ) ret += to_string( v.second, "Confiuration '" + v.first +"':\n");
   return ret;
 }
-
-
-//============ UTILITIES
-template<class MSG>
-bool callRequest(ros::ServiceClient& clnt, MSG& msg, std::string& error, const ros::Duration&  watchdog = ros::Duration(0.0))
-{
-  if (watchdog.toSec() > 0)
-  {
-    if (!clnt.waitForExistence(watchdog))
-    {
-      error = "The service '" + clnt.getService() + "' does not exist. Abort." ;
-      return false;
-    }
-  }
-  if (!clnt.call(msg))
-  {
-    error = "The service '" + clnt.getService() + "' is broken. Abort.";
-    return false;
-  }
-  return true;
-}
-
-
-
 
 
 

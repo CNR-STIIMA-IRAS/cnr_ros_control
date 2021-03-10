@@ -1,36 +1,104 @@
 
 <launch>
 
-<group ns="file_and_screen_different_appenders" >
+<arg name="valgrind" default="false" />
+<arg name="debug" default="false" />
+
+<group ns="/ur10_hw" >
 <rosparam>
+  type: cnr/control/FakeRobotHW
   appenders: [file, screen]
-  levels: [debug, info]
-  file_name: "ciao"
+  levels: [trace, trace]
+  file_name: "ur10_hw"
+  joint_names:
+  - shoulder_pan_joint
+  - shoulder_lift_joint
+  - elbow_joint
+  - wrist_1_joint
+  - wrist_2_joint
+  - wrist_3_joint
+  base_link: base_link
+  tool_link: tool0
+  robot_description_param: /robot_description
+  robot_description_planning_param: /robot_description_planning
+  sampling_period: 0.001
+
+  initial_position: [0, -1.57, 0, 0, 0, 0]
+  fake_controller:
+    type: cnr/control/JointStatePublisher
+    controlled_joint:
+    - shoulder_pan_joint
+    - shoulder_lift_joint
+    - elbow_joint
+    - wrist_1_joint
+    - wrist_2_joint
+    - wrist_3_joint
 </rosparam>
 </group>
 
-<group ns="file_and_screen_same_appender" >
-<rosparam >
-  appenders: [file, screen]
-  levels: [debug, debug]
-  file_name: "ciao"
-</rosparam>
+<include file="$(find ur_description)/launch/ur10_upload.launch" />
+
+<group ns="/robot_description_planning">
+  <rosparam>
+  joint_limits:
+    linear_motor_cursor_joint:
+      has_velocity_limits: true
+      max_velocity: 0.5
+      has_acceleration_limits: true
+      max_acceleration: 14 #1.55
+    elbow_joint:
+      has_velocity_limits: true
+      max_velocity: 1.4
+      has_acceleration_limits: true
+      max_acceleration: 3
+    shoulder_lift_joint:
+      has_velocity_limits: true
+      max_velocity: 1.4
+      has_acceleration_limits: true
+      max_acceleration: 14 #1.55
+    shoulder_pan_joint:
+      has_velocity_limits: true
+      max_velocity: 1.4
+      has_acceleration_limits: true
+      max_acceleration: 14 #1.55
+    wrist_1_joint:
+      has_velocity_limits: true
+      max_velocity: 1.4
+      has_acceleration_limits: true
+      max_acceleration: 14 #1.55
+    wrist_2_joint:
+      has_velocity_limits: true
+      max_velocity: 1.4
+      has_acceleration_limits: true
+      max_acceleration: 14 #1.55
+    wrist_3_joint:
+      has_velocity_limits: true
+      max_velocity: 1.4
+      has_acceleration_limits: true
+      max_acceleration: 3
+  </rosparam>
 </group>
 
-<group ns="only_file_streamer">
-<rosparam>
-  appenders: [file]
-  levels: [debug]
-  file_name: "ciao"
-</rosparam>
+
+<group if="$(arg valgrind)">
+  <arg unless="$(arg debug)" name="launch_prefix" value="" />
+  <arg     if="$(arg debug)" name="launch_prefix"
+      value="valgrind -v --track-origins=yes --tool=memcheck --leak-check=full --show-reachable=yes  --num-callers=20 --track-fds=yes  --log-file=/home/feymann/a.txt" />
+      <test launch-prefix="$(arg launch_prefix)" test-name="cnr_controller_interface_test" pkg="cnr_controller_interface" type="cnr_controller_interface_test">
+      </test>
 </group>
+<group unless="$(arg valgrind)">
+  <arg unless="$(arg debug)" name="launch_prefix" value="" />
+  <arg     if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args" />
 
-
-<test test-name="cnr_controller_interface_test" pkg="cnr_controller_interface" type="cnr_controller_interface_test">
-  <!--rosparam command="load" file="$(find my_fancy_package)/test/$(arg case).yaml" /-->
+<test launch-prefix="$(arg launch_prefix)"
+        test-name="cnr_controller_interface_test"
+          pkg="cnr_controller_interface"
+            type="cnr_controller_interface_test"
+               args="--gtest_filter=TestSuite.JointCommandControllerXConstructor">
 </test>
 
-
+</group>
 </launch>
 
 

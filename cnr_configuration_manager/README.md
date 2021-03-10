@@ -78,9 +78,9 @@ start_configuration:  is the label of the configuration to be started. The label
                       control_configurations parameter
 
 strictness: is an integer:
-  1: same behavior of `ros_control` if the client assk to run an already running controller it will be leaved running
+  1: same behavior of `ros_control` if the client asks to run an already running controller it will be leaved running
   2: same behavior of `ros_control`
-  0: like 1, but if the client ask to run an already running controller it will be restarted as well as its 
+  0: like 1, but if the client asks to run an already running controller it will be restarted as well as its 
      hardware interface
 ```
 

@@ -39,7 +39,7 @@
 #include <ctime>
 #include <chrono>
 #include <algorithm>
-#include <mutex>
+#include <string>
 
 #include <ros/ros.h>
 #include <ros/callback_queue.h>
@@ -48,74 +48,28 @@
 #include <diagnostic_msgs/DiagnosticArray.h>
 #include <diagnostic_updater/DiagnosticStatusWrapper.h>
 #include <cnr_logger/cnr_logger.h>
-#include <cnr_controller_interface/internal/utils.h>
-#include <realtime_utilities/time_span_tracker.h>
+#include <realtime_utilities/diagnostics_interface.h>
+#include <subscription_notifier/subscription_notifier.h>
 
+#include <cnr_controller_interface/utils/utils.h>
 
-namespace cnr_controller_interface
+namespace cnr
+{
+namespace control
 {
 
-//============ FUNCTIONS TO DEFINE THE PARAMETERS WHERE THE CTRL STATUS IS LOADED
-std::vector<std::string> get_names(const std::vector< controller_manager_msgs::ControllerState >& controllers);
-std::string              ctrl_list_param(const std::string& hw_name);
-std::string              last_status_param(const std::string& hw_name,
-                                           const std::string& ctrl_name);
-std::string              status_param(const std::string& hw_name,
-                                      const std::string& ctrl_name);
-bool                     get_state(const std::string& hw_name,
-                                   const std::string& ctrl_name,
-                                   std::string& status,
-                                   std::string& error,
-                                   const ros::Duration& watchdog = ros::Duration(0.0));
 
-
-class ControllerDiagnostic
+template<class T>
+class Controller: public controller_interface::Controller<T>,
+                  public realtime_utilities::DiagnosticsInterface
 {
 public:
 
-  /**
-   * @brief add_diagnostic_message
-   * @param msg
-   * @param name
-   * @param level
-   * @param verbose
-   */
-  virtual void add_diagnostic_message(const std::string& msg,
-                                      const std::string& name,
-                                      const std::string& level,
-                                      const bool&        verbose) {}
+  virtual ~Controller();
 
-  virtual void diagnostics     (diagnostic_updater::DiagnosticStatusWrapper &stat, int level);
-  virtual void diagnosticsInfo (diagnostic_updater::DiagnosticStatusWrapper &stat)           ;
-  virtual void diagnosticsWarn (diagnostic_updater::DiagnosticStatusWrapper &stat)           ;
-  virtual void diagnosticsError(diagnostic_updater::DiagnosticStatusWrapper &stat)           ;
-  virtual void diagnosticsPerformance(diagnostic_updater::DiagnosticStatusWrapper &stat)     ;
-
-protected:
-
-  std::string                                           m_hw_name;
-  std::string                                           m_ctrl_name;
-  mutable std::mutex                                    m_mutex;
-  mutable diagnostic_msgs::DiagnosticArray              m_diagnostic;
-  std::shared_ptr<cnr_logger::TraceLogger>              m_logger;
-  std::vector<std::string>                              m_status_history;
-  std::shared_ptr<realtime_utilities::TimeSpanTracker>  m_time_span_tracker;
-  double                                                m_sampling_period;
-  double                                                m_watchdog;
-
-
-};
-
-template< class T >
-class Controller: public ::controller_interface::Controller< T >, public ControllerDiagnostic
-{
-public:
-
-  ~Controller();
-
-  bool init(T*, ros::NodeHandle&)                                            final
+  bool init(T* hw, ros::NodeHandle&)                                         final
   {
-    return true;
+    return hw;
   }
   bool init(T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh) final;
   void starting(const ros::Time& time)                                       final;
@@ -124,7 +78,7 @@ public:
   void waiting(const ros::Time& time)                                        final;
   void aborting(const ros::Time& time)                                       final;
 
-  std::shared_ptr<cnr_logger::TraceLogger> logger() { return m_logger; }
+  cnr_logger::TraceLoggerPtr logger() { return m_logger; }
 
 public:
   virtual bool doInit()
@@ -174,7 +128,7 @@ public:
    * @return
    */
   bool shutdown(const std::string& state_final);
-  
+
   /**
    * @brief add_publisher
    * @param id
@@ -182,10 +136,11 @@ public:
    * @param queue_size
    * @param latch
    */
-  template<typename M> void add_publisher(const std::string& id,
-                                          const std::string &topic,
-                                          uint32_t queue_size,
-                                          bool latch = false);
+  template<typename M>
+  size_t add_publisher(const std::string &topic,
+                       uint32_t queue_size,
+                       bool latch = false,
+                       bool enable_watchdog = false);
 
   /**
    * @brief publish
@@ -194,7 +149,7 @@ public:
    * @return
    */
   template<typename M>
-  bool publish(const std::string& id, const M &message);
+  bool publish(const size_t& idx, const M &message);
 
   /**
    * @brief add_subscriber
@@ -204,22 +159,14 @@ public:
    * @param obj
    * @param transport_hints
    */
-  template<typename M, typename K>
-  void add_subscriber(const std::string& id,
-                      const std::string &topic,
-                      uint32_t queue_size,
-                      void(K::*fp)(M), K *obj,
-                      const ros::TransportHints &transport_hints = ros::TransportHints());
+  template<typename M>
+  size_t add_subscriber(const std::string &topic,
+                        uint32_t queue_size,
+                        boost::function<void(const boost::shared_ptr<M const>& msg)> callback,
+                        bool enable_watchdog = true);
 
-  bool tick(const std::string& id);
-
-  std::shared_ptr<ros::Subscriber>&  getSubscriber(const std::string& id);
-  std::shared_ptr<ros::Publisher>& getPublisher(const std::string& id);
-
-  void add_diagnostic_message(const std::string& msg,
-                              const std::string& name,
-                              const std::string& level,
-                              const bool&        verbose) override;
+  std::shared_ptr<ros::Subscriber> getSubscriber(const size_t& id);
+  std::shared_ptr<ros::Publisher>  getPublisher(const size_t &id);
 
 protected:
 
@@ -245,43 +192,39 @@ protected:
   virtual bool exitAborting();
 
   bool dump_state(const std::string& status);
-  bool dump_state();
+  //bool dump_state();
 
 protected:
-  T*                                       m_hw;
-
+  T*            m_hw;
+  ros::Duration m_dt;
+  cnr_logger::TraceLoggerPtr  m_logger;
+  std::string                 m_hw_name;
+  std::string                 m_ctrl_name;
+  double                      m_sampling_period;
+  double                      m_watchdog;
+  std::vector<std::string>    m_status_history;
 
 private:
-  ros::NodeHandle                          m_root_nh;
-  ros::NodeHandle                          m_controller_nh;
-  ros::CallbackQueue                       m_controller_nh_callback_queue;
+  ros::NodeHandle     m_root_nh;
+  ros::NodeHandle     m_controller_nh;
+  ros::CallbackQueue  m_controller_nh_callback_queue;
 
-  struct Publisher
-  {
-    std::shared_ptr<ros::Publisher>                 pub;
-    std::chrono::high_resolution_clock::time_point* start = nullptr;
-    std::chrono::high_resolution_clock::time_point  last;
-    std::chrono::duration<double>                   time_span;
-  };
+  std::vector<std::shared_ptr<ros::Publisher>>                 m_pub;
+  std::vector<std::chrono::high_resolution_clock::time_point*> m_pub_start;
+  std::vector<std::chrono::high_resolution_clock::time_point*> m_pub_last;
+  std::vector<bool>                                            m_pub_time_track;
 
-  struct Subscriber
-  {
-    std::shared_ptr<ros::Subscriber>                sub;
-    std::chrono::high_resolution_clock::time_point* start = nullptr;
-    std::chrono::high_resolution_clock::time_point  last;
-    std::chrono::duration<double>                   time_span;
-  };
-
-  std::map<std::string, Publisher  > m_pub;
-  std::map<std::string, Subscriber > m_sub;
+  std::vector<std::shared_ptr<void>>            m_sub_notifier;
+  std::vector<std::shared_ptr<ros::Subscriber>> m_sub;
+  std::vector<ros_helper::WallTimeMTPtr>        m_sub_time;
+  std::vector<bool>                             m_sub_time_track;
 
   bool callAvailable( );
-
 };
 
-}  // namespace cnr_controller_interface
+}   // namespace cnr
+}   // namespace control
 
-
-#include <cnr_controller_interface/cnr_controller_interface_impl.h>
+#include <cnr_controller_interface/internal/cnr_controller_interface_impl.h>
 
 #endif  // CNR_CONTROLLER_INTERFACE_CNR_CONTROLLER_INTERFACE_H

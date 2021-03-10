@@ -1,4 +1,4 @@
-# nr_controller_interface #
+# cnr_controller_interface #
 
 Package to publish JointStates in nodelet fashion (shared memory). It allows sorting the joint_names.
 The published topic has this name:

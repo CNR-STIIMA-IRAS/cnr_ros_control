@@ -44,7 +44,7 @@ std::shared_ptr<cnr_logger::TraceLogger> logger;
 TEST(TestSuite, fullConstructor)
 {
   EXPECT_NO_FATAL_FAILURE(logger.reset(new cnr_logger::TraceLogger("log1", "/file_and_screen_different_appenders")));
-  EXPECT_FALSE(logger->init("/file_and_screen_different_appenders", false, false));  // Already initialized
+  EXPECT_FALSE(logger->init("log1", "/file_and_screen_different_appenders", false, false));  // Already initialized
   EXPECT_NO_FATAL_FAILURE(logger.reset());
 }
 

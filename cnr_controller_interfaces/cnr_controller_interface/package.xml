@@ -11,6 +11,15 @@
 
 
   <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>cnr_controller_interface_params </build_depend>
+  <build_export_depend>cnr_controller_interface_params </build_export_depend>
+  <exec_depend>cnr_controller_interface_params</exec_depend>
+
+  <build_depend>cnr_hardware_interface</build_depend>
+  <build_export_depend>cnr_hardware_interface</build_export_depend>
+  <exec_depend>cnr_hardware_interface</exec_depend>
+
   <build_depend>controller_interface</build_depend>
   <build_export_depend>controller_interface</build_export_depend>
   <exec_depend>controller_interface</exec_depend>
@@ -42,6 +51,22 @@
   <build_depend>rosdyn_core</build_depend>
   <build_export_depend>rosdyn_core</build_export_depend>
   <exec_depend>rosdyn_core</exec_depend>
+
+  <build_depend>rosdyn_utilities</build_depend>
+  <build_export_depend>rosdyn_utilities</build_export_depend>
+  <exec_depend>rosdyn_utilities</exec_depend>
+
+  <build_depend>subscription_notifier</build_depend>
+  <build_export_depend>subscription_notifier</build_export_depend>
+  <exec_depend>subscription_notifier</exec_depend>
+
+  <build_depend>sensor_msgs</build_depend>
+  <build_export_depend>sensor_msgs</build_export_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+
+  <test_depend>rosunit</test_depend>
+  <test_depend>cnr_fake_hardware_interface</test_depend>
+  <test_depend>ur_description</test_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

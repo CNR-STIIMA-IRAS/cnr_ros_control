@@ -32,96 +32,107 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
+#pragma once
+
 #ifndef CNR_CONTROLLER_INTERFACE__JOINT_CONTROLLER_INTERFACE_H
 #define CNR_CONTROLLER_INTERFACE__JOINT_CONTROLLER_INTERFACE_H
 
-#include <eigen3/Eigen/Core>
+#include <mutex>
+#include <thread>
+#include <Eigen/Core>
+
 #include <ros/ros.h>
+
 #include <cnr_logger/cnr_logger.h>
-#include <cnr_controller_interface/cnr_controller_interface.h>
-
-#include <urdf_model/model.h>
-#include <urdf_parser/urdf_parser.h>
 #include <rosdyn_core/primitives.h>
-#include <cnr_controller_interface/utils/cnr_kinematic_status.h>
+#include <rosdyn_utilities/chain_state.h>
 
-namespace cnr_controller_interface
+#include <cnr_controller_interface/cnr_controller_interface.h>
+#include <cnr_controller_interface/internal/cnr_handles.h>
+
+namespace cnr
+{
+namespace control
 {
 
 /**
+ * @brief The class is designed to get the feedback of a set of joints,
+ * and the joints must be connected to each other.
+ * The class is built aroun a 'rosdyn::ChainState' that stores the state
+ * of the joints, and at each cycle time the internal status is updated.
+ * The class creates a parallel thread cyclically (as the sampling rate)
+ * compute the forward kinematics. Furthermore, the effort may be computed
+ * from the external force measure id available.
+ * The computation is therefore done in parallel to avoid that the 'update' method
+ * takes too long, breaking the soft-realtime of the controller
  *
- *
- *
- * Base class to log the controller status
  */
-template< class T >
-class JointController: public cnr_controller_interface::Controller< T >
+template<class H, class T>
+class JointController: public cnr::control::Controller<T>
 {
 public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  ~JointController();
+  virtual ~JointController();
 
-  virtual bool doInit();
-  virtual bool doStarting(const ros::Time& /*time*/);
-  virtual bool doUpdate(const ros::Time& /*time*/, const ros::Duration& /*period*/);
-  virtual bool doStopping(const ros::Time& /*time*/);
-  virtual bool doWaiting(const ros::Time& /*time*/);
-  virtual bool doAborting(const ros::Time& /*time*/);
-
-  virtual bool enterInit();
-  virtual bool enterStarting();
-  virtual bool enterUpdate();
-
-  const size_t& nAx                         ( ) const { return m_nAx; }
-  const Eigen::VectorXd& q                  ( ) const { return m_state.q; }
-  const Eigen::VectorXd& qd                 ( ) const { return m_state.qd; }
-  const Eigen::VectorXd& qdd                ( ) const { return m_state.qdd; }
-  const Eigen::VectorXd& effort             ( ) const { return m_state.effort; }
-  const Eigen::VectorXd& upperLimit         ( ) const { return m_lower_limit; }
-  const Eigen::VectorXd& lowerLimit         ( ) const { return m_upper_limit; }
-  const Eigen::VectorXd& speedLimit         ( ) const { return m_qd_limit;    }
-  const Eigen::VectorXd& accelerationLimit  ( ) const { return m_qdd_limit;   }
-  const std::vector<std::string>& jointNames( ) const { return m_joint_names; }
-  const double& q                  (size_t iAx) const { return m_state.q(iAx); }
-  const double& qd                 (size_t iAx) const { return m_state.qd(iAx); }
-  const double& qdd                (size_t iAx) const { return m_state.qdd(iAx); }
-  const double& effort             (size_t iAx) const { return m_state.effort(iAx); }
-  const double& upperLimit         (size_t iAx) const { return m_lower_limit(iAx); }
-  const double& lowerLimit         (size_t iAx) const { return m_upper_limit(iAx); }
-  const double& speedLimit         (size_t iAx) const { return m_qd_limit(iAx);    }
-  const double& accelerationLimit  (size_t iAx) const { return m_qdd_limit(iAx);   }
-  const std::string& jointName     (size_t iAx) const { return m_joint_names.at(iAx); }
-
-  const std::string& baseLink    ( ) const { return m_base_link;  }
-  const std::string& baseFrame   ( ) const { return baseLink();   }
-  const std::string& toolLink    ( ) const { return m_tool_link;  }
-  const std::string& toolFrame   ( ) const { return toolLink();   }
-  const Eigen::Affine3d& toolPose( ) const { return m_Tbt;        }
+  virtual bool doInit() override;
+  virtual bool doStarting(const ros::Time& /*time*/) override;
+  virtual bool doUpdate(const ros::Time& /*time*/, const ros::Duration& /*period*/) override;
+  virtual bool doStopping(const ros::Time& /*time*/) override;
+  virtual bool doWaiting(const ros::Time& /*time*/) override;
+  virtual bool doAborting(const ros::Time& /*time*/) override;
 
 protected:
+  virtual bool enterInit() override;
+  virtual bool enterStarting() override;
+  virtual bool exitStarting() override;
+  virtual bool enterUpdate() override;
 
-  urdf::ModelInterfaceSharedPtr                   m_model;
-  std::string                                     m_base_link;
-  std::string                                     m_tool_link;
-  rosdyn::ChainPtr                                m_chain;
-  Eigen::Affine3d                                 m_Tbt;
-  Eigen::Matrix<double, 6, 1>                     m_twist;
-  Eigen::Matrix6Xd                                m_J;
+  // Accessors, to be used by the inherited classes
+  const unsigned int& nAx( ) const { return m_chain.getActiveJointsNumber(); }
+  const std::vector<std::string>& jointNames( ) const { return m_chain.getActiveJointsName(); }
+
+  Handler<H,T>                   m_handler;
+  urdf::ModelInterfaceSharedPtr  m_urdf_model;
+  rosdyn::Chain                  m_chain;
+
+  const rosdyn::ChainState& chainState() const;
+  rosdyn::ChainState&       chainState();
+
+  const rosdyn::VectorXd& getPosition    ( ) const;
+  const rosdyn::VectorXd& getVelocity    ( ) const;
+  const rosdyn::VectorXd& getAcceleration( ) const;
+  const rosdyn::VectorXd& getEffort      ( ) const;
+
+  double getPosition    (int idx) const;
+  double getVelocity    (int idx) const;
+  double getAcceleration(int idx) const;
+  double getEffort      (int idx) const;
+
+  const Eigen::Affine3d&   getToolPose( ) const;
+  const Eigen::Vector6d&   getTwist( ) const;
+  const Eigen::Vector6d&   getTwistd( ) const;
+  const rosdyn::Matrix6Xd& getJacobian( ) const;
+
+  void startUpdateTransformationsThread(int ffwd_kin_type, double hz = 10.0);
+  void stopUpdateTransformationsThread();
+  virtual void updateTransformationsThread(int ffwd_kin_type, double hz);
+
+  std::thread         update_transformations_;
+  bool                stop_update_transformations_;
+  bool                update_transformations_runnig_;
+  mutable std::mutex  mtx_;
 
 private:
-  std::vector<std::string>      m_joint_names;
-  size_t                        m_nAx;
-  KinematicStatus               m_state;
-  Eigen::VectorXd               m_upper_limit;
-  Eigen::VectorXd               m_lower_limit;
-  Eigen::VectorXd               m_qd_limit;
-  Eigen::VectorXd               m_qdd_limit;
+  rosdyn::LinkPtr    m_root_link;  //link primitivo da cui parte la catena cinematica(world ad esempio)
+  rosdyn::ChainState m_rstate;
+  Eigen::IOFormat    m_cfrmt;
 };
 
-} // cnr_controller_interface
+}  // control
+}  // cnr
 
-#include <cnr_controller_interface/cnr_joint_controller_interface_impl.h>
+#include <cnr_controller_interface/internal/cnr_joint_controller_interface_impl.h>
 
-#endif
-
+#endif  // CNR_CONTROLLER_INTERFACE__JOINT_CONTROLLER_INTERFACE_H
 

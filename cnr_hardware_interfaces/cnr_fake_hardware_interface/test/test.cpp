@@ -33,27 +33,60 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <memory>
 #include <iostream>
 #include <ros/ros.h>
 #include <cnr_logger/cnr_logger.h>
 #include <gtest/gtest.h>
+#include <pluginlib/class_loader.h>
+#include <cnr_fake_hardware_interface/cnr_fake_robot_hw.h>
 
-std::shared_ptr<cnr_logger::TraceLogger> logger;
+std::shared_ptr<ros::NodeHandle> root_nh;
+std::shared_ptr<ros::NodeHandle> robot_nh;
+std::shared_ptr<cnr_hardware_interface::FakeRobotHW> robot_hw;
+std::shared_ptr<pluginlib::ClassLoader<cnr_hardware_interface::RobotHW>> robot_hw_plugin_loader;
 
-// Declare a test
-TEST(TestSuite, fullConstructor)
+std::string to_string(const std::vector<std::string>& vv)
 {
-  EXPECT_NO_FATAL_FAILURE(logger.reset(new cnr_logger::TraceLogger("log1", "/file_and_screen_different_appenders")));
-  EXPECT_FALSE(logger->init("/file_and_screen_different_appenders", false, false));  // Already initialized
-  EXPECT_NO_FATAL_FAILURE(logger.reset());
+  std::string ret = "[ ";
+  for(const auto &v : vv ) ret += v +" ";
+  return ret + "]";
 }
 
+// Declare a test
+TEST(TestSuite, Constructor)
+{
+  EXPECT_NO_FATAL_FAILURE(robot_hw.reset(new cnr_hardware_interface::FakeRobotHW()));
+  EXPECT_TRUE(robot_hw->init(*root_nh, *robot_nh));
+}
+
+TEST(TestSuite, Handles)
+{
+  EXPECT_TRUE(robot_hw->get<hardware_interface::JointStateInterface     >());
+  EXPECT_TRUE(robot_hw->get<hardware_interface::PositionJointInterface  >());
+  EXPECT_TRUE(robot_hw->get<hardware_interface::VelocityJointInterface  >());
+  EXPECT_TRUE(robot_hw->get<hardware_interface::EffortJointInterface    >());
+  EXPECT_TRUE(robot_hw->get<hardware_interface::PosVelEffJointInterface >());
+  EXPECT_TRUE(robot_hw->get<hardware_interface::VelEffJointInterface    >());
+
+  std::cout << "JointStateInterface     :" << to_string(robot_hw->get<hardware_interface::JointStateInterface     >()->getNames()) << std::endl;
+  std::cout << "PositionJointInterface  :" << to_string(robot_hw->get<hardware_interface::PositionJointInterface  >()->getNames()) << std::endl;
+  std::cout << "VelocityJointInterface  :" << to_string(robot_hw->get<hardware_interface::VelocityJointInterface  >()->getNames()) << std::endl;
+  std::cout << "EffortJointInterface    :" << to_string(robot_hw->get<hardware_interface::EffortJointInterface    >()->getNames()) << std::endl;
+  std::cout << "PosVelEffJointInterface :" << to_string(robot_hw->get<hardware_interface::PosVelEffJointInterface >()->getNames()) << std::endl;
+  std::cout << "VelEffJointInterface    :" << to_string(robot_hw->get<hardware_interface::VelEffJointInterface    >()->getNames()) << std::endl;
+}
+TEST(TestSuite, Desctructor)
+{
+  EXPECT_NO_FATAL_FAILURE(robot_hw.reset());
+}
 
 // Run all the tests that were declared with TEST()
 int main(int argc, char **argv)
 {
   testing::InitGoogleTest(&argc, argv);
   ros::init(argc, argv, "cnr_logger_tester");
-  ros::NodeHandle nh;
+  root_nh.reset(new ros::NodeHandle("/"));
+  robot_nh.reset(new ros::NodeHandle("/ur10_hw"));
   return RUN_ALL_TESTS();
 }

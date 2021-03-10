@@ -35,17 +35,23 @@
 #ifndef CNR_CONTROLLER_INTERFACE__JOINT_COMMAND_CONTROLLER_INTERFACE_H
 #define CNR_CONTROLLER_INTERFACE__JOINT_COMMAND_CONTROLLER_INTERFACE_H
 
-#include <eigen3/Eigen/Core>
+#include <mutex>
+#include <Eigen/Core>
 #include <ros/ros.h>
+#include <std_msgs/Int64.h>
+#include <sensor_msgs/JointState.h>
+
 #include <cnr_logger/cnr_logger.h>
-#include <cnr_controller_interface/utils/cnr_kinematic_status.h>
+#include <rosdyn_utilities/chain_state.h>
 #include <cnr_controller_interface/cnr_joint_controller_interface.h>
 
 #include <urdf_model/model.h>
 #include <urdf_parser/urdf_parser.h>
 
 
-namespace cnr_controller_interface
+namespace cnr
+{
+namespace control
 {
 
 /**
@@ -54,53 +60,79 @@ namespace cnr_controller_interface
  *
  * Base class to log the controller status
  */
-template< class T >
-class JointCommandController: public cnr_controller_interface::JointController< T >
+template<class H, class T>
+class JointCommandController: public cnr::control::JointController<H,T>
 {
 public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  enum InputType { Q_PRIORITY, QD_PRIORITY };
-  ~JointCommandController();
+  enum InputType {Q_PRIORITY, QD_PRIORITY};
 
-  virtual bool doInit();
-  virtual bool doStarting(const ros::Time& /*time*/);
-  virtual bool doUpdate(const ros::Time& /*time*/, const ros::Duration& /*period*/);
-  virtual bool doStopping(const ros::Time& /*time*/);
-  virtual bool doWaiting(const ros::Time& /*time*/);
-  virtual bool doAborting(const ros::Time& /*time*/);
+  JointCommandController() = default;
+  virtual ~JointCommandController();
 
-  virtual bool enterInit();
-  virtual bool enterStarting();
-  virtual bool enterUpdate();
-  virtual bool exitUpdate();
-  virtual bool enterStopping();
+  virtual bool doInit() override;
+  virtual bool doStarting(const ros::Time& time) override;
+  virtual bool doUpdate(const ros::Time& time, const ros::Duration& period) override;
+  virtual bool doStopping(const ros::Time& time) override;
+  virtual bool doWaiting(const ros::Time& time) override;
+  virtual bool doAborting(const ros::Time& time) override;
 
-  const Eigen::VectorXd& getPositionCommand     ( ) const { return m_target.q; }
-  const Eigen::VectorXd& getVelocityCommand     ( ) const { return m_target.qd; }
-  const Eigen::VectorXd& getAccelerationCommand ( ) const { return m_target.qdd; }
-  const Eigen::VectorXd& getEffortCommand       ( ) const { return m_target.effort; }
+protected:
+  virtual bool enterInit() override;
+  virtual bool enterStarting() override;
+  virtual bool enterUpdate() override;
+  virtual bool exitUpdate() override;
+  virtual bool exitStopping() override;
 
-  void setPositionCommand     (const Eigen::VectorXd& in) { m_target.q      = in; }
-  void setVelocityCommand     (const Eigen::VectorXd& in) { m_target.qd     = in; }
-  void setAccelerationCommand (const Eigen::VectorXd& in) { m_target.qdd    = in; }
-  void setEffortCommand       (const Eigen::VectorXd& in) { m_target.effort = in; }
+  const rosdyn::VectorXd& getCommandPosition    ( ) const;
+  const rosdyn::VectorXd& getCommandVelocity    ( ) const;
+  const rosdyn::VectorXd& getCommandAcceleration( ) const;
+  const rosdyn::VectorXd& getCommandEffort      ( ) const;
 
-  void setPositionCommand     (const double& in, size_t idx) { m_target.q      (idx) = in; }
-  void setVelocityCommand     (const double& in, size_t idx) { m_target.qd     (idx) = in; }
-  void setAccelerationCommand (const double& in, size_t idx) { m_target.qdd    (idx) = in; }
-  void setEffortCommand       (const double& in, size_t idx) { m_target.effort (idx) = in; }
+  double getCommandPosition    (size_t idx) const;
+  double getCommandVelocity    (size_t idx) const;
+  double getCommandAcceleration(size_t idx) const;
+  double getCommandEffort      (size_t idx) const;
 
+  void setCommandPosition     (const rosdyn::VectorXd& in);
+  void setCommandVelocity     (const rosdyn::VectorXd& in);
+  void setCommandAcceleration (const rosdyn::VectorXd& in);
+  void setCommandEffort       (const rosdyn::VectorXd& in);
+
+  void setCommandPosition     (const double& in, size_t idx);
+  void setCommandVelocity     (const double& in, size_t idx);
+  void setCommandAcceleration (const double& in, size_t idx);
+  void setCommandEffort       (const double& in, size_t idx);
+
+  virtual double getTargetOverride() const;
+
+  void setPriority( const InputType& priority ) { m_priority = priority; }
+
+  mutable std::mutex m_mtx;
 
 private:
-  InputType       m_priority;
-  KinematicStatus m_target;
-  KinematicStatus m_last_target;
+  InputType          m_priority;
+  rosdyn::ChainState m_target;
+  rosdyn::ChainState m_last_target;
+
+  double m_override;
+  void overrideCallback(const std_msgs::Int64ConstPtr& msg);
+
+  double m_safe_override_1;
+  double m_safe_override_2;
+  double m_max_velocity_multiplier;
+  void safeOverrideCallback_1(const std_msgs::Int64ConstPtr& msg);
+  void safeOverrideCallback_2(const std_msgs::Int64ConstPtr& msg);
+
+  virtual void updateTransformationsThread(int ffwd_kin_type, double hz);
 };
 
-} // cnr_controller_interface
+}  // namespace control
+}  // namespace cnr
 
-#include <cnr_controller_interface/cnr_joint_controller_interface_impl.h>
+#include <cnr_controller_interface/internal/cnr_joint_command_controller_interface_impl.h>
 
-#endif
+#endif  // CNR_CONTROLLER_INTERFACE__JOINT_COMMAND_CONTROLLER_INTERFACE_H
 
 

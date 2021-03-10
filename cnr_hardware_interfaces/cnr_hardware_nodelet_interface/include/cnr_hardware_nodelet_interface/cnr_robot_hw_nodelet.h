@@ -36,6 +36,10 @@
 #define CNR_HARDWARE_NODELET_INTERFACE_CNR_ROBOT_HW_NODELET_H
 
 #include <thread>
+#include <memory>
+#include <map>
+#include <string>
+
 #include <ros/ros.h>
 #include <nodelet/nodelet.h>
 #include <nodelet/NodeletLoad.h>
@@ -46,23 +50,23 @@
 
 #include <realtime_utilities/time_span_tracker.h>
 #include <cnr_logger/cnr_logger.h>
-#include <cnr_controller_manager_interface/cnr_controller_manager_interface.h>
+#include <cnr_controller_manager_interface/cnr_controller_manager_proxy.h>
 #include <cnr_hardware_interface/cnr_robot_hw.h>
 
 namespace cnr_hardware_nodelet_interface
 {
 
 
-class RobotHwNodelet : public nodelet::Nodelet
+class RobotHwNodelet : public nodelet::Nodelet, realtime_utilities::DiagnosticsInterface
 {
 public:
   void onInit() final;
 
-  RobotHwNodelet();
+  RobotHwNodelet() = default;
 
 protected:
 
-  ~RobotHwNodelet();
+  virtual ~RobotHwNodelet();
 
   virtual bool doOnInit();
   bool         enterOnInit();
@@ -70,6 +74,7 @@ protected:
 
   void         diagnosticsThread();
   void         controlUpdateThread();
+  virtual bool dump_state(const cnr_hardware_interface::StatusHw& status) const;
 
   enum THREAD_STATE { ON_INIT, RUNNING, ON_ERROR, EXPIRED } m_diagnostics_thread_state, m_update_thread_state;
 
@@ -79,22 +84,16 @@ protected:
   bool                                                                      m_stop_diagnostic_thread;
   ros::NodeHandle                                                           m_nh;
   ros::NodeHandle                                                           m_hw_nh;
-  boost::shared_ptr< cnr_hardware_interface::RobotHW >                      m_hw;
+  std::shared_ptr< cnr_hardware_interface::RobotHW >                        m_hw;
   std::string                                                               m_hw_namespace;
   std::string                                                               m_hw_name;
   std::shared_ptr<cnr_controller_manager_interface::ControllerManagerProxy> m_cmp;
   ros::Duration                                                             m_period;
-
-  std::map<std::string, realtime_utilities::TimeSpanTracker* >              m_time_span_tracker;
-  diagnostic_updater::Updater                                               m_updater;
   std::shared_ptr<cnr_logger::TraceLogger>                                  m_logger;
-
-  void diagnosticsPerformance(diagnostic_updater::DiagnosticStatusWrapper &stat);
 
   std::shared_ptr< pluginlib::ClassLoader< cnr_hardware_interface::RobotHW > > m_robot_hw_plugin_loader;
 
-
-
+  ros::ServiceServer                                                        m_mail_service;
 
 
 };

@@ -58,13 +58,15 @@ private:
   std::string                              error_;
 
   std::shared_ptr<nodelet::Loader>         nodelet_loader_;
-  std::map<std::string, cnr_controller_manager_interface::ControllerManagerInterface> cmi_;
+  std::map<std::string, cnr_controller_manager_interface::ControllerManagerInterfacePtr > cmi_;
+
+  std::map<std::string, ros::ServiceClient> mail_senders_;
 
 public:
 
 
   ConfigurationLoader(std::shared_ptr<cnr_logger::TraceLogger> log,
-                          const ros::NodeHandle& root_nh);
+                      const ros::NodeHandle& root_nh);
   ~ConfigurationLoader()
   {
     nodelet_loader_.reset();
@@ -87,10 +89,10 @@ public:
   bool unloadHw(const std::vector<std::string>& hw_to_unload_names, const ros::Duration& watchdog);
 
   bool loadAndStartControllers(const std::string&              hw_name,
-                               const ConfigurationStruct*      next_configuration,
+                               const ConfigurationStruct&      next_configuration,
                                const size_t                    strictness);
   bool loadAndStartControllers(const std::vector<std::string>& hw_next_names,
-                               const ConfigurationStruct*      next_configuration,
+                               const ConfigurationStruct&      next_configuration,
                                const size_t                    strictness);
 
   bool stopAndUnloadAllControllers(const std::vector<std::string>& hw_to_unload_names,
@@ -104,7 +106,7 @@ public:
   {
     if (cmi_.find(hw) != cmi_.end())
     {
-      return cmi_.at(hw).error();
+      return cmi_.at(hw)->error();
     }
     return "HW name not in the list";
   }

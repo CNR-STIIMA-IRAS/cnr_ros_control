@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.9)
+
 project(configuration_msgs)
 add_compile_options(-std=c++11)
 find_package(catkin REQUIRED COMPONENTS
@@ -20,6 +21,7 @@ add_service_files(
   SetConfig.srv
   GetConfig.srv
   UpdateConfigurations.srv
+  SendMessage.srv
 )
 
 generate_messages(

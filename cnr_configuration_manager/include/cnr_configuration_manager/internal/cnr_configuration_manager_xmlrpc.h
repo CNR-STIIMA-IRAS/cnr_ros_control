@@ -35,11 +35,13 @@
 #ifndef __cnr_configuration_manager_xmlrpc__
 #define __cnr_configuration_manager_xmlrpc__
 
-#include <ros/ros.h>
 #include <string>
 
-#include <configuration_msgs/ConfigurationComponent.h>
+#include <ros/ros.h>
 #include <nodelet/NodeletLoadRequest.h>
+
+#include <configuration_msgs/ConfigurationComponent.h>
+#include <cnr_configuration_manager/internal/cnr_configuration_manager_utils.h>
 
 namespace cnr_configuration_manager
 {
@@ -51,8 +53,8 @@ namespace param
 
 inline 
 bool get_configuration_component_no_dependencies(XmlRpc::XmlRpcValue& configuration_component, 
-                                                 ConfigurationStruct& configuration, 
-                                                 std::string&         error)
+                                                 cnr_configuration_manager::ConfigurationStruct& configuration,
+                                                 std::string& error)
 {
   if (configuration_component.getType() != XmlRpc::XmlRpcValue::TypeStruct)
   {
@@ -82,7 +84,7 @@ bool get_configuration_component_no_dependencies(XmlRpc::XmlRpcValue& configurat
   configuration.data.type   = "unknown";
   configuration.components.clear();
 
-  size_t jdx = 0;
+  int jdx = 0;
   for (jdx = 0; jdx < configuration_component["components"].size(); jdx++)
   {
     XmlRpc::XmlRpcValue& c = configuration_component["components"][jdx];
@@ -127,7 +129,7 @@ bool get_configuration_component_dependencies(XmlRpc::XmlRpcValue&      configur
     return true;
   }
   
-  for (size_t jdx = 0; jdx < configuration_component["depends"].size(); jdx++)
+  for (int jdx = 0; jdx < configuration_component["depends"].size(); jdx++)
   {
     std::string d = configuration_component["depends"][jdx];
     dependencies.push_back(d);
@@ -151,7 +153,7 @@ inline bool get_configuration_components(XmlRpc::XmlRpcValue&                   
   configurations.clear();
   std::map<std::string, size_t> name_to_index;
   std::map<std::string, std::vector< std::string > > name_to_dep_names;
-  for (size_t i = 0; i < configuration_components.size(); i++)
+  for(int i=0; i<configuration_components.size(); i++)
   {
     std::string         what;
     ConfigurationStruct configuration;
@@ -214,9 +216,6 @@ inline bool get_configuration_components(XmlRpc::XmlRpcValue&                   
         configurations.clear();
         return false;
       }
-
-      std::cout << "[ " << configuration.first << " ]  Dep Name: "<< dep_names.at(i) 
-                << " at "<< name_to_index.at( dep_names.at(i) ) << std::endl;
       std::string         what;
       ConfigurationStruct configuration_depend_from;
       if (!param::get_configuration_component_no_dependencies(

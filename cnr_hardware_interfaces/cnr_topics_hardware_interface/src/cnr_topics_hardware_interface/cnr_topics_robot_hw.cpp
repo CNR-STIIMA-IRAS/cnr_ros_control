@@ -33,11 +33,10 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <hardware_interface/joint_command_interface.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <trajectory_msgs/JointTrajectoryPoint.h>
 #include <name_sorting/name_sorting.h>
-
-
 #include <cnr_topics_hardware_interface/cnr_topics_robot_hw.h>
 
 #include <pluginlib/class_list_macros.h>
@@ -47,12 +46,12 @@ PLUGINLIB_EXPORT_CLASS(cnr_hardware_interface::TopicsRobotHW, cnr_hardware_inter
 
 
 #define CNR_FATAL_RETURN( MSG )\
-      CNR_RETURN_FALSE(*m_logger, "ERROR DURING STARTING HARDWARE INTERFACE ' "+m_robothw_nh.getNamespace()+" ':" + std::string( MSG ) );\
+      CNR_RETURN_FALSE(m_logger, "ERROR DURING STARTING HARDWARE INTERFACE ' "+m_robothw_nh.getNamespace()+" ':" + std::string( MSG ) );\
       std::cout.flush();\
 
 
 #define WARNING( MSG )\
-      CNR_DEBUG(*m_logger, "[ "+ m_robothw_nh.getNamespace() + " ] RobotHW Nodelet: " + std::string( MSG ) );
+      CNR_DEBUG(m_logger, "[ "+ m_robothw_nh.getNamespace() + " ] RobotHW Nodelet: " + std::string( MSG ) );
 
 static size_t line = __LINE__;
 #define __LL__ line = __LINE__;
@@ -70,7 +69,8 @@ void setParam(TopicsRobotHW* hw, const std::string& ns)
   if (hw->m_resources.count(TWIST_RESOURCE)) hw->m_twist_resource              ->setParam(ns);
 }
 
-std::vector<std::string> getResourceNames(const std::map< cnr_hardware_interface::RESOURCE_ID, std::shared_ptr< cnr_hardware_interface::Resource > >& resources)
+std::vector<std::string> getResourceNames(const std::map< cnr_hardware_interface::RESOURCE_ID,
+                                            std::shared_ptr< cnr_hardware_interface::Resource > >& resources)
 {
   std::vector<std::string> ret;
   for (auto const & resource : resources)
@@ -84,23 +84,24 @@ std::vector<std::string> getResourceNames(const std::map< cnr_hardware_interface
 TopicsRobotHW::TopicsRobotHW()
 {
   m_set_status_param = boost::bind(setParam, this, _1);
+  m_warmup = 0;
 }
 
 bool TopicsRobotHW::doInit()
 #define INIT_RESOURCE( RES, res_var, RES_TYPE, CLAIMED_RES_TYPE)\
       if( m_resources.count( RES ) )\
       {\
-        CNR_INFO(*m_logger, "[ " << m_robot_name << " ] Create '" <<  #RES << "' Claimed Resource");\
+        CNR_INFO(m_logger, "[ " << m_robot_name << " ] Create '" <<  #RES << "' Claimed Resource");\
         std::shared_ptr< cnr_hardware_interface::Resource > p  = m_resources.at( RES );\
         std::shared_ptr< cnr_hardware_interface::RES_TYPE > pp = std::static_pointer_cast<cnr_hardware_interface::RES_TYPE>( p );\
         res_var.reset( new CLAIMED_RES_TYPE( *pp, m_robothw_nh, this->m_topics_subscribed ) );\
-        CNR_INFO(*m_logger, "[ " << m_robot_name << " ] Initializing '" << #RES << "' Claimed Resource");\
+        CNR_INFO(m_logger, "[ " << m_robot_name << " ] Initializing '" << #RES << "' Claimed Resource");\
         init##CLAIMED_RES_TYPE( );\
-        CNR_INFO(*m_logger, "[ " << m_robot_name << " ] Claimed Resource '"<< #RES << "' succesfully initialized");\
+        CNR_INFO(m_logger, "[ " << m_robot_name << " ] Claimed Resource '"<< #RES << "' succesfully initialized");\
       }
 
 {
-  CNR_TRACE_START(*m_logger);
+  CNR_TRACE_START(m_logger);
   try
   {
     std::vector<std::string> resources;
@@ -129,7 +130,7 @@ bool TopicsRobotHW::doInit()
 
       if (it != cnr_hardware_interface::RESOURCES().end())
       {
-        CNR_DEBUG(*m_logger, "Reading param for resource: '" << it->second);
+        CNR_DEBUG(m_logger, "Reading param for resource: '" << it->second);
         std::string ns = m_robothw_nh.getNamespace() + "/" + it->second;
 
         std::shared_ptr< cnr_hardware_interface::Resource > claimed_resource;
@@ -214,7 +215,7 @@ bool TopicsRobotHW::doInit()
             CNR_FATAL_RETURN(ns + "/frames_id has size zero");
           }
           for (auto const & fr :  pr->m_frames_id)
-            CNR_DEBUG(*m_logger, ns << " - " << fr);
+            CNR_DEBUG(m_logger, ns << " - " << fr);
           claimed_resource = pr;
         }
         break;
@@ -263,10 +264,10 @@ bool TopicsRobotHW::doInit()
         }
         else
         {
-          CNR_DEBUG(*m_logger, "Subscribed topics: ");
+          CNR_DEBUG(m_logger, "Subscribed topics: ");
           for (auto const & s : subscribed_topics)
           {
-            CNR_DEBUG(*m_logger, " - " << s);
+            CNR_DEBUG(m_logger, " - " << s);
           }
         }
 
@@ -284,8 +285,8 @@ bool TopicsRobotHW::doInit()
       }
       else
       {
-        CNR_WARN(*m_logger,  m_robothw_nh.getNamespace() << "/resources/" <<  resource << "'  is not supported");
-        CNR_WARN(*m_logger,  " Available Resource: " << cnr_hardware_interface::AVAILABLE_RESOURCES());
+        CNR_WARN(m_logger,  m_robothw_nh.getNamespace() << "/resources/" <<  resource << "'  is not supported");
+        CNR_WARN(m_logger,  " Available Resource: " << cnr_hardware_interface::AVAILABLE_RESOURCES());
       }
 
     }
@@ -294,10 +295,11 @@ bool TopicsRobotHW::doInit()
       CNR_FATAL_RETURN("No claimed resources. ?!?!?");
     }
 
-    CNR_DEBUG(*m_logger, "Create the TopicsRobotHW (claimed resources: " << m_resources.size() << ", max missing messages: " << maximum_missing_cycles);
+    CNR_DEBUG(m_logger, "Create the TopicsRobotHW (claimed resources: " << m_resources.size()
+                  << ", max missing messages: " << maximum_missing_cycles<<")");
 
 
-    m_resource_names = getResourceNames(m_resources);
+    //setResourceNames(getResourceNames(m_resources));
     m_joint_resource = nullptr;
     m_missing_messages = 0;
     m_max_missing_messages = maximum_missing_cycles;
@@ -308,7 +310,7 @@ bool TopicsRobotHW::doInit()
     INIT_RESOURCE(POSE_RESOURCE, m_pose_resource, PoseResource, PoseClaimedResource);
     INIT_RESOURCE(TWIST_RESOURCE, m_twist_resource, TwistResource, TwistClaimedResource);
 
-    CNR_INFO(*m_logger, "[ " << m_robot_name << " ] Ok, TopicsRobotHW initialized");
+    CNR_INFO(m_logger, "[ " << m_robot_name << " ] Ok, TopicsRobotHW initialized");
 
   }
   catch (std::exception& e)
@@ -328,13 +330,16 @@ bool TopicsRobotHW::doInit()
     return false;
   }
 
-  return true;
+  CNR_RETURN_TRUE(m_logger);;
 
 #undef INIT_RESOURCE
 }
 
 bool TopicsRobotHW::doRead(const ros::Time& time, const ros::Duration& period)
 {
+  CNR_TRACE_START_THROTTLE_DEFAULT(m_logger);
+  std::stringstream report;
+  m_warmup++;
   if (!topicsReceived())
   {
     m_missing_messages++;
@@ -346,15 +351,30 @@ bool TopicsRobotHW::doRead(const ros::Time& time, const ros::Duration& period)
 
   resetTopicsReceived();
 
-  if (m_missing_messages > m_max_missing_messages)
+  if(m_warmup < m_max_missing_messages * 1000000 )
+  {
+    CNR_RETURN_TRUE_THROTTLE_DEFAULT(m_logger);
+  }
+  else if(m_missing_messages > m_max_missing_messages)
   {
     if (getStatus() == cnr_hardware_interface::RUNNING)
     {
-      add_diagnostic_message("ERROR", "maximum_missing_cycles " + std::to_string(m_missing_messages) + "s ", {{"read", "missing messages"}}, true);
-      return false;
+      std::string all_topics = "[";
+      for (const std::pair<std::string, bool>& topic_received : m_topics_subscribed)
+      {
+        if(!topic_received.second)
+          all_topics += topic_received.first + " ";
+      }
+      all_topics +="]";
+
+      addDiagnosticsMessage("ERROR","Missing Cycles"+std::to_string(m_missing_messages)+", Topics: "+all_topics,
+        {{"read", "missing messages"}}, &report);
+      
+      CNR_ERROR_THROTTLE(m_logger, 5.0, report.str());
+      CNR_RETURN_FALSE_THROTTLE(m_logger, 5.0);
     }
   }
-  return true;
+  CNR_RETURN_TRUE_THROTTLE_DEFAULT(m_logger);
 }
 
 bool TopicsRobotHW::doWrite(const ros::Time& time, const ros::Duration& period)
@@ -389,6 +409,7 @@ bool TopicsRobotHW::doWrite(const ros::Time& time, const ros::Duration& period)
 
 bool TopicsRobotHW::doPrepareSwitch(const std::list< hardware_interface::ControllerInfo >& start_list, const std::list< hardware_interface::ControllerInfo >& stop_list)
 {
+  CNR_TRACE_START(m_logger);
   if (m_resources.count(JOINT_RESOURCE))
   {
     assert(m_joint_resource);
@@ -414,7 +435,7 @@ bool TopicsRobotHW::doPrepareSwitch(const std::list< hardware_interface::Control
     assert(m_twist_resource);
     m_twist_resource->prepareSwitch(start_list, stop_list);
   }
-  return true;
+  CNR_RETURN_TRUE(m_logger);
 }
 
 
@@ -426,21 +447,24 @@ if( m_resources.count( RES ) )\
   assert( res_var );\
   if( res_var->checkForConflict(info) )\
   {\
-    add_diagnostic_message("ERROR", "The resource '" + std::string( #RES ) + "' is in conflict with another controller", {{"Transition","switching"}} , true );\
+    std::stringstream report;\
+    addDiagnosticsMessage("ERROR",\
+                          "The resource '" + std::string( #RES ) + "' is in conflict with another controller",\
+                          {{"Transition","switching"}},\
+                          &report );\
+    CNR_ERROR_COND(m_logger, report.str().size(), report.str() );\
   }\
 }
 
 {
-
+  CNR_TRACE_START(m_logger);
   CHECK_RESOURCE(JOINT_RESOURCE, m_joint_resource);
   CHECK_RESOURCE(ANALOG_RESOURCE, m_analog_resource);
   CHECK_RESOURCE(WRENCH_RESOURCE, m_force_torque_sensor_resource);
   CHECK_RESOURCE(POSE_RESOURCE, m_pose_resource);
   CHECK_RESOURCE(TWIST_RESOURCE, m_twist_resource);
 
-
-  return false;
-
+  CNR_RETURN_FALSE(m_logger);
 #undef CHECK_RESOURCE
 }
 
@@ -453,6 +477,7 @@ bool TopicsRobotHW::doShutdown()
   }\
 
 {
+  CNR_TRACE_START(m_logger);
   if (!m_shutted_down)
   {
     SHUTDOWN_RESOURCE(JOINT_RESOURCE, m_joint_resource);
@@ -461,11 +486,12 @@ bool TopicsRobotHW::doShutdown()
     SHUTDOWN_RESOURCE(POSE_RESOURCE, m_pose_resource);
     SHUTDOWN_RESOURCE(TWIST_RESOURCE, m_twist_resource);
   }
-  return true;
+  CNR_RETURN_TRUE(m_logger);
 }
 
 bool TopicsRobotHW::initJointClaimedResource()
 {
+  CNR_TRACE_START(m_logger);
   bool ret = true;
   try
   {
@@ -495,8 +521,7 @@ bool TopicsRobotHW::initJointClaimedResource()
     ret = false;
   }
 
-
-  return ret;
+  CNR_RETURN_BOOL(m_logger, ret);
 }
 
 bool TopicsRobotHW::initAnalogClaimedResource()
@@ -510,7 +535,6 @@ bool TopicsRobotHW::initAnalogClaimedResource()
     registerInterface(&m_analog_resource->m_a_h);
     registerInterface(&m_analog_resource->m_a_sh);
   }
-
   return ret;
 }
 

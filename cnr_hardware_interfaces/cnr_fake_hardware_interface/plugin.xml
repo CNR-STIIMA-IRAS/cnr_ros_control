@@ -1,12 +1,3 @@
-
-<library path="lib/libcnr_fake_hardware_interface">
-  <class name="cnr/control/FakeRobotHwNodelet" type="cnr_hardware_nodelet_interface::FakeRobotHwNodelet" base_class_type="nodelet::Nodelet">
-    <description>
-      cnr_hardware_interface::FakeRobotHwNodelet
-    </description>
-  </class>
-</library>
-
 <library path="lib/libcnr_fake_hardware_interface">
   <class name="cnr/control/FakeRobotHW" type="cnr_hardware_interface::FakeRobotHW" base_class_type="cnr_hardware_interface::RobotHW">
     <description>

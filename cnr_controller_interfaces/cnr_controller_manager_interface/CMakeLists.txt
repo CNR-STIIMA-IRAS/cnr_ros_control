@@ -1,14 +1,15 @@
 cmake_minimum_required(VERSION 3.1)
 project(cnr_controller_manager_interface)
 
-set(CMAKE_BUILD_TYPE Debug)
-set(CMAKE_CXX_STANDARD 14)
+if(NOT CMAKE_BUILD_TYPE )
+  set(CMAKE_BUILD_TYPE Release)
+endif()
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-find_package(catkin REQUIRED COMPONENTS
-  cnr_controller_interface
-)
+find_package(catkin REQUIRED COMPONENTS controller_manager_msgs cnr_logger cnr_controller_interface_params
+  realtime_utilities)
 
 if(CATKIN_ENABLE_TESTING AND ENABLE_COVERAGE_TESTING)
   find_package(code_coverage REQUIRED)
@@ -19,7 +20,8 @@ endif()
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
-  CATKIN_DEPENDS cnr_controller_interface controller_manager
+  CATKIN_DEPENDS controller_manager controller_manager_msgs cnr_logger cnr_controller_interface_params
+                  realtime_utilities
 #  DEPENDS system_lib
 )
 
@@ -34,9 +36,14 @@ include_directories(
 
 ## Declare a C++ library
 add_library(${PROJECT_NAME}
+  src/${PROJECT_NAME}/internal/cnr_controller_manager_base.cpp
+  src/${PROJECT_NAME}/internal/cnr_controller_manager.cpp
    src/${PROJECT_NAME}/cnr_controller_manager_interface.cpp
+   src/${PROJECT_NAME}/cnr_controller_manager_proxy.cpp
 )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
+target_compile_options(${PROJECT_NAME} PUBLIC -Wall -faligned-new
+        $<$<CONFIG:Release>:-Ofast -funroll-loops -ffast-math >)
 
 
 #############
