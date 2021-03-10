@@ -35,11 +35,11 @@ Then, it allows the loading/unlaoding and start/stop of all the different contro
 
 The configuration is done trough a proper yaml file, and it is possible to dynamically switch between many different configurations.
 
-A collaction of Matlab scripts useful for the...
+A collection of Matlab scripts useful for the...
 
 ## Dependencies ##
 
-The package provides a .rosinstall file with the dependencies, and the depndencies are configured in the `package.xml` of the packages.
+The package provides a .rosinstall file with the dependencies, and the dependencies are configured in the `package.xml` of the packages.
 
 ```shell
 \$ export ROSINSTALL_FILE=dependencies.rosinstall
