@@ -10,3 +10,6 @@
 - git:
     local-name: subscription_notifier
     uri:  https://github.com/CNR-STIIMA-IRAS/subscription_notifier
+- git:
+    local-name: cnr_hardware_interface
+    uri:  https://github.com/CNR-STIIMA-IRAS/cnr_hardware_interface.git
