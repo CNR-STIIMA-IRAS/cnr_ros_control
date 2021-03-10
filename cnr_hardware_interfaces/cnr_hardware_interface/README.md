@@ -94,6 +94,22 @@ protected:
 typedef std::shared_ptr<RobotHW> RobotHWSharedPtr;
 ```
 
+
+## Dependencies ##
+
+The package provides a .rosinstall file with the dependencies, and the dependencies are configured in the `package.xml` of the packages.
+
+```shell
+\$ export ROSINSTALL_FILE=dependencies.rosinstall
+\$ mkdir -p ~/catkin_ws/src
+\$ cd ~/catkin_ws/src
+\$ git clone https://github.com/CNR-STIIMA-IRAS/cnr_hardware_interface
+\$ wstool init
+\$ wstool merge cnr_ros_control/dependencies.rosinstall
+\$ wstool up -v
+\$ cd ~/catkin_ws
+\$ rosdep install -y --from-paths src --ignore-src --rosdistro $ROS_DISTRO
+```
 ## Developer Contact
 
 **Authors:**

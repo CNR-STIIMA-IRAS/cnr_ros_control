@@ -1,0 +1,4 @@
+- git:
+    local-name: cnr_logger
+    uri: https://github.com/CNR-STIIMA-IRAS/cnr_logger
+
