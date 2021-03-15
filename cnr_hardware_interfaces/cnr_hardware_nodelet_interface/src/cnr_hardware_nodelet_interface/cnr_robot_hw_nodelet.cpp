@@ -278,7 +278,7 @@ bool RobotHwNodelet::enterOnInit()
   realtime_utilities::DiagnosticsInterface::addTimeTracker("update",sampling_period);
   
   m_robot_hw_plugin_loader.reset(
-    new pluginlib::ClassLoader<cnr_hardware_interface::RobotHW>("cnr_hardware_interface", "cnr_hardware_interface::RobotHW"));
+    new pluginlib::ClassLoader<hardware_interface::RobotHW>("hardware_interface", "hardware_interface::RobotHW"));
 
   boost::function<bool(configuration_msgs::SendMessage::Request &req,configuration_msgs::SendMessage::Response &res)>
       callback =

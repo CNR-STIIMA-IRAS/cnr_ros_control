@@ -52,9 +52,9 @@
   <build_export_depend>rosdyn_core</build_export_depend>
   <exec_depend>rosdyn_core</exec_depend>
 
-  <build_depend>rosdyn_utilities</build_depend>
-  <build_export_depend>rosdyn_utilities</build_export_depend>
-  <exec_depend>rosdyn_utilities</exec_depend>
+  <build_depend>rosdyn_chain_state</build_depend>
+  <build_export_depend>rosdyn_chain_state</build_export_depend>
+  <exec_depend>rosdyn_chain_state</exec_depend>
 
   <build_depend>subscription_notifier</build_depend>
   <build_export_depend>subscription_notifier</build_export_depend>

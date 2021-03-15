@@ -12,7 +12,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(catkin REQUIRED COMPONENTS
   realtime_utilities cnr_controller_interface_params cnr_hardware_interface controller_interface diagnostic_msgs
-  cnr_logger urdf rosdyn_core rosdyn_utilities subscription_notifier sensor_msgs
+  cnr_logger urdf rosdyn_core rosdyn_chain_state subscription_notifier sensor_msgs
 )
 
 find_package (Eigen3 3.3 REQUIRED NO_MODULE)
@@ -28,7 +28,7 @@ catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
   CATKIN_DEPENDS urdf realtime_utilities cnr_controller_interface_params cnr_hardware_interface controller_interface
-      cnr_logger rosdyn_core rosdyn_utilities subscription_notifier sensor_msgs
+      cnr_logger rosdyn_core rosdyn_chain_state subscription_notifier sensor_msgs
 )
 
 include_directories(
@@ -64,7 +64,7 @@ if(${CMAKE_VERSION} VERSION_GREATER  "3.16.0")
     <hardware_interface/joint_command_interface.h>
     <cnr_hardware_interface/veleff_command_interface.h>
     <cnr_hardware_interface/posveleff_command_interface.h>
-    <rosdyn_utilities/chain_state.h>
+    <rosdyn_chain_state/chain_state.h>
   )
 endif()
 

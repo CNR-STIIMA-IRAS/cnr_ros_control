@@ -42,7 +42,7 @@
 #include <sensor_msgs/JointState.h>
 
 #include <cnr_logger/cnr_logger.h>
-#include <rosdyn_utilities/chain_state.h>
+#include <rosdyn_chain_state/chain_state.h>
 #include <cnr_controller_interface/cnr_joint_controller_interface.h>
 
 #include <urdf_model/model.h>

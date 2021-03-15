@@ -45,7 +45,7 @@
 
 #include <cnr_logger/cnr_logger.h>
 #include <rosdyn_core/primitives.h>
-#include <rosdyn_utilities/chain_state.h>
+#include <rosdyn_chain_state/chain_state.h>
 
 #include <cnr_controller_interface/cnr_controller_interface.h>
 #include <cnr_controller_interface/internal/cnr_handles.h>

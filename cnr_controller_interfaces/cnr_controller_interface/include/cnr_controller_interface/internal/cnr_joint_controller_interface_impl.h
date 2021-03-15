@@ -40,11 +40,11 @@
 #include <sstream>
 #include <ros/ros.h>
 #include <cnr_logger/cnr_logger.h>
-#include <rosdyn_utilities/chain_state.h>
+#include <rosdyn_chain_state/chain_state.h>
 #include <cnr_controller_interface/internal/cnr_handles.h>
 #include <cnr_controller_interface/cnr_joint_controller_interface.h>
 #include <rosdyn_core/primitives.h>
-#include <rosdyn_utilities/chain_state.h>
+#include <rosdyn_chain_state/chain_state.h>
 #include <urdf_model/model.h>
 #include <urdf_parser/urdf_parser.h>
 
