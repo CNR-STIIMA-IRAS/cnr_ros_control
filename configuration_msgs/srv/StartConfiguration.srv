@@ -1,8 +1,0 @@
-int32 FORCE_RESTART=0
-int32 BEST_EFFORT=1
-int32 STRICT=2
-string start_configuration
-int32 strictness
-
----
-bool ok
