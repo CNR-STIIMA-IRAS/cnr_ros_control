@@ -74,7 +74,7 @@ protected:
 
   void         diagnosticsThread();
   void         controlUpdateThread();
-  virtual bool dump_state(const cnr_hardware_interface::StatusHw& status) const;
+  virtual bool dumpState(const cnr_hardware_interface::StatusHw& status) const;
 
   enum THREAD_STATE { ON_INIT, RUNNING, ON_ERROR, EXPIRED } m_diagnostics_thread_state, m_update_thread_state;
 

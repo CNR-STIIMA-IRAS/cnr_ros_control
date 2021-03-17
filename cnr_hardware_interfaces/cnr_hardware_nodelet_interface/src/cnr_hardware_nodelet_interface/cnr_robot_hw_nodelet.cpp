@@ -208,12 +208,12 @@ void RobotHwNodelet::onInit()
   }
   catch (std::exception& e)
   {
-    dump_state(cnr_hardware_interface::ERROR);
+    dumpState(cnr_hardware_interface::ERROR);
     CNR_RETURN_NOTOK(m_logger, void(), m_hw_name + ": ExitOnInit failed. Exception caught: " + std::string(e.what()));
   }
   catch (...)
   {
-    dump_state(cnr_hardware_interface::ERROR);
+    dumpState(cnr_hardware_interface::ERROR);
     CNR_RETURN_NOTOK(m_logger, void(), m_hw_name + ": ExitOnInit failed. UNhandled Exception");
   }
 }
@@ -394,20 +394,20 @@ void RobotHwNodelet::diagnosticsThread()
       updater.update();
       wd.sleep();
 
-      // TO DO: ADD diagnosticsError HWNodelet
-      bool hardware_interface_with_error = (m_hw == nullptr) || (m_hw->getStatus() == cnr_hardware_interface::ERROR);
-      if(hardware_interface_with_error)
-      {
-        CNR_FATAL_THROTTLE(m_logger, 10, "The Hardware interface '" << m_hw_name << "' is in error state, shutting down");
-      }
-      if (m_update_thread_state == ON_ERROR)
-      {
-        CNR_FATAL(m_logger, "The update thread is in Error. Abort.");
-      }
-      if (m_update_thread_state == EXPIRED)
-      {
-        CNR_FATAL(m_logger, "The update thread is expired. Something went wrong during the start. Abort.");
-      }
+      // // TO DO: ADD diagnosticsError HWNodelet
+      // bool hardware_interface_with_error = (m_hw == nullptr) || (m_hw->getStatus() == cnr_hardware_interface::ERROR);
+      // if(hardware_interface_with_error)
+      // {
+      //   CNR_FATAL_THROTTLE(m_logger, 10, "The Hardware interface '" << m_hw_name << "' is in error state, shutting down");
+      // }
+      // if (m_update_thread_state == ON_ERROR)
+      // {
+      //   CNR_FATAL(m_logger, "The update thread is in Error. Abort.");
+      // }
+      // if (m_update_thread_state == EXPIRED)
+      // {
+      //   CNR_FATAL(m_logger, "The update thread is expired. Something went wrong during the start. Abort.");
+      // }
     }
     CNR_DEBUG(m_logger, "Diagnostic finished.");
   }
@@ -498,22 +498,31 @@ void RobotHwNodelet::controlUpdateThread()
     catch (std::exception& e)
     {
       CNR_ERROR(m_logger, "updateThread error call hardware interface read(): " << e.what());
-      break;
+      dumpState(cnr_hardware_interface::ERROR);
+      m_stop_update_thread = true;
+      m_update_thread_state = ON_ERROR;
+      return;
     }
 
     try
     {
       timeSpanStrakcer("update")->tick();
+      // 
+      // it executes the 
+      // hw->doSwitch() as needed, and the update of the control strategies
+      //
       m_cmp->update(ros::Time::now(), m_period);
       timeSpanStrakcer("update")->tock();
     }
     catch (std::exception& e)
     {
       CNR_WARN(m_logger, "updateThread error call controller manager update(): " << std::string(e.what()));
+      dumpState(cnr_hardware_interface::ERROR);
       m_stop_update_thread = true;
       m_update_thread_state = ON_ERROR;
       return;
     }
+
     try
     {
       timeSpanStrakcer("write")->tick();
@@ -522,13 +531,17 @@ void RobotHwNodelet::controlUpdateThread()
     }
     catch (std::exception& e)
     {
-      CNR_WARN(m_logger, "updateThread error call hardware interface write() " << e.what());
+      CNR_ERROR(m_logger, "updateThread error call hardware interface write() " << e.what());
+      dumpState(cnr_hardware_interface::ERROR);
+      m_stop_update_thread = true;
+      m_update_thread_state = ON_ERROR;
+      return;
     }
 
     if (m_hw->getStatus() == cnr_hardware_interface::ERROR)
     {
       CNR_ERROR_THROTTLE(m_logger, 1.0, "RobotHw is in error");
-      dump_state(cnr_hardware_interface::ERROR);
+      dumpState(cnr_hardware_interface::ERROR);
     }
   }
 
@@ -537,7 +550,7 @@ void RobotHwNodelet::controlUpdateThread()
   CNR_WARN(m_logger, "EXIT UPDATE THREAD");
 }
 
-bool RobotHwNodelet::dump_state(const cnr_hardware_interface::StatusHw& status) const
+bool RobotHwNodelet::dumpState(const cnr_hardware_interface::StatusHw& status) const
 {
   ros::param::set(cnr_hardware_interface::last_status_param(m_hw_namespace), status);
   return true;
