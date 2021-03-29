@@ -347,16 +347,28 @@ bool JointController<H,T>::enterUpdate()
 }
 
 template<class H,class T>
-inline void JointController<H,T>::startUpdateTransformationsThread(int ffwd_kin_type, double hz)
+inline bool JointController<H,T>::startUpdateTransformationsThread(int ffwd_kin_type, double hz)
 {
   CNR_TRACE_START(this->m_logger);
   stop_update_transformations_ = false;
   update_transformations_runnig_ = false;
-  CNR_INFO(this->logger(), "Creating thread");
+  CNR_DEBUG(this->logger(), "Creating the fkin update thread");
   update_transformations_ = std::thread(
         &JointController<H,T>::updateTransformationsThread, this, ffwd_kin_type, hz);
-  CNR_INFO(this->logger(), "Thread created");
-  CNR_RETURN_OK(this->m_logger, void());
+  CNR_DEBUG(this->logger(), "Fkin Thread created");
+  
+  double timeout = 1.0;
+  ros::Time st = ros::Time::now();
+  while(!update_transformations_runnig_)
+  {
+    ros::Duration(0.005).sleep();
+    if((ros::Time::now()-st).toSec()>timeout)
+    {
+      CNR_ERROR(this->m_logger,"The thread that updates the fkin didn't start within the timeout of "<< timeout << ". Abort");
+      CNR_RETURN_TRUE(this->m_logger);  
+    }
+  }
+  CNR_RETURN_TRUE(this->m_logger);
 }
 
 template<class H,class T>

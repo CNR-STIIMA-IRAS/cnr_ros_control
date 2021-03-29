@@ -114,7 +114,7 @@ protected:
   const Eigen::Vector6d&   getTwistd( ) const;
   const rosdyn::Matrix6Xd& getJacobian( ) const;
 
-  void startUpdateTransformationsThread(int ffwd_kin_type, double hz = 10.0);
+  bool startUpdateTransformationsThread(int ffwd_kin_type, double hz = 10.0);
   void stopUpdateTransformationsThread();
   virtual void updateTransformationsThread(int ffwd_kin_type, double hz);
 
