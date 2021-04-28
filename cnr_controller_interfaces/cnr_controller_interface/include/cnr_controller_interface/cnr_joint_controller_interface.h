@@ -94,7 +94,9 @@ protected:
 
   Handler<H,T>                   m_handler;
   urdf::ModelInterfaceSharedPtr  m_urdf_model;
-  rosdyn::Chain                  m_chain;
+
+  const rosdyn::Chain& chain() const;
+  rosdyn::Chain& chainNonConst();
 
   const rosdyn::ChainState& chainState() const;
   rosdyn::ChainState&       chainState();
@@ -125,6 +127,7 @@ protected:
 
 private:
   rosdyn::LinkPtr    m_root_link;  //link primitivo da cui parte la catena cinematica(world ad esempio)
+  rosdyn::Chain      m_chain;
   rosdyn::ChainState m_rstate;
   Eigen::IOFormat    m_cfrmt;
 };

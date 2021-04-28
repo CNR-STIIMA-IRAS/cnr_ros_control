@@ -413,7 +413,11 @@ inline void JointController<H,T>::updateTransformationsThread(int ffwd_kin_type,
   CNR_RETURN_OK(this->m_logger, void());
 }
 
-
+template<class H,class T>
+inline const rosdyn::Chain& JointController<H,T>::chain() const
+{
+  return m_chain;
+}
 
 template<class H,class T>
 inline const rosdyn::ChainState& JointController<H,T>::chainState() const
@@ -497,21 +501,21 @@ template<class H,class T>
 inline const Eigen::Vector6d& JointController<H,T>::getTwist( ) const
 {
   std::lock_guard<std::mutex> lock(this->mtx_);
-  return m_rstate.twist();
+  return m_rstate.toolTwist();
 }
 
 template<class H,class T>
 inline const Eigen::Vector6d& JointController<H,T>::getTwistd( ) const
 {
   std::lock_guard<std::mutex> lock(this->mtx_);
-  return m_rstate.twistd();
+  return m_rstate.toolTwistd();
 }
 
 template<class H,class T>
 inline const rosdyn::Matrix6Xd& JointController<H,T>::getJacobian( ) const
 {
   std::lock_guard<std::mutex> lock(this->mtx_);
-  return m_rstate.jacobian();
+  return m_rstate.toolJacobian();
 }
 
 

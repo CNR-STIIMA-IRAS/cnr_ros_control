@@ -560,8 +560,18 @@ size_t Controller<T>::add_publisher(const std::string &topic, uint32_t queue_siz
   return m_pub.size()-1;
 }
 
+
 template<typename T> template<typename M>
-bool Controller<T>::publish(const size_t& idx, const M &message)
+bool Controller<T>::publish(const size_t& idx, const M& message)
+{
+   boost::shared_ptr<M> _message;
+   _message.reset(new M());
+   *_message = message;
+   return this->publish(_message);
+}
+
+template<typename T> template<typename M>
+bool Controller<T>::publish(const size_t& idx, const boost::shared_ptr<M>& message)
 {
   CNR_TRACE_START_THROTTLE_DEFAULT(this->m_logger);
   if(idx >=m_pub.size())

@@ -109,8 +109,8 @@ inline bool JointCommandController<H,T>::enterInit()
   }
 
   m_priority = QD_PRIORITY;
-  m_target.init(this->m_chain);
-  m_last_target.init(this->m_chain);
+  m_target.init(this->chainNonConst());
+  m_last_target.init(this->chainNonConst());
 
   this->template add_subscriber<std_msgs::Int64>("/speed_ovr" , 1,
                      boost::bind(&JointCommandController<H,T>::overrideCallback, this, _1), false);
@@ -140,10 +140,10 @@ inline bool JointCommandController<H,T>::enterStarting()
     CNR_RETURN_FALSE(this->m_logger);
   }
 
-  m_target.setZero(this->m_chain);
+  m_target.setZero(this->chainNonConst());
   m_target.q() = this->getPosition();
 
-  this->m_handler.update(m_target, this->m_chain);
+  this->m_handler.update(m_target, this->chain());
 
   CNR_DEBUG(this->m_logger, "Target at Start: Position: " << m_target.q() );
   CNR_DEBUG(this->m_logger, "Target at Start: Velocity: " << m_target.qd() );
@@ -180,10 +180,10 @@ inline bool JointCommandController<H,T>::exitUpdate()
   {
     report << "==========\n";
     report << "Priority           : " << std::to_string(m_priority) << "\n";
-    report << "upper limit        : " << TP(this->m_chain.getQMax()) << "\n";
-    report << "lower limit        : " << TP(this->m_chain.getQMin()) << "\n";
-    report << "Speed Limit        : " << TP(this->m_chain.getDQMax()) << "\n";
-    report << "Acceleration Limit : " << TP(this->m_chain.getDDQMax()) << "\n";
+    report << "upper limit        : " << TP(this->chain().getQMax()) << "\n";
+    report << "lower limit        : " << TP(this->chain().getQMin()) << "\n";
+    report << "Speed Limit        : " << TP(this->chain().getDQMax()) << "\n";
+    report << "Acceleration Limit : " << TP(this->chain().getDDQMax()) << "\n";
     report << "----------\n";
     // ============================== ==============================
     auto nominal_qd = m_target.q();
@@ -213,7 +213,7 @@ inline bool JointCommandController<H,T>::exitUpdate()
 
     // ============================== ==============================
     auto saturated_qd = nominal_qd;
-    if(rosdyn::saturateSpeed(this->m_chain, saturated_qd, m_last_target.qd(), m_last_target.q(),
+    if(rosdyn::saturateSpeed(this->chain(), saturated_qd, m_last_target.qd(), m_last_target.q(),
                                this->m_sampling_period, m_max_velocity_multiplier, true, &report))
     {
       print_report = true;
@@ -235,11 +235,11 @@ inline bool JointCommandController<H,T>::exitUpdate()
   report<< "qd trg: " << TP(m_target.qd()) << "\n";
   report<< "ef trg: " << TP(m_target.effort()) << "\n";
 
-  this->m_handler.update(m_target, this->m_chain);
+  this->m_handler.update(m_target, this->chain());
 
   for(size_t iAx=0; iAx<this->jointNames().size(); iAx++)
   {
-    report<< this->m_hw->getHandle(this->m_chain.getActiveJointName(iAx)) <<"\n";
+    report<< this->m_hw->getHandle(this->chain().getActiveJointName(iAx)) <<"\n";
   }
 
   CNR_WARN_COND_THROTTLE(this->m_logger, print_report, throttle_time, report.str() );
@@ -258,12 +258,12 @@ inline bool JointCommandController<H,T>::exitStopping()
 {
   CNR_TRACE_START(this->m_logger);
 
-  for(unsigned int iAx=0; iAx<this->m_chain.getActiveJointsNumber(); iAx++)
+  for(unsigned int iAx=0; iAx<this->chain().getActiveJointsNumber(); iAx++)
   {
     m_target.q(iAx) = this->getPosition(iAx);
   }
   eigen_utils::setZero(m_target.qd());
-  this->m_handler.update(m_target, this->m_chain);
+  this->m_handler.update(m_target, this->chain());
 
   if(!JointController<H,T>::exitStopping())
   {
@@ -319,6 +319,19 @@ inline void JointCommandController<H,T>::safeOverrideCallback_2(const std_msgs::
   m_safe_override_2 = ovr;
 }
 
+template<class H,class T>
+inline const rosdyn::ChainState& JointCommandController<H,T>::chainCommand() const
+{
+  std::lock_guard<std::mutex> lock(this->mtx_);
+  return m_target;
+}
+
+template<class H,class T>
+inline rosdyn::ChainState& JointCommandController<H,T>::chainCommand()
+{
+  std::lock_guard<std::mutex> lock(this->mtx_);
+  return m_target;
+}
 
 template<class H,class T>
 inline const rosdyn::VectorXd& JointCommandController<H,T>::getCommandPosition( ) const
@@ -441,12 +454,12 @@ inline void JointCommandController<H,T>::updateTransformationsThread(int ffwd_ki
 
   {
     std::lock_guard<std::mutex> lock(this->mtx_);
-    if(!rstate.init(this->m_chain))
+    if(!rstate.init(this->chainNonConst()))
     {
        CNR_FATAL(this->m_logger, "Chain failure!");
        CNR_RETURN_NOTOK(this->m_logger, void());
     }
-    if(!target.init(this->m_chain))
+    if(!target.init(this->chainNonConst()))
     {
        CNR_FATAL(this->m_logger, "Chain failure!");
        CNR_RETURN_NOTOK(this->m_logger, void());
@@ -461,8 +474,8 @@ inline void JointCommandController<H,T>::updateTransformationsThread(int ffwd_ki
       rstate.copy(this->chainState(), this->chainState().ONLY_JOINT);
       target.copy(this->m_target, this->m_target.ONLY_JOINT);
     }
-    rstate.updateTransformations(this->m_chain, ffwd_kin_type);
-    target.updateTransformations(this->m_chain, ffwd_kin_type);
+    rstate.updateTransformations(this->chainNonConst(), ffwd_kin_type);
+    target.updateTransformations(this->chainNonConst(), ffwd_kin_type);
     {
       //std::lock_guard<std::mutex> lock(this->mtx_);
       this->chainState().copy(rstate, rstate.ONLY_CART);

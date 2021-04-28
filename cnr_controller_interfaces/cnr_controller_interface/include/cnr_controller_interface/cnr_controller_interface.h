@@ -152,6 +152,15 @@ public:
   bool publish(const size_t& idx, const M &message);
 
   /**
+   * @brief publish
+   * @param id
+   * @param message
+   * @return
+   */
+  template<typename M>
+  bool publish(const size_t& idx, const boost::shared_ptr<M>& message);
+
+  /**
    * @brief add_subscriber
    * @param id
    * @param topic

@@ -85,6 +85,9 @@ protected:
   virtual bool exitUpdate() override;
   virtual bool exitStopping() override;
 
+  const rosdyn::ChainState& chainCommand() const;
+  rosdyn::ChainState&       chainCommand();
+
   const rosdyn::VectorXd& getCommandPosition    ( ) const;
   const rosdyn::VectorXd& getCommandVelocity    ( ) const;
   const rosdyn::VectorXd& getCommandAcceleration( ) const;
