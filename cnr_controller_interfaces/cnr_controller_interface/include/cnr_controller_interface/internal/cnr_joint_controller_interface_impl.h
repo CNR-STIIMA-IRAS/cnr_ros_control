@@ -433,7 +433,6 @@ inline rosdyn::ChainState& JointController<H,T>::chainState()
   return m_rstate;
 }
 
-
 template<class H,class T>
 inline const rosdyn::VectorXd& JointController<H,T>::getPosition( ) const
 {
