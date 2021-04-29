@@ -12,7 +12,7 @@ The extension is based on one package and two meta-packages.
 
 * The `cnr_hardware_interfaces` [(readme)](cnr_hardware_interfaces/README.md)
 * The `cnr_controller_interfaces` [(readme)](cnr_hardware_interfaces/README.md)
-* The `cnr_configuration_manager` [(readme()](cnr_configuration_manager/README.md)
+* The `cnr_configuration_manager` [(readme)](cnr_configuration_manager/README.md)
 
 The core of the extension is having encapsulated the lifecyle of the `RobotHw` [(link)](https://github.com/ros-controls/ros_control/wiki/hardware_interface) in a [`nodelet`](http://wiki.ros.org/nodelet).
 
@@ -42,15 +42,15 @@ A collection of Matlab scripts useful for the...
 The package provides a .rosinstall file with the dependencies, and the dependencies are configured in the `package.xml` of the packages.
 
 ```shell
-\$ export ROSINSTALL_FILE=dependencies.rosinstall
-\$ mkdir -p ~/catkin_ws/src
-\$ cd ~/catkin_ws/src
-\$ git clone https://github.com/CNR-STIIMA-IRAS/cnr_ros_control
-\$ wstool init
-\$ wstool merge cnr_ros_control/dependencies.rosinstall
-\$ wstool up -v
-\$ cd ~/catkin_ws
-\$ rosdep install -y --from-paths src --ignore-src --rosdistro $ROS_DISTRO
+$ export ROSINSTALL_FILE=dependencies.rosinstall
+$ mkdir -p ~/catkin_ws/src
+$ cd ~/catkin_ws/src
+$ git clone https://github.com/CNR-STIIMA-IRAS/cnr_ros_control
+$ wstool init
+$ wstool merge cnr_ros_control/dependencies.rosinstall
+$ wstool up -v
+$ cd ~/catkin_ws
+$ rosdep install -y --from-paths src --ignore-src --rosdistro $ROS_DISTRO
 ```
 
 ## Example to download ##

@@ -420,6 +420,12 @@ inline const rosdyn::Chain& JointController<H,T>::chain() const
 }
 
 template<class H,class T>
+inline rosdyn::Chain& JointController<H,T>::chainNonConst()
+{
+  return m_chain;
+}
+
+template<class H,class T>
 inline const rosdyn::ChainState& JointController<H,T>::chainState() const
 {
   std::lock_guard<std::mutex> lock(this->mtx_);
