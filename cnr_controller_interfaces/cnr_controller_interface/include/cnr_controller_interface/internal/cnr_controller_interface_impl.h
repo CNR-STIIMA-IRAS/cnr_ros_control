@@ -567,7 +567,7 @@ bool Controller<T>::publish(const size_t& idx, const M& message)
    boost::shared_ptr<M> _message;
    _message.reset(new M());
    *_message = message;
-   return this->publish(_message);
+   return this->publish(idx, _message);
 }
 
 template<typename T> template<typename M>
