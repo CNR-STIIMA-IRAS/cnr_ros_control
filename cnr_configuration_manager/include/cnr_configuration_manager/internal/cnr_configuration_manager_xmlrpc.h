@@ -128,11 +128,35 @@ bool get_configuration_component_dependencies(XmlRpc::XmlRpcValue&      configur
   {
     return true;
   }
-  
-  for (int jdx = 0; jdx < configuration_component["depends"].size(); jdx++)
+
+  if (configuration_component["depends"].getType() != XmlRpc::XmlRpcValue::TypeArray)
   {
-    std::string d = configuration_component["depends"][jdx];
-    dependencies.push_back(d);
+    if (configuration_component["depends"].getType() == XmlRpc::XmlRpcValue::TypeString)
+    {
+      std::string d = configuration_component["depends"];
+      dependencies.push_back(d);
+    }
+    else
+    {
+      error = "The 'depends' is not an array neither a string. Abort." ;
+      return false;
+    }
+  }
+  else
+  {  
+    for (int jdx = 0; jdx < configuration_component["depends"].size(); jdx++)
+    {
+      if (configuration_component["depends"][jdx].getType() == XmlRpc::XmlRpcValue::TypeString)
+      {
+        std::string d = configuration_component["depends"][jdx];
+        dependencies.push_back(d);
+      }
+      else
+      {
+        error = "The 'depends' is an array, but the field " + std::to_string(jdx) +" is not a string. Abort." ;
+        return false;
+      }
+    }
   }
 
   return true;

@@ -595,7 +595,7 @@ bool ConfigurationManager::getAvailableConfigurationsFromParam()
   std::string error;
   if (!param::get_configuration_components(configuration_components, configurations, error))
   {
-    error = "Param '" + m_nh.getNamespace() + "/control_configurations' error: " + m_conf_loader.error() ;
+    error = "Param '" + m_nh.getNamespace() + "/control_configurations' error: " + error;
     CNR_RETURN_FALSE(m_logger, error);
   }
 
