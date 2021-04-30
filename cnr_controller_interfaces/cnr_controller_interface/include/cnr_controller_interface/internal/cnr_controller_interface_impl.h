@@ -577,7 +577,7 @@ bool Controller<T>::publish(const size_t& idx, const boost::shared_ptr<M>& messa
   if(idx >=m_pub.size())
   {
     CNR_RETURN_FALSE(this->m_logger,
-          "The index is out of range (idx:" +std::to_string(idx) + " size: " + std::to_string(m_pub.size()) +")" );
+          "The index is out of range (idx:" + std::to_string(idx) + " size: " + std::to_string(m_pub.size()) +")" );
   }
 
   if(!m_pub.at(idx))

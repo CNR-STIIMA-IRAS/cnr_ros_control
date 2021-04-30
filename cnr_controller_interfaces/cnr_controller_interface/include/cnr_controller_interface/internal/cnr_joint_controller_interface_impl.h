@@ -206,7 +206,6 @@ bool JointController<H,T>::enterInit()
       CNR_ERROR(this->m_logger, "Mismatch of the dimension of the chain names and the controlled joint names. Abort.");
       CNR_RETURN_FALSE(this->m_logger);
     }
-
     //=======================================
 
 
