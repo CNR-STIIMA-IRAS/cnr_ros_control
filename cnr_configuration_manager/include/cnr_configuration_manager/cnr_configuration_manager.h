@@ -35,11 +35,9 @@
 #ifndef CNR_CONFIGURATION_MANAGER_CNR_CONFIGURATION_MANAGER_H
 #define CNR_CONFIGURATION_MANAGER_CNR_CONFIGURATION_MANAGER_H
 
-#include <nodelet/nodelet.h>
-#include <nodelet/loader.h>
-#include <nodelet/NodeletLoad.h>
-#include <nodelet/NodeletUnload.h>
-#include <nodelet/NodeletList.h>
+#include <memory>
+#include <mutex>
+#include <string>
 
 #include <configuration_msgs/StartConfiguration.h>
 #include <configuration_msgs/StopConfiguration.h>
@@ -49,7 +47,7 @@
 #include <cnr_logger/cnr_logger.h>
 #include <cnr_hardware_interface/internal/cnr_robot_hw_utils.h>
 #include <cnr_controller_manager_interface/cnr_controller_manager_interface.h>
-#include <cnr_configuration_manager/internal/cnr_configuration_manager_utils.h>
+#include <cnr_configuration_manager/cnr_configuration_types.h>
 #include <cnr_configuration_manager/cnr_configuration_loader.h>
 
 namespace cnr_configuration_manager

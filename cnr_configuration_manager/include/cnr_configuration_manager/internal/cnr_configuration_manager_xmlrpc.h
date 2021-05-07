@@ -61,9 +61,9 @@ bool get_configuration_component_no_dependencies(XmlRpc::XmlRpcValue& configurat
     error = "The element is not a struct" ;
     return false;
   }
-  if (!configuration_component.hasMember("name"))
+  if (!configuration_component.hasMember("name") || (configuration_component["name"].getType() != XmlRpc::XmlRpcValue::TypeString))
   {
-    error = "The element has not the field 'name'";
+    error = "The element has not the field 'name' or it not a 'string'";
     return false;
   }
   if (!configuration_component.hasMember("components"))
@@ -98,14 +98,39 @@ bool get_configuration_component_no_dependencies(XmlRpc::XmlRpcValue& configurat
       error = "Broken at component n. " + std::to_string(jdx) + ". No 'controller' field";
       return false;
     }
+
+    std::string key;
     if (!c.hasMember("hardware_interface") && !c.hasMember("robot_hw"))
     {
       error = "Broken at component n. " + std::to_string(jdx) + ". No 'hardware_interface' field";
       return false;
     }
+    else
+    {
+      if( c.hasMember("hardware_interface") && c["hardware_interface"].getType() == XmlRpc::XmlRpcValue::TypeString)
+      {
+        key = (std::string)(c["hardware_interface"]);
+      }
+      else if( c.hasMember("robot_hw") && c["robot_hw"].getType() == XmlRpc::XmlRpcValue::TypeString)
+      {
+        key = (std::string)(c["robot_hw"]);
+      }
+      else
+      {
+        error = "Broken at component n. " + std::to_string(jdx) + ". 'hardware_interface' (or 'robot_hw') are not 'string'";
+        return false;
+      }
+    }
 
-    std::string key = (std::string)c[ c.hasMember("hardware_interface") ? "hardware_interface" : "robot_hw" ];
-    configuration.components[ key ].push_back((std::string)c["controller"]);
+    bool check_online = !c.hasMember("runtime_check") ? true
+                      : (c["runtime_check"].getType() != XmlRpc::XmlRpcValue::TypeBoolean) ? true
+                      : (bool)(c["runtime_check"]);
+
+   //  std::string key = (std::string)c[ c.hasMember("hardware_interface") ? "hardware_interface" : "robot_hw" ];
+    cnr::control::ControllerData ctrl;
+    ctrl.id = (std::string)c["controller"];
+    ctrl.check_state = check_online;
+    configuration.components[ key ].push_back(ctrl);
   }
 
   return true;
@@ -258,73 +283,6 @@ inline bool get_configuration_components(XmlRpc::XmlRpcValue&                   
 }
 
 }
-
 }
 
 #endif
-
-
-#if 0
-
- configurations.clear();
-  std::map<std::string, size_t> name_to_index;
-  for (size_t i = 0; i < configuration_components.size(); i++)
-  {
-    std::string         what;
-    ConfigurationStruct configuration;
-    if (!get_configuration_component_no_dependencies(configuration_components[i], configuration, what))
-    {
-      error = "Error in the configuration " + std::to_string(i) + ": " +   what;
-      return false;
-    }
-
-    if (configurations.find(configuration.data.name) != configurations.end())
-    {
-      error = "The configuration '" + configuration.data.name + "' is repeated! Skip the override...";
-      configurations.clear();
-      return false;
-    }
-  
-    name_to_index [ configuration.data.name ] = i;
-    configurations[ configuration.data.name ] = configuration;
-  }
-
-for (size_t i = 0; i < configuration_components.size(); i++)
-  {
-    XmlRpc::XmlRpcValue& configuration_component = configuration_components[i];
-    if (!configuration_component.hasMember("depends"))
-    {
-      continue;
-    }
-
-    if (configuration_component["depends"].getType() != XmlRpc::XmlRpcValue::TypeArray)
-    {
-      error = "The element #" + std::to_string(i) + " has 'depends' bad-formed, while an array was expected";
-      return false;
-    }
-
-    std::string configuration_name = configuration_component["name"];
-    for (size_t j = 0; j < configuration_component["depends"].size(); j++)
-    {
-      std::string dep_name = (std::string)configuration_component["depends"][j];
-      
-      if (name_to_index.find(dep_name) == name_to_index.end())
-      {
-        error = "There is a broken dependency.";
-        configurations.clear();
-        return false;
-      }
-      size_t              dep_index = name_to_index[ dep_name ];
-      std::cout << "[ " << configuration_name << " ]  Dep Name: "<< dep_name << " at "<< dep_index << std::endl;
-      std::string         what;
-      ConfigurationStruct configuration_depend_from;
-      if (!param::get_configuration_component_no_dependencies(configuration_components[ dep_index ], configuration_depend_from, what))
-      {
-        error = "Error in the configuration " + std::to_string(i) + ": " + what;
-        configurations.clear();
-        return false;
-      }
-      concat(configurations[ configuration_name ].components, configuration_depend_from.components);      
-    }
-  }
-  #endif

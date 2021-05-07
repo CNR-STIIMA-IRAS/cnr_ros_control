@@ -21,7 +21,7 @@
  *
  *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESSf
  *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
  *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
  *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
@@ -40,19 +40,15 @@
 #include <chrono>
 #include <algorithm>
 #include <string>
+#include <vector>
 
 #include <ros/ros.h>
 #include <ros/callback_queue.h>
 #include <controller_interface/controller.h>
-#include <controller_manager_msgs/ControllerState.h>
-#include <diagnostic_msgs/DiagnosticArray.h>
-#include <diagnostic_updater/DiagnosticStatusWrapper.h>
+
 #include <cnr_logger/cnr_logger.h>
 #include <realtime_utilities/diagnostics_interface.h>
-#include <subscription_notifier/subscription_notifier.h>
-
-#include <cnr_controller_interface/utils/utils.h>
-
+#include <subscription_notifier/subscription_notifier.h> //ros_helper::WallTimeMTPr
 namespace cnr
 {
 namespace control

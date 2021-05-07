@@ -55,6 +55,7 @@ namespace cnr_controller_manager_interface
 {
 
 
+
 /**
  * @brief The ControllerManager integrates an instance of the controller_manager::ControllerManager
  *
@@ -106,7 +107,6 @@ public:
     return cm_.update(time,period,reset_controllers);
   }
 };
-
 
 }  // namespace cnr_controller_manager_interface
 

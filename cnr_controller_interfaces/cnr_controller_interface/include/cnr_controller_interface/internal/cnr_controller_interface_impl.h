@@ -44,6 +44,8 @@
 #include <ros/console.h>
 #include <ros/time.h>
 
+#include <cnr_controller_interface/utils/utils.h>
+
 #include <cnr_controller_interface/cnr_controller_interface.h>
 #include <cnr_controller_interface_params/cnr_controller_interface_params.h>
 
@@ -479,15 +481,15 @@ bool Controller<T>::dump_state(const std::string& status)
   if(m_status_history.size() == 0)
   {
     m_status_history.push_back(status);
-    m_controller_nh.setParam(cnr::control::last_status_param(m_hw_name, m_ctrl_name), status);
-    m_controller_nh.setParam(cnr::control::status_param(m_hw_name, m_ctrl_name), m_status_history);  }
+    m_controller_nh.setParam(cnr::control::ctrl_last_status_param_name(m_hw_name, m_ctrl_name), status);
+    m_controller_nh.setParam(cnr::control::ctrl_status_param_name(m_hw_name, m_ctrl_name), m_status_history);  }
   else
   {
     if(m_status_history.back() != status)
     {
       m_status_history.push_back(status);
-      m_controller_nh.setParam(cnr::control::last_status_param(m_hw_name, m_ctrl_name), status);
-      m_controller_nh.setParam(cnr::control::status_param(m_hw_name, m_ctrl_name), m_status_history);
+      m_controller_nh.setParam(cnr::control::ctrl_last_status_param_name(m_hw_name, m_ctrl_name), status);
+      m_controller_nh.setParam(cnr::control::ctrl_status_param_name(m_hw_name, m_ctrl_name), m_status_history);
     }
   }
 

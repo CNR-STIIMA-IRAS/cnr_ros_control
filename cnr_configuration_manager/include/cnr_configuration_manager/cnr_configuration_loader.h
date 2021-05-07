@@ -61,12 +61,11 @@ private:
   std::map<std::string, cnr_controller_manager_interface::ControllerManagerInterfacePtr > cmi_;
 
   std::map<std::string, ros::ServiceClient> mail_senders_;
+  ConfigurationStruct                       running_configuration_;
 
 public:
-
-
   ConfigurationLoader(std::shared_ptr<cnr_logger::TraceLogger> log,
-                      const ros::NodeHandle& root_nh);
+                        const ros::NodeHandle& root_nh);
   ~ConfigurationLoader()
   {
     nodelet_loader_.reset();
@@ -88,19 +87,18 @@ public:
   bool loadHw(const std::vector<std::string>& hw_to_load_names, const ros::Duration& watchdog, bool double_check);
   bool unloadHw(const std::vector<std::string>& hw_to_unload_names, const ros::Duration& watchdog);
 
-  bool loadAndStartControllers(const std::string&              hw_name,
-                               const ConfigurationStruct&      next_configuration,
-                               const size_t                    strictness);
+  bool loadAndStartControllers(const std::string& hw_name, const ConfigurationStruct& next_configuration,
+                                const size_t& strictness);
+
   bool loadAndStartControllers(const std::vector<std::string>& hw_next_names,
-                               const ConfigurationStruct&      next_configuration,
-                               const size_t                    strictness);
+                                const ConfigurationStruct& next_configuration, const size_t& strictness);
 
   bool stopAndUnloadAllControllers(const std::vector<std::string>& hw_to_unload_names,
-                                const ros::Duration& watchdog = ros::Duration(10.0));
+                                    const ros::Duration& watchdog = ros::Duration(10.0));
 
   bool listControllers(const std::string& hw_name,
-                       std::vector< controller_manager_msgs::ControllerState >& running,
-                       std::vector< controller_manager_msgs::ControllerState >& stopped );
+                        std::vector< controller_manager_msgs::ControllerState >& running,
+                          std::vector< controller_manager_msgs::ControllerState >& stopped );
 
   std::string error( const std::string& hw )
   {

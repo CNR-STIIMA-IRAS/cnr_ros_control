@@ -11,5 +11,15 @@
     local-name: subscription_notifier
     uri:  https://github.com/CNR-STIIMA-IRAS/subscription_notifier
 - git:
+    local-name: configuration_msgs
+    uri: https://github.com/CNR-STIIMA-IRAS/configuration_msgs
+- git:
     local-name: cnr_hardware_interface
     uri:  https://github.com/CNR-STIIMA-IRAS/cnr_hardware_interface.git
+- git: 
+    local-name: Universal_Robots_ROS_Driver
+    uri: https://github.com/UniversalRobots/Universal_Robots_ROS_Driver.git
+- git:
+    local-name: fmauch_universal_robot
+    uri: https://github.com/fmauch/universal_robot.git
+    version: calibration_devel

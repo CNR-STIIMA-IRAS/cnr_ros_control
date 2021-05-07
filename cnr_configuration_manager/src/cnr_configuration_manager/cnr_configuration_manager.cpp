@@ -58,6 +58,7 @@
 
 #include <cnr_controller_interface/cnr_controller_interface.h>
 #include <cnr_configuration_manager/signal_handler.h>
+#include <cnr_configuration_manager/cnr_configuration_types.h>
 #include <cnr_configuration_manager/internal/cnr_configuration_manager_utils.h>
 #include <cnr_configuration_manager/internal/cnr_configuration_manager_xmlrpc.h>
 #include <cnr_configuration_manager/cnr_configuration_loader.h>
@@ -325,7 +326,7 @@ bool ConfigurationManager::isOk(bool nodelet_check)
       const std::string& hw = component.first;
       cnr_hardware_interface::StatusHw hw_status;
 
-      if(!cnr_hardware_interface::get_state(m_nh, hw, hw_status, ros::Duration(0.01), error))
+      if(!cnr_hardware_interface::hw_get_state(m_nh, hw, hw_status, ros::Duration(0.01), error))
       {
         CNR_FATAL(m_logger, prefix << "The HW " << hw << " has not any valid state: " << error);
         return false;
@@ -334,24 +335,29 @@ bool ConfigurationManager::isOk(bool nodelet_check)
       if((hw_status == cnr_hardware_interface::ERROR) || (hw_status == cnr_hardware_interface::CTRL_ERROR)
         || (hw_status == cnr_hardware_interface::SRV_ERROR))
       {
-        CNR_FATAL(m_logger, prefix <<
-                             "The status of the HW '" << hw << "' is " << cnr_hardware_interface::to_string(hw_status));
+        CNR_FATAL(m_logger, prefix << "The status of the HW '" << hw
+                              << "' is " << cnr_hardware_interface::to_string(hw_status));
         return false;
       }
       for (auto const & ctrl : component.second)
       {
-        std::string ctrl_status;
-        if (!cnr::control::get_state(hw, ctrl, ctrl_status, error, ros::Duration(0.01)))
+        std::string ctrl_name = ctrl.id;
+        bool runtime_check = ctrl.check_state;
+        if(runtime_check)
         {
-          CNR_FATAL(m_logger,  prefix << "The HW '" << hw << "' and CTRL '" << ctrl << "' has not any valid state: "
-                                << error);
-          return false;
-        }
-        if (ctrl_status == "ERROR")
-        {
-          CNR_FATAL(m_logger, prefix << "The status of HW '" << hw << "' and CTRL '" << ctrl << "' is " << ctrl_status
-                                      << " while it should be 'RUNNING'");
-          return false;
+          std::string ctrl_status;
+          if (!cnr::control::ctrl_get_state(hw, ctrl_name, ctrl_status, error, ros::Duration(0.01)))
+          {
+            CNR_FATAL(m_logger,  prefix << "The HW '" << hw << "' and CTRL '" << ctrl << "' has not any valid state: "
+                                  << error);
+            return false;
+          }
+          if (ctrl_status == "ERROR")
+          {
+            CNR_FATAL(m_logger, prefix << "The status of HW '" << hw << "' and CTRL '" << ctrl 
+                                  << "' is " << ctrl_status << " while it should be 'RUNNING'");
+            return false;
+          }
         }
       }
     }
@@ -383,7 +389,7 @@ bool ConfigurationManager::isOk(bool nodelet_check)
         }
         for (auto const & ctrl : component.second)
         {
-          if(running.end() == std::find_if(running.begin(), running.end(), [&ctrl](auto r){return r.name == ctrl;}))
+          if(running.end() == std::find_if(running.begin(), running.end(), [&ctrl](auto r){return r.name == ctrl.id;}))
           {
             CNR_WARN(m_logger, prefix << "CTRL " << ctrl << " of the HW '" << hw << "' is not running! ");
             return false;
@@ -409,7 +415,7 @@ bool ConfigurationManager::checkRobotHwState(const std::string& hw, const cnr_ha
   cnr_hardware_interface::StatusHw hw_status;
   ros::NodeHandle n("/");
   std::string error;
-  if (!cnr_hardware_interface::get_state(n, hw, hw_status, ros::Duration(10), error))
+  if (!cnr_hardware_interface::hw_get_state(n, hw, hw_status, ros::Duration(10), error))
   {
     CNR_FATAL_THROTTLE(m_logger, 5.0, "The HW " << hw << " has not any valid state: " << error);
     return false;
@@ -460,12 +466,14 @@ bool ConfigurationManager::callback(const ConfigurationStruct& next_configuratio
     }
   }
 
+  //! Check if controller parameters are in rosparam server
   for( const auto & component : next_configuration.components)
   {
     std::string hw_name = component.first;
-    std::vector<std::string> ctrls_names = component.second; 
-    for(auto const & ctrl_name : ctrls_names)
+    std::vector<cnr::control::ControllerData> ctrls_data = component.second; 
+    for(auto const & ctrl_data : ctrls_data)
     {
+      std::string ctrl_name = ctrl_data.id;
       if(!ros::param::has("/" + hw_name + "/" + ctrl_name))
       {
         CNR_ERROR(m_logger, "The ctrl '" + hw_name + "/" + ctrl_name + "' is expected to store the parameters under '/" 
@@ -489,7 +497,7 @@ bool ConfigurationManager::callback(const ConfigurationStruct& next_configuratio
     hw_to_load_names.insert(hw_to_load_names.begin(), hw_active_names.begin(), hw_active_names.end());
   }
 
-  CNR_INFO(m_logger, "Load the needed hardware interfaces by nodelets:" << to_string(hw_to_load_names, ""));
+  CNR_INFO(m_logger, "Load the needed hardware interfaces by nodelets: " << to_string(hw_to_load_names, ""));
   for (const auto & hw_to_load_name : hw_to_load_names)
   {
     if (!m_conf_loader.loadHw(hw_to_load_name, watchdog, true))

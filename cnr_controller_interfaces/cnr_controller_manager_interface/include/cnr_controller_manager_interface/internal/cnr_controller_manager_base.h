@@ -52,7 +52,6 @@
 namespace cnr_controller_manager_interface
 {
 
-
 /**
  * @brief The ControllerManagerBase class is a class that make easier the interface with
  * the controller_manager::ControllerManager (http://wiki.ros.org/ros_control)
@@ -82,7 +81,6 @@ namespace cnr_controller_manager_interface
 class ControllerManagerBase
 {
 protected:
-  
   std::mutex                 mtx_;
   ros::NodeHandle            nh_;
   ros::ServiceClient         list_;
@@ -90,9 +88,7 @@ protected:
   cnr_logger::TraceLoggerPtr logger_;
   std::string                error_;
 
-
 public:
-  
   ControllerManagerBase() = delete;
   ControllerManagerBase(const ControllerManagerBase&) = delete;
   ControllerManagerBase& operator=(const ControllerManagerBase&) = delete;
@@ -145,7 +141,7 @@ public:
 
 // CORE METHODS //
   /**
-   * @brief loadController
+   * @brief loadController: the virtual/final clauses prevent the possibility the memeber is inherited
    * @param to_load_names
    * @param watchdog
    * @return
@@ -154,7 +150,7 @@ public:
                                const ros::Duration& watchdog=ros::Duration(0.0)) final;
 
   /**
-   * @brief switchController
+   * @brief switchController: the virtual/final clauses prevent the possibility the memeber is inherited
    * @param strictness
    * @param to_load_and_start_names
    * @param to_restart_names
@@ -169,7 +165,7 @@ public:
                      const ros::Duration&                                          watchdog=ros::Duration(0.0)) final;
 
   /**
-   * @brief switchController
+   * @brief switchController: the virtual/final clauses prevent the possibility the memeber is inherited
    * @param strictness
    * @param next_ctrl
    * @param watchdog
@@ -256,10 +252,6 @@ public:
                                 const ros::Duration& watchdog = ros::Duration(0.0)) final;
   // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 };
-
-
-
-
 
 }  // namespace cnr_controller_manager_interface
 

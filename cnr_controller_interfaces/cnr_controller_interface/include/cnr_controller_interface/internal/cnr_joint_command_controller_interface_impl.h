@@ -237,10 +237,10 @@ inline bool JointCommandController<H,T>::exitUpdate()
 
   this->m_handler.update(m_target, this->chain());
 
-  for(size_t iAx=0; iAx<this->jointNames().size(); iAx++)
-  {
-    report<< this->m_hw->getHandle(this->chain().getActiveJointName(iAx)) <<"\n";
-  }
+  //for(size_t iAx=0; iAx<this->jointNames().size(); iAx++)
+  //{
+  //  report<< this->m_hw->getHandle(this->chain().getActiveJointName(iAx)) <<"\n";
+  //}
 
   CNR_WARN_COND_THROTTLE(this->m_logger, print_report, throttle_time, report.str() );
   if(!JointController<H,T>::exitUpdate())

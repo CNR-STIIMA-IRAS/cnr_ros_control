@@ -7,7 +7,58 @@ namespace cnr
 namespace control
 {
 
-std::vector<std::string> get_names(const std::vector< controller_manager_msgs::ControllerState >& controllers)
+
+std::ostream& operator<<(std::ostream& lhs, const ControllerData& rhs)
+{
+  lhs << rhs.id;
+  return lhs;
+}
+
+bool operator==(const ControllerData& lhs, const ControllerData& rhs)
+{
+  return lhs.id == rhs.id;
+}
+
+bool operator==(const std::string& lhs, const ControllerData& rhs)
+{
+  return lhs == rhs.id;
+}
+
+bool operator==(const ControllerData& lhs, const std::string& rhs)
+{
+  return lhs.id == rhs;
+}
+
+bool operator!=(const ControllerData& lhs, const ControllerData& rhs)
+{
+  return lhs.id != rhs.id;
+}
+
+bool operator!=(const std::string& lhs, const ControllerData& rhs)
+{
+  return lhs != rhs.id;
+}
+
+bool operator!=(const ControllerData& lhs, const std::string& rhs)
+{
+  return lhs.id == rhs;
+}
+
+std::vector<std::string> extract_names(const std::vector<ControllerData>& vv)
+{
+  std::vector<std::string> ret;
+  for(auto const  & v : vv) ret.push_back(v.id);
+  return ret;
+}
+
+std::vector<bool> extract_runtime_checks(const std::vector<ControllerData>& vv)
+{
+  std::vector<bool> ret;
+  for(auto const & v : vv) ret.push_back(v.check_state);
+  return ret;
+}
+
+std::vector<std::string> ctrl_get_names(const std::vector< controller_manager_msgs::ControllerState >& controllers)
 {
   std::vector<std::string> ret;
   for (auto & ctrl : controllers) ret.push_back(ctrl.name);
@@ -17,27 +68,25 @@ std::vector<std::string> get_names(const std::vector< controller_manager_msgs::C
 
 
 //============ FUNCTIONS TO DEFINE THE PARAMETERS WHERE THE CTRL STATUS IS LOADED
-std::string ctrl_list_param(const std::string& hw_name)
+std::string ctrl_list_param_name(const std::string& hw_name)
 {
   return "/" + hw_name + "/status/controllers_list";
 }
-std::string last_status_param(const std::string& hw_name, const std::string& ctrl_name)
+std::string ctrl_last_status_param_name(const std::string& hw_name, const std::string& ctrl_name)
 {
   return "/" + hw_name + "/status/controllers/" + ctrl_name + "/last_status";
 }
 
-std::string status_param(const std::string& hw_name, const std::string& ctrl_name)
+std::string ctrl_status_param_name(const std::string& hw_name, const std::string& ctrl_name)
 {
   return "/" + hw_name + "/status/controllers/" + ctrl_name + "/status";
 }
-bool get_state(const std::string& hw_name,
-               const std::string& ctrl_name,
-               std::string& status,
-               std::string& error,
-               const ros::Duration& watchdog)
+
+bool ctrl_get_state(const std::string& hw_name, const std::string& ctrl_name, std::string& status, std::string& error,
+                      const ros::Duration& watchdog)
 {
   ros::Time st = ros::Time::now();
-  const std::string p = last_status_param(hw_name, ctrl_name);
+  const std::string p = ctrl_last_status_param_name(hw_name, ctrl_name);
   while (ros::ok())
   {
     if (ros::param::get(p, status))
@@ -55,16 +104,13 @@ bool get_state(const std::string& hw_name,
   return true;
 }
 
-bool check_state(const std::string& hw_name,
-                 const std::string& ctrl_name,
-                 const std::string& status,
-                 std::string& error,
-                 const ros::Duration& watchdog)
+bool ctrl_check_state(const std::string& hw_name, const std::string& ctrl_name, const std::string& status,
+                        std::string& error, const ros::Duration& watchdog)
 {
   bool ok = false;
   ros::Time st = ros::Time::now();
   std::string actual_status;
-  const std::string p = last_status_param(hw_name, ctrl_name);
+  const std::string p = ctrl_last_status_param_name(hw_name, ctrl_name);
   ros::Time n = ros::Time::now();
   while (ros::ok())
   {

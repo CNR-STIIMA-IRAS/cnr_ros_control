@@ -138,7 +138,7 @@ bool ConfigurationLoader::getHwParam(ros::NodeHandle &nh,
   }
   else
   {
-    type    = (std::string)hardware_interface["nodelet_type"];
+    type = (std::string)hardware_interface["nodelet_type"];
   }
 
   if ((hardware_interface.hasMember("remap_source_args"))
@@ -290,33 +290,32 @@ bool ConfigurationLoader::unloadHw(const std::vector<std::string>& hw_to_unload_
     CNR_DEBUG(*logger_, "ctrl unload");
     if (!cmi_.at(old)->unloadControllers(stopped, watchdog))
     {
-      error_ = "error_ in unloding the controllers: " + cmi_.at(old)->error();
+      error_ = "error_ in unloading the controllers: " + cmi_.at(old)->error();
       CNR_RETURN_FALSE(*logger_, error_);
     }
 
     CNR_DEBUG(*logger_, "hw nodelet unload (watchdog: " << watchdog.toSec() << ")");
     if (!nodelet_loader_->unload( old ) )
     {
-      error_ = "The nodelet loader failed. in unloadinf " + old;
-      set_state(getRootNh(), old, cnr_hardware_interface::SRV_ERROR);
+      hw_set_state(getRootNh(), old, cnr_hardware_interface::SRV_ERROR);
       CNR_RETURN_FALSE(*logger_, error_);
     }
     CNR_DEBUG(*logger_, "set hw nodelet state to UNLOADED");
-    set_state(getRootNh(), old, cnr_hardware_interface::UNLOADED);
+    hw_set_state(getRootNh(), old, cnr_hardware_interface::UNLOADED);
   }
   CNR_RETURN_TRUE(*logger_);
 }
 
-bool ConfigurationLoader::loadAndStartControllers(const std::string&         hw_name,
-                                                  const ConfigurationStruct& next_configuration,
-                                                  const size_t               strictness)
+bool ConfigurationLoader::loadAndStartControllers(const std::string& hw_name,
+                                                  const ConfigurationStruct& next_conf,
+                                                  const size_t& strictness)
 {
   if (mail_senders_.find(hw_name) == mail_senders_.end())
   {
     mail_senders_[hw_name] = root_nh_.serviceClient<configuration_msgs::SendMessage>("/"+hw_name+"/mail");
   }
   configuration_msgs::SendMessage srv;
-  srv.request.message.data = "========= "+next_configuration.data.name+" ======== Load and Start Controllers ========";
+  srv.request.message.data = "========= "+next_conf.data.name+" ======== Load and Start Controllers ========";
   if(!mail_senders_[hw_name].exists())
   {
     CNR_ERROR(*logger_, "The service '" +mail_senders_[hw_name].getService() +"' does not exist... ?!?");
@@ -336,22 +335,33 @@ bool ConfigurationLoader::loadAndStartControllers(const std::string&         hw_
     cmi_.emplace(hw_name, pcmi);
   }
 
-  std::vector<std::string> next_controllers = next_configuration.components.find(hw_name) != next_configuration.components.end() 
-                                            ? next_configuration.components.at(hw_name)
-                                            : std::vector<std::string>();
+  std::vector<std::string> next_controllers = std::vector<std::string>();
+  ros::Duration watchdog = ros::Duration(0.0);
+    
+  if(next_conf.components.find(hw_name) != next_conf.components.end())
+  {
+    next_controllers = extract_names(next_conf.components.at(hw_name));
+    auto runtime_check = extract_runtime_checks(next_conf.components.at(hw_name));
+    watchdog = std::find(runtime_check.begin(), runtime_check.end(), false) != runtime_check.end() 
+             ? ros::Duration(0.0) : ros::Duration(2.0);
+  }
   CNR_DEBUG(*logger_, "List of controllers to be uploaded for the RobotHw: " << hw_name
-                      << " next controllers: " << (next_controllers.size()>0 ?  to_string(next_controllers) : "none"));
-  if (!cmi_.at(hw_name)->switchControllers(strictness, next_controllers, ros::Duration(10.0)))
+                        << " next controllers: " << (next_controllers.size()>0 ?  to_string(next_controllers) : "none" )
+                          << "runtime check ? " << std::to_string(watchdog.toSec()>0) );
+
+
+  if (!cmi_.at(hw_name)->switchControllers(strictness, next_controllers, watchdog))
   {
     CNR_RETURN_FALSE(*logger_, "Error in switching the controller");
   }
+  running_configuration_ = next_conf;
   CNR_RETURN_TRUE(*logger_);
 }
 
 
 bool ConfigurationLoader::loadAndStartControllers(const std::vector<std::string>& hw_next_names,
-                                                  const ConfigurationStruct&      next_configuration,
-                                                  const size_t                    strictness)
+                                                  const ConfigurationStruct& next_conf,
+                                                  const size_t& strictness)
 {
   std::map<std::string, std::thread* > starters;
   std::map< std::string, bool > start_ok;
@@ -370,7 +380,7 @@ bool ConfigurationLoader::loadAndStartControllers(const std::vector<std::string>
       mail_senders_[hw_name] = root_nh_.serviceClient<configuration_msgs::SendMessage>("/"+hw_name+"/mail");
     }
     configuration_msgs::SendMessage srv;
-    srv.request.message.data="========= "+next_configuration.data.name+" ======== Load and Start Controllers ========";
+    srv.request.message.data="========= "+next_conf.data.name+" ======== Load and Start Controllers ========";
     if(!mail_senders_[hw_name].exists())
     {
       CNR_ERROR(*logger_, "The service '" +mail_senders_[hw_name].getService() +"' does not exist... ?!?");
@@ -381,12 +391,23 @@ bool ConfigurationLoader::loadAndStartControllers(const std::vector<std::string>
     }
   }
 
-  auto starter=[&](const std::string & hw, cnr_controller_manager_interface::ControllerManagerInterfacePtr ctrl,
-                   const std::vector<std::string>& next_controllers, bool& ok, std::string& error)
+  auto starter=[&](const std::string & hw_name, cnr_controller_manager_interface::ControllerManagerInterfacePtr ctrl,
+                    const ConfigurationStruct& next, bool& ok, std::string& error)
   {
     try
-    {
-      ok = ctrl->switchControllers(strictness, next_controllers, ros::Duration(1.0));
+    { 
+      std::vector<std::string> next_controllers = std::vector<std::string>();
+      ros::Duration watchdog = ros::Duration(0.0);
+      
+      if(next.components.find(hw_name) != next.components.end())
+      {
+        next_controllers = extract_names(next.components.at(hw_name));
+        auto runtime_check = extract_runtime_checks(next.components.at(hw_name));
+        watchdog = std::find(runtime_check.begin(), runtime_check.end(), false) != runtime_check.end() 
+                              ? ros::Duration(0.0) : ros::Duration(2.0);
+      }
+
+      ok = ctrl->switchControllers(strictness, next_controllers, watchdog);
     }
     catch(std::exception& e)
     {
@@ -401,17 +422,12 @@ bool ConfigurationLoader::loadAndStartControllers(const std::vector<std::string>
     return;
   };
 
-
   std::map<std::string, std::string> errors;
   for (auto const & hw_name : hw_next_names)
-  {
-    std::vector<std::string> next_controllers = next_configuration.components.find(hw_name) != next_configuration.components.end() 
-                                              ? next_configuration.components.at(hw_name)
-                                              : std::vector<std::string>();
- 
+  { 
     errors[hw_name] = "";
-    starters[hw_name] = new std::thread(starter, hw_name,  std::ref(cmi_.at(hw_name)), next_controllers, 
-                                        std::ref(start_ok[hw_name]), std::ref(errors[hw_name]));
+    starters[hw_name] = new std::thread(starter, hw_name,  std::ref(cmi_.at(hw_name)), next_conf, 
+                                          std::ref(start_ok[hw_name]), std::ref(errors[hw_name]));
   }
 
   CNR_DEBUG(*logger_,  "Waiting for threads");
@@ -442,12 +458,13 @@ bool ConfigurationLoader::loadAndStartControllers(const std::vector<std::string>
     ok &= b.second;
   });
 
+  running_configuration_ = next_conf;
   CNR_RETURN_BOOL(*logger_, ok);
 }
 
 
-bool ConfigurationLoader::stopAndUnloadAllControllers( const std::vector<std::string>& hw_to_unload_names,
-                                                    const ros::Duration&            watchdog)
+bool ConfigurationLoader::stopAndUnloadAllControllers(const std::vector<std::string>& hw_to_unload_names,
+                                                        const ros::Duration& watchdog)
 {
   CNR_TRACE_START(*logger_);
 
@@ -477,7 +494,13 @@ bool ConfigurationLoader::stopAndUnloadAllControllers( const std::vector<std::st
     }
     try
     {
-      ok = ctrl->stopUnloadAllControllers(watchdog);
+      bool null_watchdog = false;
+      for(auto const & component : running_configuration_.components  )
+      {
+        auto runtime_check = extract_runtime_checks(component.second);
+        null_watchdog  |= std::find(runtime_check.begin(), runtime_check.end(), false) != runtime_check.end();
+      }
+      ok = ctrl->stopUnloadAllControllers( null_watchdog ? ros::Duration(0.0) : ros::Duration(10.0) );
     }
    catch(std::exception& e)
     {

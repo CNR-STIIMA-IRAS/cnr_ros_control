@@ -168,7 +168,7 @@ private:
 
 
 public:
-  std::map<std::string, cnr_controller_manager_interface::ControllerManagerInterface> cmi_;
+  std::map<std::string, cnr::control::ControllerManagerInterface> cmi_;
 
   NodeletManagerInterface(std::shared_ptr<cnr_logger::TraceLogger> log, const std::string& root_ns, const std::string& nodelet_manager_ns = "/configuration_nodelet_manager");
   ~NodeletManagerInterface()

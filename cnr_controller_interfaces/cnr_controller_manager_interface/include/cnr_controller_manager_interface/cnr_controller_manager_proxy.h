@@ -67,7 +67,7 @@ namespace cnr_controller_manager_interface
  * controller_manager::ControllerManager. As matter of example, it offers diganostics, it dump the status of the
  * controllers on the ros parameters etc.
  */
-class ControllerManagerProxy : public ::cnr_controller_manager_interface::ControllerManager
+class ControllerManagerProxy : public cnr_controller_manager_interface::ControllerManager
 {
 public:
   
@@ -107,8 +107,6 @@ private:
 
 
 };
-
-
 
 }  // namespace cnr_controller_manager_interface
 

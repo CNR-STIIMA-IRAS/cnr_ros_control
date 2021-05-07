@@ -145,13 +145,13 @@ RobotHwNodelet::~RobotHwNodelet()
   {
     CNR_INFO(m_logger, "Reset the HW (watchdog: 10sec)");
     std::vector<std::string> ctrls;
-    if (ros::param::has(cnr::control::ctrl_list_param(m_hw_name)))
+    if (ros::param::has(cnr::control::ctrl_list_param_name(m_hw_name)))
     {
-      ros::param::get(cnr::control::ctrl_list_param(m_hw_name), ctrls);
+      ros::param::get(cnr::control::ctrl_list_param_name(m_hw_name), ctrls);
       for (const auto ctrl : ctrls)
       {
         std::string last_status;
-        ros::param::get(cnr::control::last_status_param(m_hw_name, ctrl), last_status);
+        ros::param::get(cnr::control::ctrl_last_status_param_name(m_hw_name, ctrl), last_status);
         if (last_status != "UNLOADED")
         {
           CNR_INFO(m_logger, "Last Status Tracked: " << last_status);
@@ -552,7 +552,7 @@ void RobotHwNodelet::controlUpdateThread()
 
 bool RobotHwNodelet::dumpState(const cnr_hardware_interface::StatusHw& status) const
 {
-  ros::param::set(cnr_hardware_interface::last_status_param(m_hw_namespace), status);
+  ros::param::set(cnr_hardware_interface::hw_last_status_param_name(m_hw_namespace), status);
   return true;
 }
 

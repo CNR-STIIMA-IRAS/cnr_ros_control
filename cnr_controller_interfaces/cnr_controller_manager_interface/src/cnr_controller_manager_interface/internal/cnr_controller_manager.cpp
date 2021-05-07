@@ -50,6 +50,7 @@ namespace cnr_controller_manager_interface
 
 
 
+
 /**
  * 
  * 
@@ -85,7 +86,7 @@ bool ControllerManager::loadController(const std::string& ctrl_to_load_name, con
     CNR_RETURN_FALSE(*logger_, "HW: " + getHwName() + ", CTRL: " + ctrl_to_load_name);
   }
 
-  const std::string n = cnr::control::ctrl_list_param(getHwName());
+  const std::string n = cnr::control::ctrl_list_param_name(getHwName());
   std::vector<std::string> l;
   if (ros::param::has(n))
   {
@@ -149,7 +150,7 @@ bool ControllerManager::switchController(const int                        strict
     // check the param, and exit only if the state is running!
     for (const std::string ctrl_name : start_controllers)
     {
-      if (!cnr::control::check_state(getNamespace(), ctrl_name, "RUNNING", error_, watchdog))
+      if (!cnr::control::ctrl_check_state(getNamespace(), ctrl_name, "RUNNING", error_, watchdog))
       {
         CNR_RETURN_FALSE(*logger_, "HW: " + getHwName()+": " + error_);
       }
@@ -162,7 +163,7 @@ bool ControllerManager::switchController(const int                        strict
     }
     for (const std::string ctrl_name : stop_controllers)
     {
-      if (!cnr::control::check_state(getNamespace(), ctrl_name, "STOPPED", error_, watchdog))
+      if (!cnr::control::ctrl_check_state(getNamespace(), ctrl_name, "STOPPED", error_, watchdog))
       {
         CNR_RETURN_FALSE(*logger_, "HW: " + getHwName()+ ": " + error_);
       }
@@ -191,16 +192,15 @@ bool ControllerManager::unloadController(const std::string& ctrl_to_unload_name,
 
   std::string st = (ret  ? "UNLOADED" : "ERROR_UNLOAD");
   std::vector<std::string> status_history;
-  ros::param::get(cnr::control::status_param(getHwName(), ctrl_to_unload_name),  status_history);
+  ros::param::get(cnr::control::ctrl_status_param_name(getHwName(), ctrl_to_unload_name),  status_history);
 
   status_history.push_back(st);
-  ros::param::set(cnr::control::status_param(getHwName(), ctrl_to_unload_name),  status_history);
-  ros::param::set(cnr::control::last_status_param(getHwName(), ctrl_to_unload_name), st) ;
+  ros::param::set(cnr::control::ctrl_status_param_name(getHwName(), ctrl_to_unload_name),  status_history);
+  ros::param::set(cnr::control::ctrl_last_status_param_name(getHwName(), ctrl_to_unload_name), st) ;
 
   CNR_RETURN_BOOL(*logger_, ret, "HW: "+ getHwName()+", CTRL: " + ctrl_to_unload_name);
 }
 
 
 
-}
-
+}  // namespace cnr_controller_manager_interface

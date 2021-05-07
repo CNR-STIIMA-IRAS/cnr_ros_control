@@ -69,16 +69,13 @@ private:
   ros::ServiceClient unload_;
   ros::ServiceClient doswitch_;
 
-  bool loadRequest(controller_manager_msgs::LoadController& msg,
-                   std::string& error,
+  bool loadRequest(controller_manager_msgs::LoadController& msg, std::string& error,
                    const ros::Duration&  watchdog = ros::Duration(0.0));
 
-  bool unloadRequest(controller_manager_msgs::UnloadController& msg,
-                     std::string& error,
+  bool unloadRequest(controller_manager_msgs::UnloadController& msg, std::string& error,
                      const ros::Duration&  watchdog = ros::Duration(0.0));
 
-  bool switchRequest(controller_manager_msgs::SwitchController& msg,
-                     std::string& error,
+  bool switchRequest(controller_manager_msgs::SwitchController& msg, std::string& error,
                      const ros::Duration&  watchdog = ros::Duration(0.0));
 
 public:
@@ -106,11 +103,11 @@ public:
 
   bool loadController(const std::string& to_load_name, const ros::Duration& watchdog) final;
 
-  bool switchController(const int                       strictness,
-                       const std::vector<std::string>&  to_load_and_start_names,
-                       const std::vector<std::string>&  to_restart_names,
-                       const std::vector<std::string>&  to_stop_unload_names,
-                       const ros::Duration&             watchdog = ros::Duration(0.0)) final;
+  bool switchController(const int strictness,
+                        const std::vector<std::string>& to_load_and_start_names,
+                        const std::vector<std::string>& to_restart_names,
+                        const std::vector<std::string>& to_stop_unload_names,
+                        const ros::Duration& watchdog = ros::Duration(0.0)) final;
 
   bool unloadController(const std::string& to_unload_name, const ros::Duration& watchdog = ros::Duration(0.0)) final;
 };
@@ -118,8 +115,6 @@ public:
 
 typedef std::shared_ptr< ControllerManagerInterface > ControllerManagerInterfacePtr;
 typedef const std::shared_ptr< ControllerManagerInterface const > ControllerManagerInterfaceConstPtr;
-
-
 
 }  // namespace cnr_controller_manager_interface
 

@@ -56,27 +56,10 @@
 #include <configuration_msgs/StartConfiguration.h>
 #include <configuration_msgs/StopConfiguration.h>
 
+#include <cnr_configuration_manager/cnr_configuration_types.h>
+
 namespace cnr_configuration_manager
 {
-
-struct ComponentData
-{
-  std::string name = "";
-  std::string state = "";
-  std::string type = "";
-  bool        hidden = true;
-};
-
-
-typedef std::map<std::string, std::vector<std::string> > ComponentMap;
-
-
-struct ConfigurationStruct
-{
-  ComponentData   data;
-  ComponentMap    components;
-};
-
 
 struct RetrieveKey
 {
@@ -92,7 +75,7 @@ bool unique(std::vector< T >& vv)
 {
   for (size_t i = 0; i < vv.size(); i++)
   {
-    std::string check = vv[i];
+    T check = vv[i];
     for (size_t j = i + 1; j < vv.size(); j++)
     {
       if (check == vv[j])
@@ -171,8 +154,8 @@ void concat(ComponentMap& var, const ComponentMap&add)
 {
   for (auto const & a : add)
   {
-    const std::string &             key    = a.first;
-    const std::vector<std::string>& values = a.second;
+    const std::string &                key    = a.first;
+    const std::vector<cnr::control::ControllerData>& values = a.second;
     if (var.find(key) == var.end())
     {
       var[ key ] = values;
@@ -194,7 +177,10 @@ inline
 void concat(ComponentMap& var, const std::pair< std::string, std::string >& add)
 {
   const std::string & key   = add.first;
-  const std::string&  value = add.second;
+  cnr::control::ControllerData value;
+  //const std::string&  value = add.second;
+  value.id = add.second;
+  value.check_state = true;
   if (var.find(key) == var.end())
   {
     var[ key ].push_back(value);
@@ -245,12 +231,15 @@ bool cast(const configuration_msgs::ConfigurationComponent& in, cnr_configuratio
 
   for (size_t i = 0; i < in.hardware_interfaces.size(); i++)
   {
-    out.components[ in.hardware_interfaces[i] ].push_back(in.controllers[i]);
+    cnr::control::ControllerData ctrl;
+    ctrl.id = in.controllers[i];
+    ctrl.check_state = in.check_runtime_status[i];
+    out.components[ in.hardware_interfaces[i] ].push_back(ctrl);
   }
 
   for (auto & component : out.components)
   {
-    ::cnr_configuration_manager::unique<std::string>(component.second);
+    ::cnr_configuration_manager::unique<cnr::control::ControllerData>(component.second);
   }
   return true;
 }
@@ -267,7 +256,8 @@ inline bool cast(const ::cnr_configuration_manager::ConfigurationStruct& in, con
     for (auto const & controller : component.second)
     {
       out.hardware_interfaces.push_back(component.first);
-      out.controllers.push_back(controller);
+      out.controllers.push_back(controller.id);
+      out.check_runtime_status.push_back(controller.check_state);
     }
   }
   return true;
@@ -294,13 +284,33 @@ bool extract_hardware_interfaces_names(const std::string& configuration_to_activ
 /**
  * print utilities 
  */
-inline 
-std::string to_string( const std::vector<std::string>& what, const std::string& prefix = "<", const std::string& separator = ",", const std::string& suffix = ">" )
+template<typename T> inline
+std::string to_string(const std::vector<T>& what,
+                        const std::string& prefix = "<",
+                          const std::string& separator = ",",
+                            const std::string& suffix = ">" )
+{
+  std::stringstream ret; ret << prefix;
+  for (size_t j = 0; j < what.size(); j++)
+  {
+    ret << what.at(j);
+    ret << (j < what.size() - 1 ? separator : "");
+  }
+  ret << suffix;
+  return ret.str();
+}
+
+template<> inline
+std::string to_string(const std::vector<cnr::control::ControllerData>& what,
+                        const std::string& prefix,
+                          const std::string& separator,
+                            const std::string& suffix )
 {
   std::string ret = prefix;
   for (size_t j = 0; j < what.size(); j++)
   {
-    ret += what.at(j) + (j < what.size() - 1 ? separator : "");
+    std::string id = what.at(j).id;
+    ret += id + (j < what.size() - 1 ? separator : "");
   }
   return ret + suffix;
 }

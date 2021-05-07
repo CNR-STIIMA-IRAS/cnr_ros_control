@@ -42,8 +42,6 @@
 namespace cnr_controller_manager_interface
 {
 
-
-
 template< typename T >
 bool unique(std::vector< T >& vv)
 {
@@ -123,19 +121,6 @@ void extract(const std::vector< T >& va
   }
 }
 
-template< class T >
-std::string to_string(const std::vector< T >& what)
-{
-  std::string ret = "<";
-  for (size_t j = 0; j < what.size(); j++)
-  {
-    ret += std::to_string(what.at(j)) + (j < what.size() - 1 ? ", " : "");
-  }
-  ret += ">";
-  return ret;
-}
-
-
 inline
 std::string to_string(const double& what)
 {
@@ -171,11 +156,8 @@ struct RetrieveKey
  *
  */
 template<class MSG>
-bool callRequest(std::mutex& mtx, 
-                 ros::ServiceClient& clnt,
-                 MSG& msg,
-                 std::string& error,
-                 const ros::Duration&  watchdog = ros::Duration(0.0))
+inline bool callRequest(std::mutex& mtx, ros::ServiceClient& clnt, MSG& msg, std::string& error,
+                          const ros::Duration&  watchdog = ros::Duration(0.0))
 {
   std::lock_guard<std::mutex> lock(mtx); 
   if (watchdog.toSec() > 0)

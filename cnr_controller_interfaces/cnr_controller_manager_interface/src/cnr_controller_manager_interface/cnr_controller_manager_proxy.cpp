@@ -208,7 +208,5 @@ void ControllerManagerProxy::diagnosticsPerformance(diagnostic_updater::Diagnost
   }
 }
 
-
-
-}
+}  // namespace cnr_controller_manager_interface
 
