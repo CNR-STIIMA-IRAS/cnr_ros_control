@@ -126,7 +126,6 @@ bool get_configuration_component_no_dependencies(XmlRpc::XmlRpcValue& configurat
                       : (c["runtime_check"].getType() != XmlRpc::XmlRpcValue::TypeBoolean) ? true
                       : (bool)(c["runtime_check"]);
 
-   //  std::string key = (std::string)c[ c.hasMember("hardware_interface") ? "hardware_interface" : "robot_hw" ];
     cnr::control::ControllerData ctrl;
     ctrl.id = (std::string)c["controller"];
     ctrl.check_state = check_online;

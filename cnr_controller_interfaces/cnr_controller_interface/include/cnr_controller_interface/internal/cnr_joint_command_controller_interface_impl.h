@@ -322,6 +322,9 @@ inline void JointCommandController<H,T>::safeOverrideCallback_2(const std_msgs::
 template<class H,class T>
 inline const rosdyn::ChainState& JointCommandController<H,T>::chainCommand() const
 {
+  if(this->getKinUpdatePeriod()<=0)
+    throw std::runtime_error("The 'kin_update_period' has not been set, and therefore the fkin is not computed!");
+
   std::lock_guard<std::mutex> lock(this->mtx_);
   return m_target;
 }
@@ -329,6 +332,8 @@ inline const rosdyn::ChainState& JointCommandController<H,T>::chainCommand() con
 template<class H,class T>
 inline rosdyn::ChainState& JointCommandController<H,T>::chainCommand()
 {
+  if(this->getKinUpdatePeriod()<=0)
+    throw std::runtime_error("The 'kin_update_period' has not been set, and therefore the fkin is not computed!");
   std::lock_guard<std::mutex> lock(this->mtx_);
   return m_target;
 }

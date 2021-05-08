@@ -64,6 +64,7 @@ JointController<H,T>::~JointController()
 template<class H,class T>
 bool JointController<H,T>::doInit()
 {
+  m_fkin_update_period = -1.0;
   return true;
 }
 template<class H,class T>
@@ -108,6 +109,13 @@ bool JointController<H,T>::enterInit()
     if(!Controller<T>::enterInit())
     {
       CNR_RETURN_FALSE(this->m_logger);
+    }
+
+    if(!this->getRootNh().getParam("kin_update_period", m_fkin_update_period))
+    {
+      CNR_WARN(this->m_logger, "The parameter '" + this->getRootNamespace() + "/kin_update_period' is not set. "
+                                "The chain status will not be updated.");
+      m_fkin_update_period = -1;
     }
 
     //=======================================
@@ -308,10 +316,6 @@ bool JointController<H,T>::enterStarting()
   CNR_DEBUG(this->m_logger, "Velocity: " << eigen_utils::to_string(m_rstate.qd()) );
   CNR_DEBUG(this->m_logger, "Effort  : " << eigen_utils::to_string(m_rstate.effort()) );
 
-  int ffwd = rosdyn::ChainState::SECOND_ORDER | rosdyn::ChainState::FFWD_STATIC;
-
-  startUpdateTransformationsThread(ffwd, 1.0/this->m_sampling_period);
-
   CNR_RETURN_TRUE(this->m_logger);
 }
 
@@ -319,6 +323,11 @@ template<class H,class T>
 bool JointController<H,T>::exitStarting()
 {
   CNR_TRACE_START(this->m_logger);
+
+  int ffwd = rosdyn::ChainState::SECOND_ORDER | rosdyn::ChainState::FFWD_STATIC;
+
+  if(m_fkin_update_period>0)
+    startUpdateTransformationsThread(ffwd, 1.0/this->m_fkin_update_period);
 
   if(!Controller<T>::exitStarting())
   {
@@ -374,9 +383,12 @@ template<class H,class T>
 inline void JointController<H,T>::stopUpdateTransformationsThread()
 {
   CNR_TRACE_START(this->m_logger);
-  stop_update_transformations_ = true;
-  if(update_transformations_.joinable())
-    update_transformations_.join();
+  if(m_fkin_update_period>0)
+  {
+    stop_update_transformations_ = true;
+    if(update_transformations_.joinable())
+      update_transformations_.join();
+  }
   CNR_RETURN_OK(this->m_logger, void());
 }
 
@@ -497,6 +509,8 @@ inline double JointController<H,T>::getEffort(int idx) const
 template<class H,class T>
 inline const Eigen::Affine3d& JointController<H,T>::getToolPose( ) const
 {
+  if(m_fkin_update_period<=0)
+    throw std::runtime_error("The 'kin_update_period' has not been set, and therefore the fkin is not computed!");
   std::lock_guard<std::mutex> lock(this->mtx_);
   return m_rstate.toolPose();
 }
@@ -504,6 +518,8 @@ inline const Eigen::Affine3d& JointController<H,T>::getToolPose( ) const
 template<class H,class T>
 inline const Eigen::Vector6d& JointController<H,T>::getTwist( ) const
 {
+  if(m_fkin_update_period<=0)
+    throw std::runtime_error("The 'kin_update_period' has not been set, and therefore the fkin is not computed!");
   std::lock_guard<std::mutex> lock(this->mtx_);
   return m_rstate.toolTwist();
 }
@@ -511,6 +527,8 @@ inline const Eigen::Vector6d& JointController<H,T>::getTwist( ) const
 template<class H,class T>
 inline const Eigen::Vector6d& JointController<H,T>::getTwistd( ) const
 {
+  if(m_fkin_update_period<=0)
+    throw std::runtime_error("The 'kin_update_period' has not been set, and therefore the fkin is not computed!");
   std::lock_guard<std::mutex> lock(this->mtx_);
   return m_rstate.toolTwistd();
 }
@@ -518,6 +536,8 @@ inline const Eigen::Vector6d& JointController<H,T>::getTwistd( ) const
 template<class H,class T>
 inline const rosdyn::Matrix6Xd& JointController<H,T>::getJacobian( ) const
 {
+  if(m_fkin_update_period<=0)
+    throw std::runtime_error("The 'kin_update_period' has not been set, and therefore the fkin is not computed!");
   std::lock_guard<std::mutex> lock(this->mtx_);
   return m_rstate.toolJacobian();
 }

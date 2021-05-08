@@ -125,11 +125,14 @@ protected:
   bool                update_transformations_runnig_;
   mutable std::mutex  mtx_;
 
+  double getKinUpdatePeriod() const { return m_fkin_update_period; }
+
 private:
   rosdyn::LinkPtr    m_root_link;  //link primitivo da cui parte la catena cinematica(world ad esempio)
   rosdyn::Chain      m_chain;
   rosdyn::ChainState m_rstate;
   Eigen::IOFormat    m_cfrmt;
+  double             m_fkin_update_period;
 };
 
 }  // control
