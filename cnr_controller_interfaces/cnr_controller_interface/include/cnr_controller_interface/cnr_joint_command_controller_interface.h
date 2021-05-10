@@ -43,6 +43,7 @@
 
 #include <cnr_logger/cnr_logger.h>
 #include <rosdyn_chain_state/chain_state.h>
+#include <rosdyn_chain_state/chain_state_publisher.h>
 #include <cnr_controller_interface/cnr_joint_controller_interface.h>
 
 #include <urdf_model/model.h>
@@ -118,6 +119,8 @@ private:
   InputType          m_priority;
   rosdyn::ChainState m_target;
   rosdyn::ChainState m_last_target;
+  rosdyn::ChainStatePublisherPtr m_target_pub;
+  
 
   double m_override;
   void overrideCallback(const std_msgs::Int64ConstPtr& msg);

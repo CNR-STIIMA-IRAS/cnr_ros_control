@@ -53,7 +53,6 @@ namespace cnr
 namespace control
 {
 
-
 template<class H,class T>
 inline JointCommandController<H,T>::~JointCommandController()
 {
@@ -127,6 +126,17 @@ inline bool JointCommandController<H,T>::enterInit()
   m_override = 1;
   m_safe_override_1 = 1;
   m_safe_override_2 = 1;
+
+  bool pub_log_target = false;
+  this->getRootNh().getParam("pub_log_target", pub_log_target);
+  if(pub_log_target)
+  {
+    m_target_pub.reset(new rosdyn::ChainStatePublisher(this->getControllerNh(), "log_target", this->chainNonConst(), &(this->m_target)));
+  }
+  else
+  {
+    m_target_pub.reset();
+  }
 
   CNR_RETURN_TRUE(this->m_logger);
 }
@@ -222,6 +232,9 @@ inline bool JointCommandController<H,T>::exitUpdate()
     m_target.qd() = saturated_qd;
 
     m_last_target.copy(m_target, m_target.ONLY_JOINT);
+
+    if(m_target_pub)
+      m_target_pub->publish();
     // ==============================
   }
   catch(...)
