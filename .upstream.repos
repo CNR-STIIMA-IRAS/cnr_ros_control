@@ -47,7 +47,7 @@ repositories:
         type: git
         url: https://github.com/fmauch/universal_robot.git
         version: calibration_devel
-    common/binary_logger
+    binary_logger:
         type: git
         url: https://github.com/CNR-STIIMA-IRAS/binary_logger.git
         version: master
