@@ -7,7 +7,6 @@ repositories:
         type: git
         url: https://github.com/CNR-STIIMA-IRAS/cnr_logger.git
         version: master
-        version: master
     realtime_utilities:
         type: git
         url:  https://github.com/CNR-STIIMA-IRAS/realtime_utilities.git
@@ -23,7 +22,7 @@ repositories:
     cnr_hardware_interface:
         type: git
         url:  https://github.com/CNR-STIIMA-IRAS/cnr_hardware_interface.git
-        version: master
+        version: main
     Universal_Robots_ROS_Driver:
         type: git
         url: https://github.com/UniversalRobots/Universal_Robots_ROS_Driver.git
