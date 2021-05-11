@@ -20,11 +20,12 @@ jobs:
     strategy:
       matrix:
         env:
-          - {ROS_DISTRO: melodic, ROS_REPO: testing}
-          - {ROS_DISTRO: melodic, ROS_REPO: main}
+          - {ROS_DISTRO: noetic, ROS_REPO: testing}
+          - {ROS_DISTRO: noetic, ROS_REPO: master}
     env:
       CCACHE_DIR: /github/home/.ccache # Directory for ccache (and how we enable ccache in industrial_ci)
       CODE_COVERAGE: codecov.io
+      UPSTREAM_WORKSPACE:'upstream.repos'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
