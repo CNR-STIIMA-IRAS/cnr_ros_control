@@ -21,7 +21,7 @@ repositories:
         url:  https://github.com/CNR-STIIMA-IRAS/subscription_notifier
         version: master
     cnr_hardware_interface:
-        type git
+        type: git
         url:  https://github.com/CNR-STIIMA-IRAS/cnr_hardware_interface.git
         version: master
     Universal_Robots_ROS_Driver:
