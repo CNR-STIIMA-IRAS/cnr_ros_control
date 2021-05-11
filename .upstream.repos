@@ -61,7 +61,7 @@ repositories:
         version: master
     rosparam_utilities:
         type: git
-        uri: https://github.com/CNR-STIIMA-IRAS/rosparam_utilities.git
+        url: https://github.com/CNR-STIIMA-IRAS/rosparam_utilities.git
         version: master
     moveit_planning_helper:
         type: git
