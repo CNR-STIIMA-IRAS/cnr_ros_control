@@ -47,4 +47,24 @@ repositories:
         type: git
         url: https://github.com/fmauch/universal_robot.git
         version: calibration_devel
+    common/binary_logger
+        type: git
+        url: https://github.com/CNR-STIIMA-IRAS/binary_logger.git
+        version: master
+    cnr_control_toolbox:
+        type: git
+        url: https://github.com/CNR-STIIMA-IRAS/cnr_control_toolbox
+        version: master
+    eigen_utils:
+        type: git
+        url: https://github.com/CNR-STIIMA-IRAS/eigen_utils
+        version: master
+    rosparam_utilities:
+        type: git
+        uri: https://github.com/CNR-STIIMA-IRAS/rosparam_utilities.git
+        version: master
+    moveit_planning_helper:
+        type: git
+        url: https://github.com/CNR-STIIMA-IRAS/moveit_planning_helper
+        version: master
 

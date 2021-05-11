@@ -22,3 +22,18 @@
 - git:
     local-name: rosdyn_utilities
     uri:  https://github.com/CNR-STIIMA-IRAS/rosdyn_utilities.git
+- git:
+    local-name: common/binary_logger
+    uri: https://github.com/CNR-STIIMA-IRAS/binary_logger.git
+- git:
+    local-name: common/cnr_control_toolbox
+    uri: https://github.com/CNR-STIIMA-IRAS/cnr_control_toolbox
+- git:
+    local-name: common/eigen_utils
+    uri: https://github.com/CNR-STIIMA-IRAS/eigen_utils
+- git:
+    local-name: common/rosparam_utilities
+    uri: https://github.com/CNR-STIIMA-IRAS/rosparam_utilities.git
+- git:
+    local-name: motion/moveit/moveit_planning_helper
+    uri: https://github.com/CNR-STIIMA-IRAS/moveit_planning_helper
