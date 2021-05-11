@@ -30,6 +30,6 @@ repositories:
         version: master
     fmauch_universal_robot:
         type: git
-        url https://github.com/fmauch/universal_robot.git
+        url: https://github.com/fmauch/universal_robot.git
         version: calibration_devel
 
