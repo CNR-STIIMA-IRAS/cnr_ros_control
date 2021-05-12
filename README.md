@@ -2,7 +2,7 @@
 
 
 [![CI][a]][1]
-[![Build Status][b]][2]
+[]: #( [![Build Status][b]][2] )
 [![codecov][c]][3]
 [![Codacy Badge][d]][4]
 
