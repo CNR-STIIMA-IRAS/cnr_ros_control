@@ -1,6 +1,23 @@
 # Extension of ROS-CONTROL #
 
-[![Build Status](https://travis-ci.com/CNR-STIIMA-IRAS/cnr_ros_control.svg?branch=master)](https://travis-ci.com/CNR-STIIMA-IRAS/cnr_ros_control) [![codecov](https://codecov.io/gh/CNR-STIIMA-IRAS/cnr_ros_control/branch/master/graph/badge.svg)](https://codecov.io/gh/CNR-STIIMA-IRAS/cnr_ros_control) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/fd683d54c39443df9c685fb189300695)](https://app.codacy.com/gh/CNR-STIIMA-IRAS/cnr_ros_control?utm_source=github.com&utm_medium=referral&utm_content=CNR-STIIMA-IRAS/cnr_ros_control&utm_campaign=Badge_Grade_Dashboard)
+
+[![CI][a]][1]
+[![Build Status][b]][2]
+[![codecov][c]][3]
+[![Codacy Badge][d]][4]
+
+
+[a]:https://github.com/CNR-STIIMA-IRAS/cnr_ros_control/actions/workflows/industrial_ci_action.yml/badge.svg
+[1]:https://github.com/CNR-STIIMA-IRAS/cnr_ros_control/actions/workflows/industrial_ci_action.yml
+
+[b]:https://travis-ci.com/CNR-STIIMA-IRAS/cnr_ros_control.svg?branch=master
+[2]:https://travis-ci.com/CNR-STIIMA-IRAS/cnr_ros_control
+
+[c]:https://codecov.io/gh/CNR-STIIMA-IRAS/cnr_ros_control/branch/master/graph/badge.svg
+[3]:https://codecov.io/gh/CNR-STIIMA-IRAS/cnr_ros_control
+
+[d]:https://api.codacy.com/project/badge/Grade/fd683d54c39443df9c685fb189300695
+[4]:https://app.codacy.com/gh/CNR-STIIMA-IRAS/cnr_ros_control?utm_source=github.com&utm_medium=referral&utm_content=CNR-STIIMA-IRAS/cnr_ros_control&utm_campaign=Badge_Grade_Dashboard
 
 ## The design of the framework ##
 
