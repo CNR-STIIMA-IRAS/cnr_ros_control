@@ -6,7 +6,6 @@
 [![codecov][c]][3]
 [![Codacy Badge][d]][4]
 
-
 [a]:https://github.com/CNR-STIIMA-IRAS/cnr_ros_control/actions/workflows/industrial_ci_action.yml/badge.svg
 [1]:https://github.com/CNR-STIIMA-IRAS/cnr_ros_control/actions/workflows/industrial_ci_action.yml
 
