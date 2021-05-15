@@ -1,3 +1,15 @@
+# Fake Robot HW
+This Robot HW set the joint states equal to the joint command.
+It has the following hardware interfaces:
+
+- hardware_interface::JointStateInterface     
+- hardware_interface::PositionJointInterface  
+- hardware_interface::VelocityJointInterface  
+- hardware_interface::EffortJointInterface    
+- hardware_interface::PosVelEffJointInterface 
+- hardware_interface::VelEffJointInterface    
+
+## Configuration
 ```yaml
 ur5_hw:  # name of the hardware interface
   type           : cnr/control/FakeRobotHW  # type
@@ -20,7 +32,6 @@ ur5_hw:  # name of the hardware interface
   tool_link: ur5_tool0      # endeffector of the chain
   robot_description_param: /robot_description   # URDF descriptor
   robot_description_planning_param: /robot_description_planning  
-
 
   initial_position: [2.5139003020721433, -1.300169384679926, 1.2500994437535364, -1.5412232868185847, -1.5994267077911786, 5.39879464423676]  # optional. Initial position  
 ```
