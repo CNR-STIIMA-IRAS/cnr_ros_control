@@ -9,6 +9,10 @@ It has the following hardware interfaces:
 - hardware_interface::PosVelEffJointInterface 
 - hardware_interface::VelEffJointInterface    
 
+The repository contains the implementation of a hardware interface derived from **cnr_hardware_interface**.
+
+The repository is developed by the Institute of Intelligent Industrial Technologies and Systems for Advanced Manufacturing (STIIMA), of the National Research Council of Italy (CNR).
+
 ## Configuration
 ```yaml
 ur5_hw:  # name of the hardware interface
@@ -16,7 +20,7 @@ ur5_hw:  # name of the hardware interface
   appenders      : [file, screen]  # logging information: the first one is stored in a file, the second one in the screen
   levels         : [trace, debug]  # trace debug info warn error fatal
   pattern_layout : "[%5p][%d{HH:mm:ss,SSS}][%50M:%04L][%24c] %m%n"
-  file_name      : ur5_hw  # name of the file (it is saved in ~/.ros/
+  file_name      : ur5_hw  # name of the file (it is saved in ~/.ros/)
   sampling_period: 0.008
   diagnostic_period: 0.1
   maximum_missing_cycles: 100
