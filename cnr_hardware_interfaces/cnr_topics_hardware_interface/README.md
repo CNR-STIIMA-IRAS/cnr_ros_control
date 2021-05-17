@@ -38,9 +38,9 @@ planner_hw: # name of the hardware interface
   pattern_layout : "[%5p][%d{HH:mm:ss,SSS}][%50M:%04L][%24c] %m%n"
   file_name      : planner_hw  # name of the file (it is saved in ~/.ros/)
 
-  resources: [ joint_resource ]
-  joint_resource:
-    joint_names:
+  resources: [ joint_resource ] # this TopicsRobotHW manages topic of type: joint
+  joint_resource:  # joint handles managed by planner_hw
+    joint_names: # name of the joint handles
     - linear_motor_cursor_joint
     - ur5_shoulder_pan_joint
     - ur5_shoulder_lift_joint
@@ -48,7 +48,7 @@ planner_hw: # name of the hardware interface
     - ur5_wrist_1_joint
     - ur5_wrist_2_joint
     - ur5_wrist_3_joint
-    subscribed_topics :
+    subscribed_topics : # name of topics sensor_msgs/JointState which contains the state of the joint handle
     - /elmo/joint_states
     - /ur5/joint_states
     - /ur5/joint_states
@@ -56,7 +56,7 @@ planner_hw: # name of the hardware interface
     - /ur5/joint_states
     - /ur5/joint_states
     - /ur5/joint_states
-    published_topics :
+    published_topics : # name of the topic (type sensor_msgs/JointState) that planner_hw will publish (it has to be only one)
     - /ur5/joint_target
 
   sampling_period: 0.008
