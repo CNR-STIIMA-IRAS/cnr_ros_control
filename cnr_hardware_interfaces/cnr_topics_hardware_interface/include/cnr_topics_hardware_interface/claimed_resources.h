@@ -12,8 +12,9 @@
 #include <hardware_interface/joint_state_interface.h>
 #include <hardware_interface/joint_command_interface.h>
 #include <cnr_hardware_interface/posveleff_command_interface.h>
-#include <cnr_hardware_interface/force_torque_state_interface.h>
-#include <cnr_hardware_interface/force_torque_command_interface.h>
+#include <hardware_interface/force_torque_sensor_interface.h>
+ #include <cnr_hardware_interface/force_torque_state_interface.h>
+ #include <cnr_hardware_interface/force_torque_command_interface.h>
 #include <cnr_hardware_interface/analog_state_interface.h>
 #include <cnr_hardware_interface/analog_command_interface.h>
 #include <cnr_hardware_interface/pose_state_interface.h>
@@ -197,6 +198,7 @@ struct ForceTorqueClaimedResource : ClaimedResource< geometry_msgs::WrenchStampe
   bool prepareSwitch(const std::list<hardware_interface::ControllerInfo>& start_list, const std::list<hardware_interface::ControllerInfo>& stop_list);
   void callback(const geometry_msgs::WrenchStamped::ConstPtr& msg, const std::string& topic);
 
+  hardware_interface::ForceTorqueSensorInterface m_w_sensor_h;  //interface for reading joint state complaint with ros_control
   hardware_interface::ForceTorqueStateInterface  m_w_sh; //interface for reading joint state
   hardware_interface::ForceTorqueInterface       m_w_h;
 
