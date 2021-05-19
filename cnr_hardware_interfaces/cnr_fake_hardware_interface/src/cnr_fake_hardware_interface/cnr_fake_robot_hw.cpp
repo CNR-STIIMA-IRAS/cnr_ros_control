@@ -151,7 +151,20 @@ bool FakeRobotHW::doInit()
   }
 
   std::string wrench_name="wrench";
+  if (m_robothw_nh.getParam("wrench_resourse",wrench_name))
+  {
+    wrench_name="wrench";
+    CNR_TRACE(m_logger,"using defalut wrench_resourse name: wrench");
+  }
+
   std::string m_frame_id="tool0";
+  if (m_robothw_nh.getParam("frame_id",wrench_name))
+  {
+    m_frame_id="tool0";
+    CNR_TRACE(m_logger,"using defalut frame_id name: tool0");
+  }
+
+
   hardware_interface::ForceTorqueSensorHandle sensor_handle(wrench_name
       , m_frame_id
       , &(m_ft_sensor.at(0))
