@@ -421,7 +421,12 @@ void ForceTorqueClaimedResource::init()
       , m_frame_id
       , &(m_state.at(0))
       , &(m_state.at(3)));
+  hardware_interface::ForceTorqueSensorHandle sensor_handle(m_resource_names.front()
+      , m_frame_id
+      , &(m_state.at(0))
+      , &(m_state.at(3)));
 
+  m_w_sensor_h.registerHandle(sensor_handle);
   m_w_sh.registerHandle(state_handle);
   m_w_h.registerHandle(hardware_interface::ForceTorqueHandle(state_handle, &(m_output.at(0)), &(m_output.at(3))));
 
