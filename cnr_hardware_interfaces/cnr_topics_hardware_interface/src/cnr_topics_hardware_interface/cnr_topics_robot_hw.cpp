@@ -549,6 +549,7 @@ bool TopicsRobotHW::initForceTorqueClaimedResource()
     m_force_torque_sensor_resource->init();
 
     registerInterface(&m_force_torque_sensor_resource->m_w_sh);
+    registerInterface(&m_force_torque_sensor_resource->m_w_sensor_h);
     registerInterface(&m_force_torque_sensor_resource->m_w_h);
 
     ret = true;
