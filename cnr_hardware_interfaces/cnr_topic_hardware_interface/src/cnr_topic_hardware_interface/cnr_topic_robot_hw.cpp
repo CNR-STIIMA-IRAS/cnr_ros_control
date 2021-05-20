@@ -39,7 +39,7 @@
 
 #include <pluginlib/class_list_macros.h>
 
-PLUGINLIB_EXPORT_CLASS(cnr_hardware_interface::TopicRobotHW, cnr_hardware_interface::RobotHW)
+PLUGINLIB_EXPORT_CLASS(cnr_hardware_interface::TopicRobotHW, hardware_interface::RobotHW)
 
 namespace cnr_hardware_interface
 {

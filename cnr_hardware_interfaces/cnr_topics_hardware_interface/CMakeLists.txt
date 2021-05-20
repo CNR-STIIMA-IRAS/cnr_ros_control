@@ -15,14 +15,12 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 ######
 find_package(catkin REQUIRED COMPONENTS
   control_msgs
-  cnr_hardware_nodelet_interface
   cnr_controller_interface
   controller_manager
   diagnostic_msgs
   geometry_msgs
   hardware_interface
   subscription_notifier
-  nodelet
   roscpp
   sensor_msgs
   cnr_hardware_interface
@@ -38,8 +36,8 @@ endif()
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES cnr_topics_hardware_interface
-  CATKIN_DEPENDS control_msgs cnr_hardware_nodelet_interface cnr_controller_interface controller_manager
-                  diagnostic_msgs geometry_msgs hardware_interface  subscription_notifier nodelet roscpp sensor_msgs
+  CATKIN_DEPENDS control_msgs cnr_controller_interface controller_manager
+                  diagnostic_msgs geometry_msgs hardware_interface  subscription_notifier roscpp sensor_msgs
                   cnr_hardware_interface  name_sorting
   DEPENDS 
 )

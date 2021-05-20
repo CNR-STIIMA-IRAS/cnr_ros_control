@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1)
-project(cnr_hardware_nodelet_interface)
+project(cnr_hardware_driver_interface)
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
@@ -36,7 +36,7 @@ endif()
 
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES cnr_hardware_nodelet_interface
+  LIBRARIES cnr_hardware_driver_interface
   CATKIN_DEPENDS configuration_msgs cnr_controller_interface_params cnr_controller_manager_interface
     cnr_hardware_interface cnr_logger realtime_utilities nodelet roscpp
 #  DEPENDS system_lib
@@ -45,7 +45,7 @@ catkin_package(
 include_directories(include ${catkin_INCLUDE_DIRS} )
 
 ## Declare a C++ library
-add_library(${PROJECT_NAME} src/${PROJECT_NAME}/cnr_robot_hw_nodelet.cpp )
+add_library(${PROJECT_NAME} src/${PROJECT_NAME}/cnr_hardware_driver_interface.cpp )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} )
 target_compile_options(${PROJECT_NAME} PUBLIC -Wall -faligned-new
         $<$<CONFIG:Release>:-Ofast -funroll-loops -ffast-math >)

@@ -32,13 +32,11 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
-
+#include <iterator>
+#include <vector>
+#include <algorithm>
 #include <thread>
 #include <ros/ros.h>
-#include <nodelet/nodelet.h>
-#include <nodelet/NodeletLoad.h>
-#include <nodelet/NodeletUnload.h>
-#include <nodelet/NodeletList.h>
 #include <cnr_logger/cnr_logger.h>
 #include <configuration_msgs/SendMessage.h>
 
@@ -48,92 +46,32 @@
 namespace cnr_configuration_manager
 {
 
-ConfigurationLoader::ConfigurationLoader(std::shared_ptr<cnr_logger::TraceLogger> log,
-                                                 const ros::NodeHandle& root_nh)
-  : root_nh_(root_nh), logger_(log)
+ConfigurationLoader::ConfigurationLoader(const ros::NodeHandle& root_nh)
+  : root_nh_(root_nh)
 {
-  nodelet_loader_.reset(new nodelet::Loader(false));
+  drivers_.clear();
 }
 
 ros::NodeHandle& ConfigurationLoader::getRootNh()
 {
   return root_nh_;
 }
-
-bool ConfigurationLoader::getHwParam(ros::NodeHandle &nh,
-                                     const std::string& hw_name,
-                                     nodelet::NodeletLoadRequest& request)
-{
-
-  XmlRpc::XmlRpcValue hardware_interface;
-  if (!nh.getParam(hw_name, hardware_interface))
-  {
-    error_ = "Param '" + nh.getNamespace()+ "/" + hw_name + "' does not exist";
-    return false;
-  }
-  if (!hardware_interface.hasMember("nodelet_type"))
-  {
-    //error_ = "The hardware_interface has not the field 'type'";
-    request.type = "cnr/control/RobotHwNodelet";
-  }
-  else
-  {
-    request.type    = (std::string)hardware_interface["nodelet_type"];
-  }
-
-  request.name    = hw_name;
-
-  if (hardware_interface.hasMember("remap_source_args"))
-  {
-    XmlRpc::XmlRpcValue remap_source_args = hardware_interface["remap_source_args"];
-
-    if (remap_source_args.getType() != XmlRpc::XmlRpcValue::TypeArray)
-    {
-      error_ = "The remap_source_args is not a list of names" ;
-      return false;
-    }
-    request.remap_source_args.resize(remap_source_args.size());
-    for (int i = 0; i < remap_source_args.size(); i++)
-      request.remap_source_args.at(i) = (std::string)remap_source_args[i];
-  }
-
-  if (hardware_interface.hasMember("remap_target_args"))
-  {
-    XmlRpc::XmlRpcValue remap_target_args = hardware_interface["remap_target_args"];
-
-    if (remap_target_args.getType() != XmlRpc::XmlRpcValue::TypeArray)
-    {
-      error_ = "The remap_target_args is not a list of names" ;
-      return false;
-    }
-    if ((int)request.remap_source_args.size() != remap_target_args.size())
-    {
-      error_ = "remap_target_args is different w.r.t. remap_target_args";
-      return false;
-    }
-    request.remap_target_args.resize(remap_target_args.size());
-    for (int i = 0; i < remap_target_args.size(); i++)
-      request.remap_target_args.at(i) = (std::string)remap_target_args[i];
-  }
-  return true;
-}
-
-
 bool ConfigurationLoader::getHwParam(ros::NodeHandle &nh,
                                      const std::string& hw_name,
                                      std::string& type,
-                                     nodelet::M_string& remappings)
+                                     std::map<std::string,std::string>& remappings,
+                                     std::string& error)
 {
 
   XmlRpc::XmlRpcValue hardware_interface;
   if (!nh.getParam(hw_name, hardware_interface))
   {
-    error_ = "Param '" + nh.getNamespace()+ "/" + hw_name + "' does not exist";
+    error = "Param '" + nh.getNamespace()+ "/" + hw_name + "' does not exist";
     return false;
   }
   if (!hardware_interface.hasMember("nodelet_type"))
   {
-    //error_ = "The hardware_interface has not the field 'type'";
+    //error = "The hardware_interface has not the field 'type'";
     type = "cnr/control/RobotHwNodelet";
   }
   else
@@ -149,17 +87,17 @@ bool ConfigurationLoader::getHwParam(ros::NodeHandle &nh,
 
     if (remap_source_args.getType() != XmlRpc::XmlRpcValue::TypeArray)
     {
-      error_ = "The remap_source_args is not a list of names" ;
+      error = "The remap_source_args is not a list of names" ;
       return false;
     }
     if (remap_target_args.getType() != XmlRpc::XmlRpcValue::TypeArray)
     {
-      error_ = "The remap_target_args is not a list of names" ;
+      error = "The remap_target_args is not a list of names" ;
       return false;
     }
     if (remap_source_args.size() != remap_target_args.size() )
     {
-      error_ = "The remap_source_args and remap_target_args have a different dimension!" ;
+      error = "The remap_source_args and remap_target_args have a different dimension!" ;
       return false;
     }
     for (int i = 0; i < remap_source_args.size(); i++)
@@ -173,171 +111,206 @@ bool ConfigurationLoader::getHwParam(ros::NodeHandle &nh,
 }
 
 
-bool ConfigurationLoader::listHw(std::vector<std::string>& hw_names_from_nodelet, const ros::Duration& watchdog)
+bool ConfigurationLoader::listHw(std::vector<std::string>& hw_names_from_nodelet, const ros::Duration& watchdog, std::string& error)
 {
-
-  hw_names_from_nodelet = nodelet_loader_->listLoadedNodelets();
+  hw_names_from_nodelet.clear();
+  for(auto const & d : drivers_) hw_names_from_nodelet.push_back(d.first); 
   return true;
 }
 
-bool ConfigurationLoader::purgeHw(const ros::Duration& watchdog)
+bool ConfigurationLoader::purgeHw(const ros::Duration& watchdog, std::string& error)
 {
-
-  std::vector<std::string> hw_names_from_nodelet = nodelet_loader_->listLoadedNodelets();
-
-  for (const std::string& hw_name : hw_names_from_nodelet)
+  for (auto & driver : drivers_)
   {
-    if (!nodelet_loader_->unload(hw_name))
+    if(driver.second->getState() )
+    if(!driver.second->getControllerManager()->stopUnloadAllControllers(watchdog))
     {
-      error_ = "The NodeletLoader failed in unload the nodelet '" + hw_name + "'. Abort.";
+      error = "Error in stopping and unloading the controllers";
       return false;
     }
   }
-
-  nodelet_loader_->clear();
   return true;
 }
 
-bool ConfigurationLoader::loadHw(const std::string& hw_to_load_name, const ros::Duration& watchdog, bool double_check)
+bool ConfigurationLoader::loadHw(const std::string& hw_to_load_name, 
+                                  const ros::Duration& watchdog, std::string& error)
 {
-  return loadHw(std::vector<std::string>(1,hw_to_load_name),watchdog, double_check);
+  return loadHw(std::vector<std::string>(1,hw_to_load_name),watchdog,error);
 }
 
 bool ConfigurationLoader::loadHw(const std::vector<std::string>& hw_to_load_names,
-                                 const ros::Duration& watchdog,
-                                 bool double_check)
+                                   const ros::Duration& watchdog,
+                                    std::string& error)
 {
-
+  std::vector<std::string> hw_to_start_names;
+  //=====================================================================================
+  // INIT THE DRIVERS 
   ros::NodeHandle nh("/");
-
-  CNR_TRACE_START(*logger_);
-  size_t i = 0;
   for (auto const & hw_to_load_name : hw_to_load_names)
   {
-    std::string type;
-    nodelet::M_string remappings;
-    nodelet::V_string my_argv;
-    i++;
-    if (!getHwParam(nh, hw_to_load_name, type, remappings))
+    if(drivers_.find(hw_to_load_name) != drivers_.end() )
     {
-      error_ = ("Loading RobotHW [" + std::to_string(i) + "/" + std::to_string((int)hw_to_load_names.size()) + "]") +
-               ("[" + hw_to_load_name + "] error: " + error_);
-      CNR_RETURN_FALSE(*logger_);
+      continue;
     }
-    CNR_DEBUG(*logger_, "Namespace: " << nh.getNamespace() << " Hw to load: " << hw_to_load_name
-              << " type (from param): " << type );
+    hw_to_start_names.push_back(hw_to_load_name);
 
-    if (!nodelet_loader_->load(hw_to_load_name, type, remappings, my_argv))
+    std::string type;
+    std::map<std::string,std::string> remappings;
+    if (!getHwParam(nh, hw_to_load_name, type, remappings, error))
     {
-      error_ = "The NodeleLoader failed when loading '" + hw_to_load_name + "'";
+      error = "Loading The driver for RobotHW " + hw_to_load_name + " got an error: " + error;
+      return false;
+    }
+
+    drivers_[hw_to_load_name].reset(new cnr_hardware_driver_interface::RobotHwDriverInterface() );
+    if(!drivers_[hw_to_load_name]->init(hw_to_load_name, remappings))
+    {
+      error = "Failed when loading '" + hw_to_load_name + "'";
       return false;
     }
   }
+  //=====================================================================================
 
-  if (double_check)
+
+
+
+  //=====================================================================================
+  // START IN PARALLEL ALL THE HW
+  std::map<std::string, std::thread* > starters;
+  std::map< std::string, bool > start_ok;
+  auto starter=[&](const std::string & hw_name, cnr_hardware_driver_interface::RobotHwDriverInterfacePtr driver,
+                    bool& ok)
   {
-    std::vector<std::string> hw_names_from_nodelet;
-    if (!listHw(hw_names_from_nodelet, watchdog))
-    {
-      error_ = "error_ in getting the loaded hardware interfaces by the nodelet loader: " + error_;
-      CNR_RETURN_FALSE(*logger_);
-    }
+    ok = driver->start(watchdog);
+  };
 
-    for (const std::string & hw : hw_to_load_names)
-    {
-      if (std::find(hw_names_from_nodelet.begin(), hw_names_from_nodelet.end(), hw) == hw_names_from_nodelet.end())
-      {
-        error_  = "Something wrong happen: despite the loading service was correct,";
-        error_ += "the actual loaded configuration by nodelet is different from the expected\n";
-        error_ += "Asked Hw to load    : " + to_string(hw_to_load_names);
-        error_ += "Loaded Hw by nodelet: " + to_string(hw_names_from_nodelet);
-        CNR_RETURN_FALSE(*logger_);
-      }
-    }
+  for (auto const & hw : hw_to_start_names)
+  { 
+    starters[hw] = new std::thread(starter, hw, drivers_[hw],std::ref(start_ok[hw]) );
   }
 
-  CNR_RETURN_TRUE(*logger_);
+  for (auto& thread : starters)
+  {
+    if (thread.second->joinable())
+    {
+      thread.second->join();
+    }
+    delete thread.second;
+  }
+
+  bool ok = true;
+  std::for_each(start_ok.begin(), start_ok.end(), [&](std::pair<std::string, bool> b)
+  {
+    if(!b.second)
+    {
+      error = "Error in starting the Driver of RobotHW '" + b.first +"'";
+    }
+    ok &= b.second;
+  });
+  //=====================================================================================
+
+  return ok;
+  //=====================================================================================
 }
 
 
-bool ConfigurationLoader::unloadHw(const std::vector<std::string>& hw_to_unload_names, const ros::Duration& watchdog)
+bool ConfigurationLoader::unloadHw(const std::vector<std::string>& hw_to_unload_names, 
+                                    const ros::Duration& watchdog, std::string& error)
 {
   static const std::vector<controller_manager_msgs::ControllerState> vc_empty;
   static const std::vector<std::string> vs_empty;
-  CNR_TRACE_START(*logger_);
-  CNR_DEBUG(*logger_, "Loop over the hw: " << to_string(hw_to_unload_names));
+  
+  error = "Loop over the hw: " + to_string(hw_to_unload_names) + "\n";
   for (auto old : hw_to_unload_names)
   {
-    CNR_DEBUG(*logger_, "hw: '" << old << "'");
+    error += "hw: '" + old + "'\n";
     std::vector<controller_manager_msgs::ControllerState> running;
     std::vector<controller_manager_msgs::ControllerState> stopped;
 
-    CNR_DEBUG(*logger_, "get the ctrl list");
-    if (!cmi_.at(old)->listControllers(running, stopped, watchdog))
+    auto cm = drivers_[old]->getControllerManager();
+    error += "get the ctrl list\n";
+    if (!cm->listControllers(running, stopped, watchdog))
     {
-      error_ = "error_ in getting the information of the status of the controllers." + cmi_.at(old)->error();
-      CNR_RETURN_FALSE(*logger_, cmi_.at(old)->error());
+      error += "error in getting the information of the status of the controllers." + cm->error();
+      return false;
     }
     stopped.insert(stopped.end(), running.begin(), running.end());
 
-    CNR_DEBUG(*logger_, "ctrl doswitch (stop)");
-    if (!cmi_.at(old)->switchControllers(1, vc_empty, vc_empty, running, watchdog))
+    error += "ctrl doswitch (stop)\n";
+    if (!cm->switchControllers(vc_empty, running, 1, watchdog))
     {
-      error_ = "error_ in unloding the controllers: " + cmi_.at(old)->error();
-      CNR_RETURN_FALSE(*logger_, error_);
+      error += "error in unloding the controllers: " + cm->error();
+      return false;
     }
 
-    CNR_DEBUG(*logger_, "ctrl unload");
-    if (!cmi_.at(old)->unloadControllers(stopped, watchdog))
+    error += "ctrl unload\n";
+    if (!cm->unloadControllers(stopped, watchdog))
     {
-      error_ = "error_ in unloading the controllers: " + cmi_.at(old)->error();
-      CNR_RETURN_FALSE(*logger_, error_);
+      error += "error in unloading the controllers: " + cm->error();
+      return false;
     }
 
-    CNR_DEBUG(*logger_, "hw nodelet unload (watchdog: " << watchdog.toSec() << ")");
-    if (!nodelet_loader_->unload( old ) )
+    error += "hw nodelet unload (watchdog: " + std::to_string(watchdog.toSec()) + ")\n";
+    try
     {
+      drivers_[old].reset();
+    }
+    catch(const std::exception& e)
+    {
+      error += "Error in deleting the Robot Hardware Driver ...." + std::string(e.what());
       hw_set_state(getRootNh(), old, cnr_hardware_interface::SRV_ERROR);
-      CNR_RETURN_FALSE(*logger_, error_);
+      return false;
     }
-    CNR_DEBUG(*logger_, "set hw nodelet state to UNLOADED");
+    
+    error += "set hw nodelet state to UNLOADED";
     hw_set_state(getRootNh(), old, cnr_hardware_interface::UNLOADED);
   }
-  CNR_RETURN_TRUE(*logger_);
+  return true;
 }
 
 bool ConfigurationLoader::loadAndStartControllers(const std::string& hw_name,
                                                   const ConfigurationStruct& next_conf,
-                                                  const size_t& strictness)
+                                                  const size_t& strictness,
+                                                  std::string& error)
 {
-  if (mail_senders_.find(hw_name) == mail_senders_.end())
+  //================================================
+  // The following code is used to send a message that is written then in the log file
+  // if (mail_senders_.find(hw_name) == mail_senders_.end())
+  // {
+  //   mail_senders_[hw_name] = root_nh_.serviceClient<configuration_msgs::SendMessage>("/"+hw_name+"/mail");
+  // }
+  // configuration_msgs::SendMessage srv;
+  // srv.request.message.data = "========= "+next_conf.data.name+" ======== Load and Start Controllers ========";
+  // if(!mail_senders_[hw_name].exists())
+  // {
+  //   CNR_ERROR(*logger_, "The service '" +mail_senders_[hw_name].getService() +"' does not exist... ?!?");
+  // }
+  // else
+  // {
+  //   mail_senders_[hw_name].call(srv);
+  // }
+  //================================================
+
+  //================================================
+  // If the proper Controller Manager Interface does not exist, we created a neu CMI
+  // The Controller Manager Interface, is like the standard ControlleManager.
+  // Specifically: 
+  // - A Controller Manager Proxy is created within the scope of the RobotHwNodelet. 
+  //   When a new RobotHw must be created, a RobotHwNodelet is created (i.e., a nodelet is loaded by loadHw function)
+  //   The RobotHwNodelet stores a Therefore, when a Controller Manager Proxy, that is a standard 
+  //   Controller Manager, with the services exposed under a proper namespace
+  // - The Controller Manager Interface is the 'client' side, that is configured to find the services offered by the 
+  //   Controller Manager Proxy
+  if (drivers_.find(hw_name) == drivers_.end())
   {
-    mail_senders_[hw_name] = root_nh_.serviceClient<configuration_msgs::SendMessage>("/"+hw_name+"/mail");
+    loadHw(hw_name, ros::Duration(2.0), error);
   }
-  configuration_msgs::SendMessage srv;
-  srv.request.message.data = "========= "+next_conf.data.name+" ======== Load and Start Controllers ========";
-  if(!mail_senders_[hw_name].exists())
-  {
-    CNR_ERROR(*logger_, "The service '" +mail_senders_[hw_name].getService() +"' does not exist... ?!?");
-  }
-  else
-  {
-    mail_senders_[hw_name].call(srv);
-  }
+  //================================================
 
 
-
-  // create proper configured servers
-  if (cmi_.find(hw_name) == cmi_.end())
-  {
-    cnr_controller_manager_interface::ControllerManagerInterfacePtr pcmi( 
-                                new cnr_controller_manager_interface::ControllerManagerInterface(logger_, hw_name) );
-    cmi_.emplace(hw_name, pcmi);
-  }
-
+  //================================================
   std::vector<std::string> next_controllers = std::vector<std::string>();
   ros::Duration watchdog = ros::Duration(0.0);
-    
   if(next_conf.components.find(hw_name) != next_conf.components.end())
   {
     next_controllers = extract_names(next_conf.components.at(hw_name));
@@ -345,53 +318,42 @@ bool ConfigurationLoader::loadAndStartControllers(const std::string& hw_name,
     watchdog = std::find(runtime_check.begin(), runtime_check.end(), false) != runtime_check.end() 
              ? ros::Duration(0.0) : ros::Duration(2.0);
   }
-  CNR_DEBUG(*logger_, "List of controllers to be uploaded for the RobotHw: " << hw_name
-                        << " next controllers: " << (next_controllers.size()>0 ?  to_string(next_controllers) : "none" )
-                          << "runtime check ? " << std::to_string(watchdog.toSec()>0) );
 
+  //================================================
 
-  if (!cmi_.at(hw_name)->switchControllers(strictness, next_controllers, watchdog))
+  //================================================
+  if (!drivers_[hw_name]->getControllerManager()->switchControllers(strictness, next_controllers, watchdog))
   {
-    CNR_RETURN_FALSE(*logger_, "Error in switching the controller");
+    error = "Error in switching the controller: " 
+            + drivers_[hw_name]->getControllerManager()->error();
+    return false;
   }
   running_configuration_ = next_conf;
-  CNR_RETURN_TRUE(*logger_);
+  //================================================
+
+  return true;
 }
 
 
 bool ConfigurationLoader::loadAndStartControllers(const std::vector<std::string>& hw_next_names,
                                                   const ConfigurationStruct& next_conf,
-                                                  const size_t& strictness)
+                                                  const size_t& strictness, std::string& error)
 {
   std::map<std::string, std::thread* > starters;
   std::map< std::string, bool > start_ok;
   for (auto const & hw_name : hw_next_names)
   {
     start_ok[hw_name] = false;
-    if (cmi_.find(hw_name) == cmi_.end())
+    if (drivers_.find(hw_name) == drivers_.end())
     {
-      cnr_controller_manager_interface::ControllerManagerInterfacePtr pcmi(
-        new cnr_controller_manager_interface::ControllerManagerInterface(logger_, hw_name) );
-      cmi_.emplace(hw_name, pcmi);
-    }
-
-    if (mail_senders_.find(hw_name) == mail_senders_.end())
-    {
-      mail_senders_[hw_name] = root_nh_.serviceClient<configuration_msgs::SendMessage>("/"+hw_name+"/mail");
-    }
-    configuration_msgs::SendMessage srv;
-    srv.request.message.data="========= "+next_conf.data.name+" ======== Load and Start Controllers ========";
-    if(!mail_senders_[hw_name].exists())
-    {
-      CNR_ERROR(*logger_, "The service '" +mail_senders_[hw_name].getService() +"' does not exist... ?!?");
-    }
-    else
-    {
-      mail_senders_[hw_name].call(srv);
+      if(!loadHw(hw_name, ros::Duration(2.0), error))
+      {
+        return false;
+      }
     }
   }
 
-  auto starter=[&](const std::string & hw_name, cnr_controller_manager_interface::ControllerManagerInterfacePtr ctrl,
+  auto starter=[&](const std::string & hw_name, cnr_controller_manager_interface::ControllerManagerPtr ctrl,
                     const ConfigurationStruct& next, bool& ok, std::string& error)
   {
     try
@@ -426,48 +388,45 @@ bool ConfigurationLoader::loadAndStartControllers(const std::vector<std::string>
   for (auto const & hw_name : hw_next_names)
   { 
     errors[hw_name] = "";
-    starters[hw_name] = new std::thread(starter, hw_name,  std::ref(cmi_.at(hw_name)), next_conf, 
-                                          std::ref(start_ok[hw_name]), std::ref(errors[hw_name]));
+    starters[hw_name] = new std::thread(starter, hw_name, 
+                                          drivers_.at(hw_name)->getControllerManager(),
+                                            next_conf, std::ref(start_ok[hw_name]), std::ref(errors[hw_name]) );
   }
 
-  CNR_DEBUG(*logger_,  "Waiting for threads");
   for (auto& thread : starters)
   {
-    CNR_DEBUG(*(cmi_.at(thread.first)->getLogger()), thread.first << ": Waiting for thread join execution ...");
+    auto cm = drivers_.at(thread.first)->getControllerManager();
     if (thread.second->joinable())
     {
       thread.second->join();
     }
     delete thread.second;
-    CNR_DEBUG(*(cmi_.at(thread.first)->getLogger()), thread.first << ": Thread Finished ");
   }
-  CNR_DEBUG(*logger_,  "Threads Joined");
 
   bool ok = true;
   std::for_each(start_ok.begin(), start_ok.end(), [&](std::pair<std::string, bool> b)
   {
+    auto cm = drivers_.at(b.first)->getControllerManager();
     if(b.second)
     {
-      CNR_INFO(cmi_.at(b.first)->getLogger(), "Successful starting the controllers of HW '" + b.first + "'");
+      //CNR_INFO(cm->getLogger(), "Successful starting the controllers of HW '" + b.first + "'");
     }
     else
     {
-      CNR_ERROR(cmi_.at(b.first)->getLogger(), "Error in starting the controllers of HW '" + b.first + "': " 
-                                             + cmi_.at(b.first)->error() + " (" + errors[b.first] + ")" );
+      error = "Error in starting the controllers of HW '" + b.first + "': " 
+                  + cm->error() + " (" + errors[b.first] + ")";
     }
     ok &= b.second;
   });
 
   running_configuration_ = next_conf;
-  CNR_RETURN_BOOL(*logger_, ok);
+  return ok;
 }
 
 
 bool ConfigurationLoader::stopAndUnloadAllControllers(const std::vector<std::string>& hw_to_unload_names,
-                                                        const ros::Duration& watchdog)
+                                                        const ros::Duration& watchdog, std::string& error)
 {
-  CNR_TRACE_START(*logger_);
-
   std::map<std::string, std::thread* > stoppers;
   std::map< std::string, bool > unload_ok;
 
@@ -475,23 +434,23 @@ bool ConfigurationLoader::stopAndUnloadAllControllers(const std::vector<std::str
   {
     unload_ok[hw_name] = false;
   }
-  auto stopper=[&](const std::string & hw, cnr_controller_manager_interface::ControllerManagerInterfacePtr ctrl, 
+  auto stopper=[&](const std::string & hw, cnr_controller_manager_interface::ControllerManagerPtr ctrl, 
                    bool& ok, std::string& error)
   {
-    if (mail_senders_.find(hw) == mail_senders_.end())
-    {
-      mail_senders_[hw] = root_nh_.serviceClient<configuration_msgs::SendMessage>("/"+hw+"/mail");
-    }
-    configuration_msgs::SendMessage srv;
-    srv.request.message.data = "========= ======== UnLoad and Stop Controllers ========";
-    if(!mail_senders_[hw].exists())
-    {
-      CNR_ERROR(*logger_, "The service '" +mail_senders_[hw].getService() +"' does not exist... ?!?");
-    }
-    else
-    {
-      mail_senders_[hw].call(srv);
-    }
+    // if (mail_senders_.find(hw) == mail_senders_.end())
+    // {
+    //   mail_senders_[hw] = root_nh_.serviceClient<configuration_msgs::SendMessage>("/"+hw+"/mail");
+    // }
+    // configuration_msgs::SendMessage srv;
+    // srv.request.message.data = "========= ======== UnLoad and Stop Controllers ========";
+    // if(!mail_senders_[hw].exists())
+    // {
+    //   CNR_ERROR(*logger_, "The service '" +mail_senders_[hw].getService() +"' does not exist... ?!?");
+    // }
+    // else
+    // {
+    //   mail_senders_[hw].call(srv);
+    // }
     try
     {
       bool null_watchdog = false;
@@ -513,54 +472,61 @@ bool ConfigurationLoader::stopAndUnloadAllControllers(const std::vector<std::str
       ok = false;
     }
     return;
-    
   };
 
   std::map<std::string,std::string> errors;
   for (auto const & hw_name : hw_to_unload_names)
   {
     errors[hw_name]="";
-    stoppers[hw_name] = new std::thread(stopper, hw_name,  cmi_.at(hw_name), 
+    stoppers[hw_name] = new std::thread(stopper, hw_name,  drivers_.at(hw_name)->getControllerManager(), 
                                         std::ref(unload_ok[hw_name]), std::ref(errors[hw_name]));
   }
-  CNR_DEBUG(*logger_,  "Waiting for threads");
+  
   for (auto& thread : stoppers)
   {
-    CNR_DEBUG(*(cmi_.at(thread.first)->getLogger()), thread.first << ": Waiting for thread join execution ...");
+    auto cm = drivers_.at(thread.first)->getControllerManager();
     if (thread.second->joinable())
     {
       thread.second->join();
     }
-    CNR_DEBUG(*(cmi_.at(thread.first)->getLogger()), thread.first << ": Thread Finished ");
   }
-  CNR_DEBUG(*logger_,  "Threads Joined");
 
   bool ok = true;
   std::for_each(unload_ok.begin(), unload_ok.end(), [&](std::pair<std::string, bool> b)
   {
+    auto cm = drivers_.at(b.first)->getControllerManager();
     if(b.second)
     {
-      CNR_INFO(cmi_.at(b.first)->getLogger(), "Successful stopping the controllers of HW '" + b.first + "'");
+      //CNR_INFO(cm->getLogger(), "Successful stopping the controllers of HW '" + b.first + "'");
     }
     else
     {
-      CNR_ERROR(cmi_.at(b.first)->getLogger(), "Error in stopping the controllers of HW '" + b.first + "': " 
-      + cmi_.at(b.first)->error()+ "(" + errors[b.first]+")");
+      error = "Error in stopping the controllers of HW '" + b.first + "': " 
+                + cm->error()+ "(" + errors[b.first]+")";
     }
     ok &= b.second;
   });
 
-  CNR_RETURN_BOOL(*logger_, ok);
+  return ok;
 }
 
 bool ConfigurationLoader::listControllers(const std::string& hw_name,
                                           std::vector< controller_manager_msgs::ControllerState >& running,
-                                          std::vector< controller_manager_msgs::ControllerState >& stopped )
+                                          std::vector< controller_manager_msgs::ControllerState >& stopped, 
+                                          std::string& error )
 {
-  if (cmi_.find(hw_name) == cmi_.end())
+  if (drivers_.find(hw_name) == drivers_.end())
+  {
+    error = "robot hw '"+hw_name+"'not in the list of the robot hw loaded";
     return false;
-
-  return cmi_.at(hw_name)->listControllers(running, stopped, ros::Duration(1.0));
+  }
+  
+  if(!drivers_.at(hw_name)->getControllerManager()->listControllers(running, stopped, ros::Duration(1.0)))
+  {
+    error = drivers_.at(hw_name)->getControllerManager()->error();
+    return false;
+  }
+  return true;
 }
 
 

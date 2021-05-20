@@ -126,6 +126,7 @@ protected:
   mutable std::mutex  mtx_;
 
   double getKinUpdatePeriod() const { return m_fkin_update_period; }
+  void setKinUpdatePeriod(const double& fkin_update_period) { m_fkin_update_period = fkin_update_period; }
 
 private:
   rosdyn::LinkPtr    m_root_link;  //link primitivo da cui parte la catena cinematica(world ad esempio)

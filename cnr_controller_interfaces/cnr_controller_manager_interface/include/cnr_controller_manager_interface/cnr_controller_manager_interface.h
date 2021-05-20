@@ -79,7 +79,6 @@ private:
                      const ros::Duration&  watchdog = ros::Duration(0.0));
 
 public:
-  
   ControllerManagerInterface() = delete;
   virtual ~ControllerManagerInterface() = default;
   ControllerManagerInterface(const ControllerManagerInterface&) = delete;
@@ -93,9 +92,9 @@ public:
    * @param hw_name
    * @param use_proxy
    */
-  ControllerManagerInterface(std::shared_ptr<cnr_logger::TraceLogger> logger,
-                             const std::string&                       hw_name,
-                             const bool&                              use_proxy = false );
+  ControllerManagerInterface(cnr_logger::TraceLogger* logger,
+                             const std::string&       hw_name,
+                             const bool&              use_proxy = false );
 
   std::string  loadServiceName()             { return load_.getService();     }
   std::string  unloadServiceName()           { return unload_.getService();   }
@@ -103,10 +102,9 @@ public:
 
   bool loadController(const std::string& to_load_name, const ros::Duration& watchdog) final;
 
-  bool switchController(const int strictness,
-                        const std::vector<std::string>& to_load_and_start_names,
-                        const std::vector<std::string>& to_restart_names,
+  bool switchController(const std::vector<std::string>& to_load_and_start_names,
                         const std::vector<std::string>& to_stop_unload_names,
+                        const int strictness,
                         const ros::Duration& watchdog = ros::Duration(0.0)) final;
 
   bool unloadController(const std::string& to_unload_name, const ros::Duration& watchdog = ros::Duration(0.0)) final;

@@ -35,15 +35,10 @@
 #ifndef CNR_HARDWARE_NODELET_INTERFACE_CNR_HARDWARE_NODELET_INTERFACE_H
 #define CNR_HARDWARE_NODELET_INTERFACE_CNR_HARDWARE_NODELET_INTERFACE_H
 
-#include <nodelet/nodelet.h>
-#include <nodelet/loader.h>
-#include <nodelet/NodeletLoad.h>
-#include <nodelet/NodeletUnload.h>
-#include <nodelet/NodeletList.h>
-
 #include <cnr_logger/cnr_logger.h>
 #include <cnr_hardware_interface/internal/cnr_robot_hw_utils.h>
 #include <cnr_controller_manager_interface/cnr_controller_manager_interface.h>
+#include <cnr_hardware_driver_interface/cnr_hardware_driver_interface.h>
 #include <cnr_configuration_manager/internal/cnr_configuration_manager_utils.h>
 
 namespace cnr_configuration_manager
@@ -53,61 +48,62 @@ namespace cnr_configuration_manager
 class ConfigurationLoader
 {
 private:
-  ros::NodeHandle                          root_nh_;
-  std::shared_ptr<cnr_logger::TraceLogger> logger_;
-  std::string                              error_;
+  ros::NodeHandle  root_nh_;
 
-  std::shared_ptr<nodelet::Loader>         nodelet_loader_;
-  std::map<std::string, cnr_controller_manager_interface::ControllerManagerInterfacePtr > cmi_;
-
-  std::map<std::string, ros::ServiceClient> mail_senders_;
-  ConfigurationStruct                       running_configuration_;
+  std::map<std::string, cnr_hardware_driver_interface::RobotHwDriverInterfacePtr > drivers_;
+  ConfigurationStruct  running_configuration_;
 
 public:
-  ConfigurationLoader(std::shared_ptr<cnr_logger::TraceLogger> log,
-                        const ros::NodeHandle& root_nh);
+  ConfigurationLoader(const ros::NodeHandle& root_nh);
   ~ConfigurationLoader()
   {
-    nodelet_loader_.reset();
+    drivers_.clear();
   }
 
   ros::NodeHandle& getRootNh();
 
-  const std::string& error() const
-  {
-    return error_;
-  }
+  /**
+   */
+  bool getHwParam(ros::NodeHandle &nh, const std::string& hw_name,
+                    std::string&type, std::map<std::string,std::string>& remappings, std::string& error);
+  
+  /**
+   */
+  bool listHw(std::vector<std::string>& hw_names_from_nodelet, const ros::Duration& watchdog,
+                std::string& error);
+  
+  /**
+   */
+  bool purgeHw(const ros::Duration& watchdog, std::string& error);
+  
+  /**
+   */
+  bool loadHw(const std::string& hw_to_load_name, const ros::Duration& watchdog, std::string& error);
+  
+  /**
+   */
+  bool loadHw(const std::vector<std::string>& hw_to_load_names,
+                const ros::Duration& watchdog, std::string& error);
 
-  // inline implementation
-  bool getHwParam(ros::NodeHandle &nh, const std::string& hw_name, nodelet::NodeletLoadRequest& request);
-  bool getHwParam(ros::NodeHandle &nh, const std::string& hw_name, std::string&type, nodelet::M_string&remappings);
-  bool listHw(std::vector<std::string>& hw_names_from_nodelet, const ros::Duration& watchdog);
-  bool purgeHw(const ros::Duration& watchdog);
-  bool loadHw(const std::string& hw_to_load_name, const ros::Duration& watchdog, bool double_check);
-  bool loadHw(const std::vector<std::string>& hw_to_load_names, const ros::Duration& watchdog, bool double_check);
-  bool unloadHw(const std::vector<std::string>& hw_to_unload_names, const ros::Duration& watchdog);
+  /**
+   */
+  bool unloadHw(const std::vector<std::string>& hw_to_unload_names, const ros::Duration& watchdog, 
+                std::string& error);
 
   bool loadAndStartControllers(const std::string& hw_name, const ConfigurationStruct& next_configuration,
-                                const size_t& strictness);
+                                const size_t& strictness, std::string& error);
 
   bool loadAndStartControllers(const std::vector<std::string>& hw_next_names,
-                                const ConfigurationStruct& next_configuration, const size_t& strictness);
+                                const ConfigurationStruct& next_configuration, const size_t& strictness,
+                                  std::string& error);
 
   bool stopAndUnloadAllControllers(const std::vector<std::string>& hw_to_unload_names,
-                                    const ros::Duration& watchdog = ros::Duration(10.0));
+                                    const ros::Duration& watchdog, std::string& error);
 
   bool listControllers(const std::string& hw_name,
                         std::vector< controller_manager_msgs::ControllerState >& running,
-                          std::vector< controller_manager_msgs::ControllerState >& stopped );
-
-  std::string error( const std::string& hw )
-  {
-    if (cmi_.find(hw) != cmi_.end())
-    {
-      return cmi_.at(hw)->error();
-    }
-    return "HW name not in the list";
-  }
+                          std::vector< controller_manager_msgs::ControllerState >& stopped, 
+                            std::string& error);
 };
 
 }  // namespace cnr_hardware_nodelet_interface

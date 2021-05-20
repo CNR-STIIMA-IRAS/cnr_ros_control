@@ -40,25 +40,19 @@
 #include <atomic>
 #include <string>
 #include <thread>
-
+#include <realtime_utilities/diagnostics_interface.h>
 #include <cnr_controller_interface_params/cnr_controller_interface_params.h>
-#include <cnr_controller_manager_interface/internal/cnr_controller_manager.h>
+#include <cnr_controller_manager_interface/cnr_controller_manager.h>
 
 namespace cnr_controller_manager_interface
 {
-
-
-
-
 
 /**
  * 
  * 
  * 
- * 
- * 
  */
-ControllerManager::ControllerManager(std::shared_ptr<cnr_logger::TraceLogger> log,
+ControllerManager::ControllerManager(cnr_logger::TraceLogger* log,
                                      const std::string& hw_name,
                                      hardware_interface::RobotHW *robot_hw,
                                      const ros::NodeHandle& nh)
@@ -69,21 +63,21 @@ ControllerManager::ControllerManager(std::shared_ptr<cnr_logger::TraceLogger> lo
 
 bool ControllerManager::loadController(const std::string& ctrl_to_load_name, const ros::Duration& watchdog)
 {
-  CNR_TRACE_START(*logger_, "HW: " + getHwName() + ", CTRL: " + ctrl_to_load_name);
+  CNR_TRACE_START(logger_, "HW: " + getHwName() + ", CTRL: " + ctrl_to_load_name);
   if (!cm_.loadController(ctrl_to_load_name))
   {
     error_ = "ControllerManagerfailed while loading '" + ctrl_to_load_name + "'\n";
     controller_manager_msgs::ListControllerTypes ctrl_types;
     if (!listTypeRequest(ctrl_types, error_, watchdog))
     {
-      CNR_RETURN_FALSE(*logger_, "HW: " + getHwName() + ", CTRL: " + ctrl_to_load_name);
+      CNR_RETURN_FALSE(logger_, "HW: " + getHwName() + ", CTRL: " + ctrl_to_load_name);
     }
     error_ += "Available " + std::to_string((int)(ctrl_types.response.types.size())) +  "# classes:\n";
     for (auto const & t : ctrl_types.response.types)
     {
       error_ += "-" + t + "\n" ;
     }
-    CNR_RETURN_FALSE(*logger_, "HW: " + getHwName() + ", CTRL: " + ctrl_to_load_name);
+    CNR_RETURN_FALSE(logger_, "HW: " + getHwName() + ", CTRL: " + ctrl_to_load_name);
   }
 
   const std::string n = cnr::control::ctrl_list_param_name(getHwName());
@@ -97,52 +91,46 @@ bool ControllerManager::loadController(const std::string& ctrl_to_load_name, con
     l.push_back(ctrl_to_load_name);
     ros::param::set(n, l);
   }
-  CNR_RETURN_TRUE(*logger_, "HW: " + getHwName() + ", CTRL: " + ctrl_to_load_name);
+
+  controllers_.emplace( ctrl_to_load_name, cm_.getControllerByName(ctrl_to_load_name) );
+  
+  CNR_RETURN_TRUE(logger_, "HW: " + getHwName() + ", CTRL: " + ctrl_to_load_name);
 }
 
-
-
-bool ControllerManager::switchController(const int                        strictness,
-                                         const std::vector<std::string>&  to_load_and_start_names,
-                                         const std::vector<std::string>&  to_restart_names,
-                                         const std::vector<std::string>&  to_stop_unload_names,
+bool ControllerManager::switchController(const std::vector<std::string>&  to_start_names,
+                                         const std::vector<std::string>&  to_stop_names,
+                                         const int                        strictness, 
                                          const ros::Duration&             watchdog)
 {
-  CNR_TRACE_START(*logger_, "HW: "+ getHwName());
+  CNR_TRACE_START(logger_, "HW: "+ getHwName());
 
   std::vector<std::string> start_controllers;
   std::vector<std::string> stop_controllers;
 
   //--
-  if (to_load_and_start_names.size())
+  if (to_start_names.size())
   {
-    CNR_DEBUG(*logger_, to_string(to_load_and_start_names, "to_load_and_start_names  "));
-    for (auto const & ctrl : to_load_and_start_names)
+    CNR_DEBUG(logger_, to_string(to_start_names, "to_start_names  "));
+    for (auto const & ctrl : to_start_names)
       start_controllers.push_back(ctrl);
   }
-  if (to_restart_names.size())
+  if (to_stop_names.size())
   {
-    CNR_DEBUG(*logger_, to_string(to_restart_names, "to_restart_names         "));
-    for (auto const & ctrl : to_restart_names)
-      start_controllers.push_back(ctrl);
-  }
-  if (to_stop_unload_names.size())
-  {
-    CNR_DEBUG(*logger_, to_string(to_stop_unload_names, "to_stop_unload_names "));
-    for (auto const & ctrl : to_stop_unload_names)
+    CNR_DEBUG(logger_, to_string(to_stop_names, "to_stop_names "));
+    for (auto const & ctrl : to_stop_names)
       stop_controllers.push_back(ctrl);
   }
 
   // switch controllers
   if ((start_controllers.size() == 0) && (stop_controllers.size() == 0))
   {
-    CNR_RETURN_TRUE(*logger_, "HW: " + getHwName());
+    CNR_RETURN_TRUE(logger_, "HW: " + getHwName());
   }
 
   if (!cm_.switchController(start_controllers, stop_controllers, strictness) )
   {
     error_ = "The ControllerManager failed in switchin the controller. Abort.";
-    CNR_RETURN_FALSE(*logger_, "HW: " + getHwName());
+    CNR_RETURN_FALSE(logger_, "HW: " + getHwName());
   }
 
   if (watchdog.toSec() > 0)
@@ -152,24 +140,18 @@ bool ControllerManager::switchController(const int                        strict
     {
       if (!cnr::control::ctrl_check_state(getNamespace(), ctrl_name, "RUNNING", error_, watchdog))
       {
-        CNR_RETURN_FALSE(*logger_, "HW: " + getHwName()+": " + error_);
+        CNR_RETURN_FALSE(logger_, "HW: " + getHwName()+": " + error_);
       }
-//      if ((status != "INITIALIZED") && (status != "RUNNING"))
-//      {
-//        error_ += "Failed while checking '" + ctrl_name + "' state. The state is '" + status + "' while RUNNING is expected";
-//        error_ +=" (transition waited for " + std::to_string( (a-n).toSec()  ) + "s, watchdog: "+ std::to_string(watchdog.toSec())+ "s)";
-//        CNR_RETURN_FALSE(*logger_, "HW: " + getHwName());
-//      }
     }
     for (const std::string ctrl_name : stop_controllers)
     {
       if (!cnr::control::ctrl_check_state(getNamespace(), ctrl_name, "STOPPED", error_, watchdog))
       {
-        CNR_RETURN_FALSE(*logger_, "HW: " + getHwName()+ ": " + error_);
+        CNR_RETURN_FALSE(logger_, "HW: " + getHwName()+ ": " + error_);
       }
     }
   }
-  CNR_RETURN_TRUE(*logger_, "HW: " + getHwName());
+  CNR_RETURN_TRUE(logger_, "HW: " + getHwName());
 }
 
 /**
@@ -181,13 +163,13 @@ bool ControllerManager::switchController(const int                        strict
 bool ControllerManager::unloadController(const std::string& ctrl_to_unload_name, const ros::Duration& watchdog)
 {
   bool ret = true;
-  CNR_TRACE_START(*logger_, "HW: "+ getHwName()+", CTRL: " + ctrl_to_unload_name);
+  CNR_TRACE_START(logger_, "HW: "+ getHwName()+", CTRL: " + ctrl_to_unload_name);
 
   if (!cm_.unloadController( ctrl_to_unload_name ))
   {
     error_ = "The ControllerManager failed in unloading the controller '"+ctrl_to_unload_name+ "'. Abort.";
     ret = false;
-    //CNR_RETURN_FALSE(*logger_, "HW: "+ getHwName()+", CTRL: " + ctrl_to_unload_name);
+    //CNR_RETURN_FALSE(logger_, "HW: "+ getHwName()+", CTRL: " + ctrl_to_unload_name);
   }
 
   std::string st = (ret  ? "UNLOADED" : "ERROR_UNLOAD");
@@ -198,7 +180,86 @@ bool ControllerManager::unloadController(const std::string& ctrl_to_unload_name,
   ros::param::set(cnr::control::ctrl_status_param_name(getHwName(), ctrl_to_unload_name),  status_history);
   ros::param::set(cnr::control::ctrl_last_status_param_name(getHwName(), ctrl_to_unload_name), st) ;
 
-  CNR_RETURN_BOOL(*logger_, ret, "HW: "+ getHwName()+", CTRL: " + ctrl_to_unload_name);
+  if( ret )
+  {
+    if(controllers_.find(ctrl_to_unload_name) != controllers_.end())
+    {
+      controllers_.erase( controllers_.find(ctrl_to_unload_name) );
+    }
+  }
+
+  CNR_RETURN_BOOL(logger_, ret, "HW: "+ getHwName()+", CTRL: " + ctrl_to_unload_name);
+}
+
+
+/**
+ * @brief ControllerManager::diagnostics
+ * @param stat
+ */
+void ControllerManager::diagnosticsInfo(diagnostic_updater::DiagnosticStatusWrapper &stat)
+{
+  std::lock_guard<std::mutex> lock(mtx_);
+  for ( const auto & ctrl : controllers_)
+  {
+    realtime_utilities::DiagnosticsInterface* cnr_ctrl =
+                                    dynamic_cast<realtime_utilities::DiagnosticsInterface*>(ctrl.second);
+    if(cnr_ctrl)
+    {
+      cnr_ctrl->diagnosticsInfo(stat);
+    }
+  }
+}
+
+
+/**
+ * @brief ControllerManager::diagnostics
+ * @param stat
+ */
+void ControllerManager::diagnosticsWarn(diagnostic_updater::DiagnosticStatusWrapper &stat)
+{
+  std::lock_guard<std::mutex> lock(mtx_);
+  for ( const auto & ctrl : controllers_)
+  {
+    realtime_utilities::DiagnosticsInterface* cnr_ctrl =
+                                    dynamic_cast<realtime_utilities::DiagnosticsInterface*>(ctrl.second);
+    if( cnr_ctrl )
+    {
+      cnr_ctrl->diagnosticsWarn(stat);
+    }
+  }
+}
+
+
+/**
+ * @brief ControllerManager::diagnostics
+ * @param stat
+ */
+void ControllerManager::diagnosticsError(diagnostic_updater::DiagnosticStatusWrapper &stat)
+{
+  std::lock_guard<std::mutex> lock(mtx_);
+  for ( const auto & ctrl : controllers_)
+  {
+    realtime_utilities::DiagnosticsInterface* cnr_ctrl =
+                                    dynamic_cast<realtime_utilities::DiagnosticsInterface*>(ctrl.second);
+    if( cnr_ctrl )
+    {
+      cnr_ctrl->diagnosticsError(stat);
+    }
+  }
+}
+
+void ControllerManager::diagnosticsPerformance(diagnostic_updater::DiagnosticStatusWrapper &stat)
+{
+  std::lock_guard<std::mutex> lock(mtx_);
+  for ( const auto & ctrl : controllers_)
+  {
+    realtime_utilities::DiagnosticsInterface* cnr_ctrl =
+                                    dynamic_cast<realtime_utilities::DiagnosticsInterface*>(ctrl.second);
+    if( cnr_ctrl )
+    {
+      cnr_ctrl->diagnosticsPerformance(stat);
+    }
+  }
 }
 
 

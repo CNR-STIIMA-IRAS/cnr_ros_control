@@ -57,9 +57,9 @@ namespace cnr_controller_manager_interface
  * 
  * 
  */
-ControllerManagerInterface::ControllerManagerInterface(std::shared_ptr<cnr_logger::TraceLogger> logger,
-                                                       const std::string&                       hw_name,
-                                                       const bool&                              use_proxy)
+ControllerManagerInterface::ControllerManagerInterface(cnr_logger::TraceLogger* logger,
+                                                       const std::string&       hw_name,
+                                                       const bool&              use_proxy)
 : ControllerManagerBase( logger, hw_name )
 {
   const std::string ns = use_proxy ? ("/" + hw_name + "/controller_manager")
@@ -91,12 +91,12 @@ bool ControllerManagerInterface::switchRequest(controller_manager_msgs::SwitchCo
 
 bool ControllerManagerInterface::loadController(const std::string& to_load_name, const ros::Duration& watchdog)
 {
-  CNR_TRACE_START(*logger_, "HW: " + getHwName() + ", CTRL: " + to_load_name);
+  CNR_TRACE_START(logger_, "HW: " + getHwName() + ", CTRL: " + to_load_name);
   controller_manager_msgs::LoadController   loadController_srv;
   loadController_srv.request.name = to_load_name;
   if (!loadRequest(loadController_srv, error_, watchdog))
   {
-    CNR_RETURN_FALSE(*logger_, "HW: " + getHwName() + ", CTRL: " + to_load_name);
+    CNR_RETURN_FALSE(logger_, "HW: " + getHwName() + ", CTRL: " + to_load_name);
   }
 
   if (!loadController_srv.response.ok)
@@ -105,38 +105,26 @@ bool ControllerManagerInterface::loadController(const std::string& to_load_name,
     controller_manager_msgs::ListControllerTypes ctrl_types;
     if (!listTypeRequest(ctrl_types, error_, watchdog))
     {
-      CNR_RETURN_FALSE(*logger_, "HW: " + getHwName() + ", CTRL: " + to_load_name);
+      CNR_RETURN_FALSE(logger_, "HW: " + getHwName() + ", CTRL: " + to_load_name);
     }
     error_ += "Available " + std::to_string((int)(ctrl_types.response.types.size())) +  "# classes:\n";
     for (auto const & t : ctrl_types.response.types)
     {
       error_ += "-" + t + "\n" ;
     }
-    CNR_RETURN_FALSE(*logger_, "HW: " + getHwName() + ", CTRL: " + to_load_name);
+    CNR_RETURN_FALSE(logger_, "HW: " + getHwName() + ", CTRL: " + to_load_name);
   }
 
-  const std::string n = cnr::control::ctrl_list_param_name(getHwName());
-  std::vector<std::string> l;
-  if (ros::param::has(n))
-  {
-    ros::param::get(n, l);
-  }
-  if (std::find(l.begin(), l.end(), to_load_name) == l.end())
-  {
-    l.push_back(to_load_name);
-    ros::param::set(n, l);
-  }
-  CNR_RETURN_TRUE(*logger_, "HW: " + getHwName() + ", CTRL: " + to_load_name);
+  CNR_RETURN_TRUE(logger_, "HW: " + getHwName() + ", CTRL: " + to_load_name);
 }
 
-bool ControllerManagerInterface::switchController(const int                        strictness             ,
-                                                  const std::vector<std::string>&  to_load_and_start_names,
-                                                  const std::vector<std::string>&  to_restart_names       ,
-                                                  const std::vector<std::string>&  to_stop_unload_names   ,
+bool ControllerManagerInterface::switchController(const std::vector<std::string>&  to_start_names,
+                                                  const std::vector<std::string>&  to_stop_names   ,
+                                                  const int                        strictness             ,
                                                   const ros::Duration&             watchdog               )
 {
 
-  CNR_TRACE_START(*logger_, "HW: " + getHwName() );
+  CNR_TRACE_START(logger_, "HW: " + getHwName() );
 
   controller_manager_msgs::SwitchController switch_ctrl_srv;
   switch_ctrl_srv.request.strictness = (strictness == 0) ? 1 : strictness;
@@ -148,50 +136,49 @@ bool ControllerManagerInterface::switchController(const int                     
       return ptr.size()>0;
   };
 
-  CNR_DEBUG(*logger_, "HW: " + getHwName() + " -----------------");
-  CNR_DEBUG(*logger_, "HW: " + getHwName() + " Stricness? " << strictness);
-  CNR_DEBUG(*logger_, "HW: " + getHwName() + " Controllers to Load/Start?  " + std::string(check(to_load_and_start_names) ? "YES" : "NO"));
-  CNR_DEBUG(*logger_, "HW: " + getHwName() + " Controllers to Re-Start?    " + std::string(check(to_restart_names) ? "YES" : "NO"));
-  CNR_DEBUG(*logger_, "HW: " + getHwName() + " Controllers to Stop/Unload? " + std::string(check(to_stop_unload_names) ? "YES" : "NO"));
-  CNR_DEBUG(*logger_, "HW: " + getHwName() + " -----------------");
+  CNR_DEBUG(logger_, "HW: " + getHwName() + " -----------------");
+  CNR_DEBUG(logger_, "HW: " + getHwName() + " Stricness? " << strictness);
+  CNR_DEBUG(logger_, "HW: " + getHwName() + " Controllers to Load/Start?  " + std::string(check(to_start_names) ? "YES" : "NO"));
+  CNR_DEBUG(logger_, "HW: " + getHwName() + " Controllers to Stop/Unload? " + std::string(check(to_stop_names) ? "YES" : "NO"));
+  CNR_DEBUG(logger_, "HW: " + getHwName() + " -----------------");
   //--
-  if(check(to_load_and_start_names))
+  if(check(to_start_names))
   {
-    CNR_DEBUG(*logger_, "HW: " + getHwName() + to_string(to_load_and_start_names, "Controllers to load/start...: "));
-    for (auto const & ctrl : to_load_and_start_names)
+    CNR_DEBUG(logger_, "HW: " + getHwName() + to_string(to_start_names, "Controllers to load/start...: "));
+    for (auto const & ctrl : to_start_names)
       switch_ctrl_srv.request.start_controllers.push_back(ctrl);
   }
 
-  if((strictness!=1) && check(to_restart_names))
-  {
-    CNR_DEBUG(*logger_, "HW: " + getHwName() + to_string(to_restart_names, " Controllers to Restart......: "));
-    for (auto const & ctrl : to_restart_names)
-    {
-      switch_ctrl_srv.request.start_controllers.push_back(ctrl);
-    }
-  }
+//  if((strictness!=1) && check(to_restart_names))
+//  {
+//    CNR_DEBUG(logger_, "HW: " + getHwName() + to_string(to_restart_names, " Controllers to Restart......: "));
+//    for (auto const & ctrl : to_restart_names)
+//    {
+//      switch_ctrl_srv.request.start_controllers.push_back(ctrl);
+//    }
+//  }
 
-  if(check(to_stop_unload_names))
+  if(check(to_stop_names))
   {
-    CNR_DEBUG(*logger_, "HW: " + getHwName() + to_string(to_stop_unload_names, " Controllers to stop/unload..: "));
-    for (auto const & ctrl : to_stop_unload_names)
+    CNR_DEBUG(logger_, "HW: " + getHwName() + to_string(to_stop_names, " Controllers to stop/unload..: "));
+    for (auto const & ctrl : to_stop_names)
       switch_ctrl_srv.request.stop_controllers .push_back(ctrl);
   }
 
   // switch controllers
   if (switch_ctrl_srv.request.start_controllers.size() == 0 && switch_ctrl_srv.request.stop_controllers.size() == 0)
   {
-    CNR_RETURN_TRUE(*logger_, "HW: " + getHwName());
+    CNR_RETURN_TRUE(logger_, "HW: " + getHwName());
   }
 
   if (!switchRequest(switch_ctrl_srv, error_, watchdog))
   {
-    CNR_RETURN_FALSE(*logger_, "HW: " + getHwName());
+    CNR_RETURN_FALSE(logger_, "HW: " + getHwName());
   }
   if (!switch_ctrl_srv.response.ok)
   {
     error_ = "The service '" + switchControllerServiceName() + "' failed. Abort.";
-    CNR_RETURN_FALSE(*logger_, "HW: " + getHwName());
+    CNR_RETURN_FALSE(logger_, "HW: " + getHwName());
   }
 
 
@@ -202,43 +189,43 @@ bool ControllerManagerInterface::switchController(const int                     
     {
       if (!cnr::control::ctrl_check_state(getNamespace(), ctrl_name, "RUNNING", error_, watchdog))
       {
-        CNR_RETURN_FALSE(*logger_, "HW: " + getHwName() + ": " + error_);
+        CNR_RETURN_FALSE(logger_, "HW: " + getHwName() + ": " + error_);
       }
 //      if ((status != "INITIALIZED") && (status != ))
 //      {
 //        error_ += "Failed while checking '"+ctrl_name +"' state. The state is "+status+" while RUNNING is expected";
 //        error_ +=" (transition waited for " + std::to_string( (a-n).toSec()  ) + "s, watchdog: "+ std::to_string(watchdog.toSec())+ "s)";
-//        CNR_RETURN_FALSE(*logger_, "HW: " + getHwName());
+//        CNR_RETURN_FALSE(logger_, "HW: " + getHwName());
 //      }
     }
     for (const std::string ctrl_name : switch_ctrl_srv.request.stop_controllers)
     {
       if (!cnr::control::ctrl_check_state(getNamespace(), ctrl_name, "STOPPED", error_, watchdog))
       {
-        CNR_RETURN_FALSE(*logger_, "HW: " + getHwName() + ": " + error_);
+        CNR_RETURN_FALSE(logger_, "HW: " + getHwName() + ": " + error_);
       }
     }
   }
-  CNR_RETURN_TRUE(*logger_, "HW: " + getHwName());
+  CNR_RETURN_TRUE(logger_, "HW: " + getHwName());
 }
 
 
 bool ControllerManagerInterface::unloadController(const std::string& ctrl_to_unload_name, const ros::Duration& watchdog)
 {
   bool ret = true;
-  CNR_TRACE_START(*logger_, "HW: " + getHwName() + ", CTRL: " + ctrl_to_unload_name);
+  CNR_TRACE_START(logger_, "HW: " + getHwName() + ", CTRL: " + ctrl_to_unload_name);
   controller_manager_msgs::UnloadController  unloadController_srv;
   unloadController_srv.request.name = ctrl_to_unload_name;
   if (!unloadRequest(unloadController_srv, error_, watchdog))
   {
     ret = false;
-    CNR_RETURN_FALSE(*logger_, "HW: " + getHwName());
+    CNR_RETURN_FALSE(logger_, "HW: " + getHwName());
   }
   else if (!unloadController_srv.response.ok)
   {
     error_ = "The service '" + unloadServiceName() + "' failed. Abort.";
     ret = false;
-    CNR_RETURN_FALSE(*logger_, "HW: " + getHwName());
+    CNR_RETURN_FALSE(logger_, "HW: " + getHwName());
   }
 
   std::string st = (ret  ? "UNLOADED" : "ERROR_UNLOAD");
@@ -249,7 +236,7 @@ bool ControllerManagerInterface::unloadController(const std::string& ctrl_to_unl
   ros::param::set(cnr::control::ctrl_status_param_name(getHwName(), ctrl_to_unload_name),  status_history);
   ros::param::set(cnr::control::ctrl_last_status_param_name(getHwName(), ctrl_to_unload_name), st) ;
 
-  CNR_RETURN_BOOL(*logger_, ret, "HW: " + getHwName() + ", CTRL: " + ctrl_to_unload_name);
+  CNR_RETURN_BOOL(logger_, ret, "HW: " + getHwName() + ", CTRL: " + ctrl_to_unload_name);
 }
 
 

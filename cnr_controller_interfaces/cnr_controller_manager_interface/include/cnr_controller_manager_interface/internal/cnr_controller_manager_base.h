@@ -81,12 +81,12 @@ namespace cnr_controller_manager_interface
 class ControllerManagerBase
 {
 protected:
-  std::mutex                 mtx_;
-  ros::NodeHandle            nh_;
-  ros::ServiceClient         list_;
-  ros::ServiceClient         list_types_;
-  cnr_logger::TraceLoggerPtr logger_;
-  std::string                error_;
+  std::mutex               mtx_;
+  ros::NodeHandle          nh_;
+  ros::ServiceClient       list_;
+  ros::ServiceClient       list_types_;
+  cnr_logger::TraceLogger* logger_;
+  std::string              error_;
 
 public:
   ControllerManagerBase() = delete;
@@ -95,10 +95,9 @@ public:
   ControllerManagerBase(ControllerManagerBase&&) = delete;
   ControllerManagerBase& operator=(ControllerManagerBase&&) = delete;
   
-  ControllerManagerBase(std::shared_ptr<cnr_logger::TraceLogger> log, const std::string& hw_name);
+  ControllerManagerBase(cnr_logger::TraceLogger* log, const std::string& hw_name);
   virtual ~ControllerManagerBase();
 
-  std::shared_ptr<cnr_logger::TraceLogger> getLogger() { return logger_;   }
   std::string error()               { return error_;   }
   std::string getHwName()           { std::string n = nh_.getNamespace(); n.erase(0, 1);  return n; }
   std::string getNamespace()        { std::lock_guard<std::mutex> lock(mtx_); return nh_.getNamespace();       }
@@ -117,16 +116,14 @@ public:
   /**
    * @brief switchController
    * @param strictness
-   * @param to_load_and_start_names
-   * @param to_restart_names
-   * @param to_stop_unload_names
+   * @param to_start_names
+   * @param to_stop_names
    * @param watchdog
    * @return
    */
-  virtual bool switchController (const int                        strictness                   ,
-                                 const std::vector<std::string>&  to_load_and_start_names      ,
-                                 const std::vector<std::string>&  to_restart_names             ,
-                                 const std::vector<std::string>&  to_stop_unload_names         ,
+  virtual bool switchController (const std::vector<std::string>&  to_start_names,
+                                 const std::vector<std::string>&  to_stop_names ,
+                                 const int                        strictness    ,
                                  const ros::Duration&             watchdog = ros::Duration(0.0)) { return true; }
 
   /**
@@ -152,16 +149,15 @@ public:
   /**
    * @brief switchController: the virtual/final clauses prevent the possibility the memeber is inherited
    * @param strictness
-   * @param to_load_and_start_names
-   * @param to_restart_names
-   * @param to_stop_unload_names
+   * @param to_start_names
+   * @param to_stop_names
    * @param watchdog
    * @return
    */
-  virtual bool switchControllers(const int&                                        strictness                 ,
+  virtual bool switchControllers(
                      const std::vector<controller_manager_msgs::ControllerState>&  load_and_start_names       ,
-                     const std::vector<controller_manager_msgs::ControllerState>&  restart_names              ,
                      const std::vector<controller_manager_msgs::ControllerState>&  stop_unload_names          ,
+                     const int&                                                    strictness                 ,
                      const ros::Duration&                                          watchdog=ros::Duration(0.0)) final;
 
   /**
@@ -195,11 +191,11 @@ public:
 
   /**
    * @brief stopUnloadControllers
-   * @param ctrl_to_stop_unload_names
+   * @param ctrl_to_stop_names
    * @param watchdog
    * @return
    */
-  virtual bool stopUnloadControllers(const std::vector<std::string>&  ctrl_to_stop_unload_names,
+  virtual bool stopUnloadControllers(const std::vector<std::string>&  ctrl_to_stop_names,
                                      const ros::Duration& watchdog = ros::Duration(0.0)) final;
 
   /**

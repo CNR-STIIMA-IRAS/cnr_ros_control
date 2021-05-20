@@ -24,12 +24,11 @@
   <build_depend>geometry_msgs</build_depend>
   <build_depend>hardware_interface</build_depend>
   <build_depend>subscription_notifier</build_depend>
-  <build_depend>nodelet</build_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>sensor_msgs</build_depend>
+  <build_depend>hardware_interface</build_depend>
   <build_depend>cnr_hardware_interface</build_depend>
   <build_depend>name_sorting</build_depend>
-  <build_depend>cnr_hardware_nodelet_interface</build_depend>
   <build_depend>roslint</build_depend>
   
   <run_depend>control_msgs</run_depend>
@@ -39,19 +38,17 @@
   <run_depend>geometry_msgs</run_depend>
   <run_depend>hardware_interface</run_depend>
   <run_depend>subscription_notifier</run_depend>
-  <run_depend>nodelet</run_depend>
   <run_depend>roscpp</run_depend>
   <run_depend>sensor_msgs</run_depend>
+  <run_depend>hardware_interface</run_depend>
   <run_depend>cnr_hardware_interface</run_depend>
   <run_depend>name_sorting</run_depend>
-  <run_depend>cnr_hardware_nodelet_interface</run_depend>
 
   <build_depend>code_coverage</build_depend>
   <build_depend>rostest</build_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
-    <nodelet plugin="${prefix}/plugin.xml" />
-    <cnr_hardware_interface plugin="${prefix}/plugin.xml" />
+    <hardware_interface plugin="${prefix}/plugin.xml" />
   </export>
 </package>

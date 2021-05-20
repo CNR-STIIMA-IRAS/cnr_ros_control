@@ -1,5 +1,5 @@
 <library path="lib/libcnr_fake_hardware_interface">
-  <class name="cnr/control/FakeRobotHW" type="cnr_hardware_interface::FakeRobotHW" base_class_type="cnr_hardware_interface::RobotHW">
+  <class name="cnr/control/FakeRobotHW" type="cnr_hardware_interface::FakeRobotHW" base_class_type="hardware_interface::RobotHW">
     <description>
       cnr_hardware_interface::FakeRobotHw
     </description>
