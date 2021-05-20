@@ -232,7 +232,6 @@ bool ConfigurationManager::init()
 
     CNR_WARN(m_logger, "********************* INIT ****************************");
     m_load_configuration      = m_nh.advertiseService("start_configuration",
-                                      &cnr_configuration_manager::ConfigurationManager::startCallback, this);
     m_unload_configuration    = m_nh.advertiseService("stop_configuration",
                                       &cnr_configuration_manager::ConfigurationManager::stopCallback, this);
     m_list_controller_service = m_nh.advertiseService("list_configurations",
