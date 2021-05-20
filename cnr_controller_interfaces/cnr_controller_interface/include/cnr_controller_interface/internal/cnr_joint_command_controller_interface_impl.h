@@ -155,9 +155,9 @@ inline bool JointCommandController<H,T>::enterStarting()
 
   this->m_handler.update(m_target, this->chain());
 
-  CNR_DEBUG(this->m_logger, "Target at Start: Position: " << m_target.q() );
-  CNR_DEBUG(this->m_logger, "Target at Start: Velocity: " << m_target.qd() );
-  CNR_DEBUG(this->m_logger, "Target at Start: Effort  : " << m_target.effort() );
+  CNR_DEBUG(this->m_logger, "Target at Start: Position: " << m_target.q().transpose() );
+  CNR_DEBUG(this->m_logger, "Target at Start: Velocity: " << m_target.qd().transpose() );
+  CNR_DEBUG(this->m_logger, "Target at Start: Effort  : " << m_target.effort().transpose() );
 
   // in the exitStarting, the updateThread with the ffwd is launched
 

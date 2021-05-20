@@ -261,40 +261,41 @@ void Controller<T>::update(const ros::Time& time, const ros::Duration& period)
   CNR_TRACE_START_THROTTLE_DEFAULT(m_logger);
   try
   {
-    timeSpanStrakcer("update")->tick();
 
-    timeSpanStrakcer("enterUpdate")->tick();
-    bool ok = enterUpdate();
-    timeSpanStrakcer("enterUpdate")->tock();
 
+  timeSpanStrakcer("update")->tick();
+  timeSpanStrakcer("enterUpdate")->tick();
+  bool ok = enterUpdate();
+  timeSpanStrakcer("enterUpdate")->tock();
+
+  if(ok)
+  {
+    m_dt = period.toSec() > 1e-4 ? period : ros::Duration(1e-4);
+    timeSpanStrakcer("doUpdate")->tick();
+    ok = doUpdate(time, period);
+    timeSpanStrakcer("doUpdate")->tock();
     if(ok)
     {
-      m_dt = period.toSec() > 1e-4 ? period : ros::Duration(1e-4);
-      timeSpanStrakcer("doUpdate")->tick();
-      ok = doUpdate(time, period);
-      timeSpanStrakcer("doUpdate")->tock();
-      if(ok)
-      {
-        timeSpanStrakcer("exitUpdate")->tick();
-        ok = exitUpdate();
-        timeSpanStrakcer("exitUpdate")->tick();
-      }
+      timeSpanStrakcer("exitUpdate")->tick();
+      ok = exitUpdate();
+      timeSpanStrakcer("exitUpdate")->tick();
     }
+  }
 
-    timeSpanStrakcer("update")->tock();
+  timeSpanStrakcer("update")->tock();
 
-    if(!ok)
+  if(!ok)
+  {
+    CNR_ERROR(m_logger, "Error in update, stop request called to stop the controller quietly.");
+    if(controller_interface::Controller<T>::stopRequest(time))
     {
-      CNR_ERROR(m_logger, "Error in update, stop request called to stop the controller quietly.");
-      if(controller_interface::Controller<T>::stopRequest(time))
-      {
-        dump_state("STOPPED");
-      }
-      else
-      {
-        dump_state("ERROR");
-      }
-      CNR_RETURN_NOTOK_THROTTLE(m_logger, void(), 10.0);
+      dump_state("STOPPED");
+    }
+    else
+    {
+      dump_state("ERROR");
+    }
+    CNR_RETURN_NOTOK_THROTTLE(m_logger, void(), 10.0);
     }
   }
   catch(const std::exception& e)
