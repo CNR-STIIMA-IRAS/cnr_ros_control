@@ -6,7 +6,7 @@ It has the following hardware interfaces:
 - hardware_interface::PositionJointInterface  
 - hardware_interface::VelocityJointInterface  
 - hardware_interface::EffortJointInterface    
-- hardware_interface::PosVelEffJointInterface 
+- hardware_interface::PosVelEffJointInterface
 - hardware_interface::VelEffJointInterface    
 
 The repository contains the implementation of a hardware interface derived from **cnr_hardware_interface**.
@@ -36,11 +36,12 @@ ur5_hw:  # name of the hardware interface
   tool_link: ur5_tool0      # endeffector of the chain
   robot_description_param: /robot_description   # URDF descriptor
   robot_description_planning_param: /robot_description_planning  
-  
+
   # ForceTorqueSensorInterface (force/torque equal to zero)
   wrench_resourse: "wrench"  # optional (defalut: wrench). name of ForceTorqueSensorHandle
   frame_id: "tool0"          # optional (defalut: tool0)
-  
+  wrench_topic: "fake_wrench" #optional wrench topic name (default: ~/fake_wrench)
+
 
   initial_position: [2.5139003020721433, -1.300169384679926, 1.2500994437535364, -1.5412232868185847, -1.5994267077911786, 5.39879464423676]  # optional. Initial position  
 ```
