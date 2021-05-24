@@ -36,9 +36,9 @@ include_directories(
 
 ## Declare a C++ library
 add_library(${PROJECT_NAME}
-  src/${PROJECT_NAME}/internal/cnr_controller_manager_base.cpp
-  src/${PROJECT_NAME}/cnr_controller_manager.cpp
-   src/${PROJECT_NAME}/cnr_controller_manager_interface.cpp
+  src/${PROJECT_NAME}/internal/cnr_controller_manager_interface_base.cpp
+  src/${PROJECT_NAME}/cnr_controller_manager_interface.cpp
+   src/${PROJECT_NAME}/cnr_controller_manager_interface_srv.cpp
    src/${PROJECT_NAME}/cnr_controller_manager_proxy.cpp
 )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})

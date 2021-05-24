@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.1)
 project(cnr_hardware_driver_interface)
 
 if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Release)
+  set(CMAKE_BUILD_TYPE Debug)
 endif()
 
 set(CMAKE_CXX_STANDARD 17)
@@ -63,10 +63,6 @@ target_precompile_headers(${PROJECT_NAME} PUBLIC  <cstring>
                                                   <string>
                                                   <boost/date_time/posix_time/posix_time.hpp>
                                                   <ros/ros.h>
-                                                  <nodelet/nodelet.h>
-                                                  <nodelet/NodeletLoad.h>
-                                                  <nodelet/NodeletUnload.h>
-                                                  <nodelet/NodeletList.h>
                                                   <pluginlib/class_loader.h>
                                                   <pluginlib/class_list_macros.h>
                                                   <diagnostic_updater/diagnostic_updater.h>

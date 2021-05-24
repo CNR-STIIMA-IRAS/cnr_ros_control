@@ -123,7 +123,7 @@ bool ConfigurationLoader::purgeHw(const ros::Duration& watchdog, std::string& er
   for (auto & driver : drivers_)
   {
     if(driver.second->getState() )
-    if(!driver.second->getControllerManager()->stopUnloadAllControllers(watchdog))
+    if(!driver.second->getControllerManagerInterface()->stopUnloadAllControllers(watchdog))
     {
       error = "Error in stopping and unloading the controllers";
       return false;
@@ -227,7 +227,7 @@ bool ConfigurationLoader::unloadHw(const std::vector<std::string>& hw_to_unload_
     std::vector<controller_manager_msgs::ControllerState> running;
     std::vector<controller_manager_msgs::ControllerState> stopped;
 
-    auto cm = drivers_[old]->getControllerManager();
+    auto cm = drivers_[old]->getControllerManagerInterface();
     error += "get the ctrl list\n";
     if (!cm->listControllers(running, stopped, watchdog))
     {
@@ -240,7 +240,7 @@ bool ConfigurationLoader::unloadHw(const std::vector<std::string>& hw_to_unload_
     if (!cm->switchControllers(vc_empty, running, 1, watchdog))
     {
       error += "error in unloding the controllers: " + cm->error();
-      return false;
+      return false; 
     }
 
     error += "ctrl unload\n";
@@ -253,7 +253,12 @@ bool ConfigurationLoader::unloadHw(const std::vector<std::string>& hw_to_unload_
     error += "hw nodelet unload (watchdog: " + std::to_string(watchdog.toSec()) + ")\n";
     try
     {
-      drivers_[old].reset();
+      auto it = drivers_.find(old);
+      if(it != drivers_.end())
+      {
+        drivers_[old].reset();
+        drivers_.erase(it);
+      }
     }
     catch(const std::exception& e)
     {
@@ -322,10 +327,10 @@ bool ConfigurationLoader::loadAndStartControllers(const std::string& hw_name,
   //================================================
 
   //================================================
-  if (!drivers_[hw_name]->getControllerManager()->switchControllers(strictness, next_controllers, watchdog))
+  if (!drivers_[hw_name]->getControllerManagerInterface()->switchControllers(strictness, next_controllers, watchdog))
   {
     error = "Error in switching the controller: " 
-            + drivers_[hw_name]->getControllerManager()->error();
+            + drivers_[hw_name]->getControllerManagerInterface()->error();
     return false;
   }
   running_configuration_ = next_conf;
@@ -353,7 +358,7 @@ bool ConfigurationLoader::loadAndStartControllers(const std::vector<std::string>
     }
   }
 
-  auto starter=[&](const std::string & hw_name, cnr_controller_manager_interface::ControllerManagerPtr ctrl,
+  auto starter=[&](const std::string & hw_name, cnr_controller_manager_interface::ControllerManagerInterfacePtr ctrl,
                     const ConfigurationStruct& next, bool& ok, std::string& error)
   {
     try
@@ -389,13 +394,13 @@ bool ConfigurationLoader::loadAndStartControllers(const std::vector<std::string>
   { 
     errors[hw_name] = "";
     starters[hw_name] = new std::thread(starter, hw_name, 
-                                          drivers_.at(hw_name)->getControllerManager(),
+                                          drivers_.at(hw_name)->getControllerManagerInterface(),
                                             next_conf, std::ref(start_ok[hw_name]), std::ref(errors[hw_name]) );
   }
 
   for (auto& thread : starters)
   {
-    auto cm = drivers_.at(thread.first)->getControllerManager();
+    auto cm = drivers_.at(thread.first)->getControllerManagerInterface();
     if (thread.second->joinable())
     {
       thread.second->join();
@@ -406,7 +411,7 @@ bool ConfigurationLoader::loadAndStartControllers(const std::vector<std::string>
   bool ok = true;
   std::for_each(start_ok.begin(), start_ok.end(), [&](std::pair<std::string, bool> b)
   {
-    auto cm = drivers_.at(b.first)->getControllerManager();
+    auto cm = drivers_.at(b.first)->getControllerManagerInterface();
     if(b.second)
     {
       //CNR_INFO(cm->getLogger(), "Successful starting the controllers of HW '" + b.first + "'");
@@ -434,7 +439,7 @@ bool ConfigurationLoader::stopAndUnloadAllControllers(const std::vector<std::str
   {
     unload_ok[hw_name] = false;
   }
-  auto stopper=[&](const std::string & hw, cnr_controller_manager_interface::ControllerManagerPtr ctrl, 
+  auto stopper=[&](const std::string & hw, cnr_controller_manager_interface::ControllerManagerInterfacePtr ctrl, 
                    bool& ok, std::string& error)
   {
     // if (mail_senders_.find(hw) == mail_senders_.end())
@@ -478,13 +483,13 @@ bool ConfigurationLoader::stopAndUnloadAllControllers(const std::vector<std::str
   for (auto const & hw_name : hw_to_unload_names)
   {
     errors[hw_name]="";
-    stoppers[hw_name] = new std::thread(stopper, hw_name,  drivers_.at(hw_name)->getControllerManager(), 
+    stoppers[hw_name] = new std::thread(stopper, hw_name,  drivers_.at(hw_name)->getControllerManagerInterface(), 
                                         std::ref(unload_ok[hw_name]), std::ref(errors[hw_name]));
   }
   
   for (auto& thread : stoppers)
   {
-    auto cm = drivers_.at(thread.first)->getControllerManager();
+    auto cm = drivers_.at(thread.first)->getControllerManagerInterface();
     if (thread.second->joinable())
     {
       thread.second->join();
@@ -494,7 +499,7 @@ bool ConfigurationLoader::stopAndUnloadAllControllers(const std::vector<std::str
   bool ok = true;
   std::for_each(unload_ok.begin(), unload_ok.end(), [&](std::pair<std::string, bool> b)
   {
-    auto cm = drivers_.at(b.first)->getControllerManager();
+    auto cm = drivers_.at(b.first)->getControllerManagerInterface();
     if(b.second)
     {
       //CNR_INFO(cm->getLogger(), "Successful stopping the controllers of HW '" + b.first + "'");
@@ -521,9 +526,9 @@ bool ConfigurationLoader::listControllers(const std::string& hw_name,
     return false;
   }
   
-  if(!drivers_.at(hw_name)->getControllerManager()->listControllers(running, stopped, ros::Duration(1.0)))
+  if(!drivers_.at(hw_name)->getControllerManagerInterface()->listControllers(running, stopped, ros::Duration(1.0)))
   {
-    error = drivers_.at(hw_name)->getControllerManager()->error();
+    error = drivers_.at(hw_name)->getControllerManagerInterface()->error();
     return false;
   }
   return true;

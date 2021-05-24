@@ -48,6 +48,7 @@
 
 #include <realtime_utilities/time_span_tracker.h>
 #include <cnr_logger/cnr_logger.h>
+#include <controller_manager/controller_manager.h>
 #include <cnr_controller_manager_interface/cnr_controller_manager_proxy.h>
 #include <cnr_hardware_interface/cnr_robot_hw_status.h>
 #include <cnr_hardware_interface/cnr_robot_hw.h>
@@ -57,12 +58,14 @@ namespace cnr_hardware_driver_interface
 
 typedef std::map<std::string, std::string> M_string;
 
+typedef std::shared_ptr< controller_manager::ControllerManager > ControllerManagerPtr;
+
 typedef std::shared_ptr< hardware_interface::RobotHW > RobotHWPtr;
-typedef std::shared_ptr< cnr_hardware_interface::RobotHW > CnrRobotHWPtr;
+typedef cnr_hardware_interface::RobotHW* CnrRobotHWPtr;
 typedef std::shared_ptr< pluginlib::ClassLoader< hardware_interface::RobotHW > > RobotLoaderPtr;
 
 typedef std::shared_ptr< hardware_interface::RobotHW const> RobotHWConstPtr;
-typedef std::shared_ptr< cnr_hardware_interface::RobotHW const> CnrRobotHWConstPtr;
+typedef cnr_hardware_interface::RobotHW* const CnrRobotHWConstPtr;
 
 
 class RobotHwDriverInterface : public realtime_utilities::DiagnosticsInterface
@@ -107,9 +110,13 @@ public:
   RobotHWConstPtr getRobotHw() const { return m_hw; }
   CnrRobotHWConstPtr getCnrRobotHw() const  { return m_cnr_hw; }
   
-  cnr_controller_manager_interface::ControllerManagerPtr getControllerManager()
+  ControllerManagerPtr getControllerManager()
   {
-    return std::dynamic_pointer_cast<cnr_controller_manager_interface::ControllerManager>(m_cmp);
+    return m_cm;
+  }
+  cnr_controller_manager_interface::ControllerManagerInterfacePtr getControllerManagerInterface()
+  {
+    return m_cmi;
   }
 
 protected:
@@ -117,17 +124,18 @@ protected:
   bool dumpState(const cnr_hardware_interface::StatusHw& status);
   bool fetchState(std::string& error);
 
-  cnr_logger::TraceLogger m_logger;
-  ros::CallbackQueue      m_callback_queue;
-  std::shared_ptr<ros::NodeHandle> m_root_nh;
-  std::shared_ptr<ros::NodeHandle> m_hw_nh;
-  std::string             m_hw_namespace;
-  std::string             m_hw_name;
+  cnr_logger::TraceLoggerPtr  m_logger;
+  ros::CallbackQueue          m_callback_queue;
+  ros::NodeHandle             m_root_nh;
+  ros::NodeHandle             m_hw_nh;
+  std::string                 m_hw_namespace;
+  std::string                 m_hw_name;
 
   RobotHWPtr              m_hw;
-  CnrRobotHWPtr           m_cnr_hw;
+  CnrRobotHWPtr           m_cnr_hw = nullptr;
   RobotLoaderPtr          m_robot_hw_loader;
-  cnr_controller_manager_interface::ControllerManagerProxyPtr m_cmp;
+  ControllerManagerPtr    m_cm;
+  cnr_controller_manager_interface::ControllerManagerInterfacePtr m_cmi;
   
   mutable std::mutex                m_mtx;
   cnr_hardware_interface::StatusHw  m_state;

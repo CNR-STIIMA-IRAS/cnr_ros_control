@@ -51,11 +51,10 @@ namespace cnr_controller_manager_interface
  * @brief ControllerManagerProxy::ControllerManagerProxy
  * @param nh
  */
-ControllerManagerProxy::ControllerManagerProxy(cnr_logger::TraceLogger*     logger,
+ControllerManagerProxy::ControllerManagerProxy(const cnr_logger::TraceLoggerPtr&  logger,
                                                const std::string&           hw_name,
-                                               hardware_interface::RobotHW* robot_hw,
-                                               const ros::NodeHandle&       nh)
-: ControllerManager(logger,hw_name,robot_hw,nh)
+                                               controller_manager::ControllerManager* cm)
+: ControllerManagerInterface(logger,hw_name,cm)
 {
   load_     = nh_.advertiseService("/" + hw_name + "/controller_manager_proxy/load_controller",
                                    &ControllerManagerProxy::loadControllerSrv, this);
@@ -63,6 +62,13 @@ ControllerManagerProxy::ControllerManagerProxy(cnr_logger::TraceLogger*     logg
                                    &ControllerManagerProxy::unloadControllerSrv, this);
   doswitch_ = nh_.advertiseService("/" + hw_name + "/controller_manager_proxy/switch_controller",
                                    &ControllerManagerProxy::switchControllerSrv,this);
+}
+
+ControllerManagerProxy::~ControllerManagerProxy()
+{
+  load_.shutdown();
+  unload_.shutdown();
+  doswitch_.shutdown();
 }
 
 /**

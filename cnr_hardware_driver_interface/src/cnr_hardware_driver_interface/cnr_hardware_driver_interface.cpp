@@ -137,7 +137,6 @@ std::string to_string(const T a_value, const int n = 5)
 RobotHwDriverInterface::~RobotHwDriverInterface()
 {
   CNR_TRACE_START(m_logger, "Shutting Down the nodelet...");
-
   try
   {
     CNR_INFO(m_logger, "Reset the HW (watchdog: 10sec)");
@@ -152,7 +151,7 @@ RobotHwDriverInterface::~RobotHwDriverInterface()
         if (last_status != "UNLOADED")
         {
           CNR_INFO(m_logger, "Last Status Tracked: " << last_status);
-          if (!m_cmp->unloadController(ctrl, ros::Duration(1.0)))
+          if (!m_cmi->unloadController(ctrl, ros::Duration(1.0)))
           {
             CNR_INFO(m_logger, "Error in unloading the controller " << ctrl);
           }
@@ -168,14 +167,17 @@ RobotHwDriverInterface::~RobotHwDriverInterface()
     }
 
     CNR_WARN(m_logger, "Join the update loop");
-    m_stop_run = true;
-    while(m_state == cnr_hardware_interface::RUNNING)
+    if(!stop())
     {
-      ros::Duration(0.01).sleep();
+      CNR_FATAL(m_logger, "Error in stopping the control loop!!!");
     }
+    
+    // m_callback_queue.disable();
+    // m_hw_nh.shutdown();
+    m_cmi.reset();
+    m_cm.reset();
     m_hw.reset();
-    m_cnr_hw.reset();
-    m_callback_queue.disable();
+    m_cnr_hw = nullptr;
   }
   catch (std::exception& e)
   {
@@ -191,16 +193,17 @@ RobotHwDriverInterface::~RobotHwDriverInterface()
 bool RobotHwDriverInterface::init(const std::string& hw_name, const std::map<std::string, std::string>& remappings)
 {
   std::cerr << __PRETTY_FUNCTION__ << ":" << __LINE__ <<": creating the dirver for the RobotHW '" << hw_name <<"' " << std::endl;
-  m_hw_nh.reset(new ros::NodeHandle(hw_name, remappings));
-  m_root_nh.reset(new ros::NodeHandle(ros::names::parentNamespace(hw_name), remappings));
+  m_hw_nh = ros::NodeHandle(hw_name, remappings);
+  m_root_nh = ros::NodeHandle(ros::names::parentNamespace(hw_name), remappings);
 
-  m_hw_nh->setCallbackQueue(&m_callback_queue);
-  m_root_nh->setCallbackQueue(&m_callback_queue);
+  m_hw_nh.setCallbackQueue(&m_callback_queue);
+  //m_root_nh.setCallbackQueue(&m_callback_queue);
 
-  m_hw_namespace = m_hw_nh->getNamespace();
+  m_hw_namespace = m_hw_nh.getNamespace();
   m_hw_name      = extractRobotName(m_hw_namespace);
   
-  if( !m_logger.init("NL_" + m_hw_name, m_hw_namespace))
+  m_logger.reset(new cnr_logger::TraceLogger());
+  if( !m_logger->init("NL_" + m_hw_name, m_hw_namespace))
   {
     std::cerr << __PRETTY_FUNCTION__ << ":" << __LINE__ <<": error in creating the logger" << std::endl;
     return false;
@@ -208,7 +211,7 @@ bool RobotHwDriverInterface::init(const std::string& hw_name, const std::map<std
 
   CNR_TRACE_START(m_logger);
   double sampling_period = 0.001;
-  if (!m_hw_nh->getParam("sampling_period", sampling_period))
+  if (!m_hw_nh.getParam("sampling_period", sampling_period))
   {
     CNR_WARN(m_logger, m_hw_namespace + "/sampling_period' does not exist, set equal to 0.001");
     sampling_period = 1.0e-3;
@@ -230,9 +233,9 @@ bool RobotHwDriverInterface::init(const std::string& hw_name, const std::map<std
   {
     //==========================================================
     // LOAD THE ROBOTHW
-    if (!m_hw_nh->getParam("type", robot_type))
+    if (!m_hw_nh.getParam("type", robot_type))
     {
-      CNR_FATAL(m_logger, "The param '" << m_hw_nh->getNamespace() << "/type' is missing! Abort.");
+      CNR_FATAL(m_logger, "The param '" << m_hw_nh.getNamespace() << "/type' is missing! Abort.");
       CNR_RETURN_FALSE(m_logger);
     }
 
@@ -248,11 +251,10 @@ bool RobotHwDriverInterface::init(const std::string& hw_name, const std::map<std
       dumpState(cnr_hardware_interface::ERROR);
       CNR_RETURN_FALSE(m_logger, "The RobotHw has not been properly initialized in the doOnInit() function. Abort.");
     }
-    m_cnr_hw = std::dynamic_pointer_cast<cnr_hardware_interface::RobotHW>(m_hw); // if not null, there are many fancy & funny functions
-
+    m_cnr_hw = dynamic_cast<cnr_hardware_interface::RobotHW*>(m_hw.get()); // if not null, there are many fancy & funny functions
 
     m_state = cnr_hardware_interface::INITIALIZED;
-    if (!m_hw->init(*m_root_nh, *m_hw_nh))
+    if (!m_hw->init(m_root_nh, m_hw_nh))
     {
       dumpState(cnr_hardware_interface::ERROR);
       CNR_RETURN_FALSE(m_logger, "The RobotHw '" + m_hw_name + "'Initialization failed. Abort.");
@@ -267,7 +269,9 @@ bool RobotHwDriverInterface::init(const std::string& hw_name, const std::map<std
 
     //==========================================================
     // CREATE THE CONTROLLER MANAGER
-    m_cmp.reset(new cnr_controller_manager_interface::ControllerManagerProxy(&m_logger, m_hw_name, m_hw.get(), *m_hw_nh));
+    m_cm.reset(new controller_manager::ControllerManager( m_hw.get(), m_hw_nh));
+    // CREATE THE CONTROLLER MANAGER INTERFACE: it redirects the 
+    m_cmi.reset(new cnr_controller_manager_interface::ControllerManagerInterface(m_logger, m_hw_name, m_cm.get()));
     //==========================================================
   }
   catch (pluginlib::PluginlibException& ex)
@@ -294,15 +298,13 @@ bool RobotHwDriverInterface::init(const std::string& hw_name, const std::map<std
 void RobotHwDriverInterface::diagnosticsThread()
 {
   CNR_INFO(m_logger, "Diagnostics Thread Started");
-  diagnostic_updater::Updater   updater(*m_hw_nh, ros::NodeHandle("~"), "/" + m_hw_name);
+  diagnostic_updater::Updater   updater(m_hw_nh, ros::NodeHandle("~"), "/" + m_hw_name);
 
   updater.setHardwareID(m_hw_name);
   std::string id = "RobotHW | ";
 
   realtime_utilities::DiagnosticsInterfacePtr            hw_d  = std::dynamic_pointer_cast<realtime_utilities::DiagnosticsInterface>(m_hw);
   realtime_utilities::DiagnosticsInterface*              hwn_d = dynamic_cast<realtime_utilities::DiagnosticsInterface*>(this);
-  cnr_controller_manager_interface::ControllerManagerPtr cm    = 
-                  std::dynamic_pointer_cast<cnr_controller_manager_interface::ControllerManager>(m_cmp);
 
   updater.add(id + "Info"      , hw_d.get(), &cnr_hardware_interface::RobotHW::diagnosticsInfo);
   updater.add(id + "Warning"   , hw_d.get(), &cnr_hardware_interface::RobotHW::diagnosticsWarn);
@@ -311,10 +313,10 @@ void RobotHwDriverInterface::diagnosticsThread()
   updater.add(id + "Main Loop (nodelet)", hwn_d, &RobotHwDriverInterface::diagnosticsPerformance);
 
   id = "Ctrl | ";
-  updater.add(id + "Info"    , cm.get(), &cnr_controller_manager_interface::ControllerManager::diagnosticsInfo);
-  updater.add(id + "Warning" , cm.get(), &cnr_controller_manager_interface::ControllerManager::diagnosticsWarn);
-  updater.add(id + "Error"   , cm.get(), &cnr_controller_manager_interface::ControllerManager::diagnosticsError);
-  updater.add(id + "Timers"  , cm.get(), &cnr_controller_manager_interface::ControllerManager::diagnosticsPerformance);
+  updater.add(id + "Info"    , m_cmi.get(), &cnr_controller_manager_interface::ControllerManagerInterface::diagnosticsInfo);
+  updater.add(id + "Warning" , m_cmi.get(), &cnr_controller_manager_interface::ControllerManagerInterface::diagnosticsWarn);
+  updater.add(id + "Error"   , m_cmi.get(), &cnr_controller_manager_interface::ControllerManagerInterface::diagnosticsError);
+  updater.add(id + "Timers"  , m_cmi.get(), &cnr_controller_manager_interface::ControllerManagerInterface::diagnosticsPerformance);
 
   ros::WallDuration wd(updater.getPeriod());
   m_diagnostics_thread_running = true;
@@ -349,6 +351,7 @@ bool RobotHwDriverInterface::start(const ros::Duration& watchdog)
 }
 bool RobotHwDriverInterface::stop(const ros::Duration& watchdog)
 {
+  CNR_TRACE_START(m_logger);
   m_stop_run = true;
   ros::Time start = ros::Time::now();
   if( m_thread_run.joinable() )
@@ -507,7 +510,7 @@ void RobotHwDriverInterface::run()
       // it executes the 
       // hw->doSwitch() as needed, and the update of the control strategies
       //
-      m_cmp->update(ros::Time::now(), m_period);
+      m_cmi->update(ros::Time::now(), m_period);
       timeSpanStrakcer("update")->tock();
     }
     catch (std::exception& e)

@@ -49,7 +49,7 @@
 #include <cnr_controller_manager_interface/internal/utils.h>
 #include <diagnostic_updater/DiagnosticStatusWrapper.h>
 
-#include <cnr_controller_manager_interface/cnr_controller_manager.h>
+#include <cnr_controller_manager_interface/cnr_controller_manager_interface.h>
 
 namespace cnr_controller_manager_interface
 {
@@ -67,23 +67,22 @@ namespace cnr_controller_manager_interface
  * controller_manager::ControllerManager. As matter of example, it offers diganostics, it dump the status of the
  * controllers on the ros parameters etc.
  */
-class ControllerManagerProxy : public cnr_controller_manager_interface::ControllerManager
+class ControllerManagerProxy : public cnr_controller_manager_interface::ControllerManagerInterface
 {
 public:
   typedef std::shared_ptr<ControllerManagerProxy> Ptr;
   typedef std::shared_ptr<ControllerManagerProxy const> ConstPtr;
 
   ControllerManagerProxy() = delete;
-  virtual ~ControllerManagerProxy() = default;
+  virtual ~ControllerManagerProxy();
   ControllerManagerProxy(const ControllerManagerProxy&) = delete;
   ControllerManagerProxy& operator=(const ControllerManagerProxy&) = delete;
   ControllerManagerProxy(ControllerManagerProxy&&) = delete;
   ControllerManagerProxy& operator=(ControllerManagerProxy&&) = delete;
     
-  ControllerManagerProxy(cnr_logger::TraceLogger*     logger,
-                         const std::string&           hw_name,
-                         hardware_interface::RobotHW* robot_hw,
-                         const ros::NodeHandle&       nh=ros::NodeHandle());
+  ControllerManagerProxy(const cnr_logger::TraceLoggerPtr& logger,
+                         const std::string&                hw_name,
+                         controller_manager::ControllerManager* cm);
 private:
   /** \name ROS Service API
    *\{*/
