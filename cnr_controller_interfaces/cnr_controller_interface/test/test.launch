@@ -36,7 +36,7 @@
 </rosparam>
 </group>
 
-<include file="$(find ur_description)/launch/ur10_upload.launch" />
+<include file="$(find cnr_ros_control_test_description)/launch/ur10_upload.launch" />
 
 <group ns="/robot_description_planning">
   <rosparam>

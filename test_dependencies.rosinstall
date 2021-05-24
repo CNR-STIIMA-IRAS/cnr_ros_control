@@ -2,10 +2,10 @@
     local-name: code_coverage
     uri: https://github.com/mikeferguson/code_coverage.git
     version: master
-- git: 
-    local-name: Universal_Robots_ROS_Driver
-    uri: https://github.com/UniversalRobots/Universal_Robots_ROS_Driver.git
-- git:
-    local-name: fmauch_universal_robot
-    uri: https://github.com/fmauch/universal_robot.git
-    version: calibration_devel
+#- git: 
+#    local-name: Universal_Robots_ROS_Driver
+#    uri: https://github.com/UniversalRobots/Universal_Robots_ROS_Driver.git
+#- git:
+#    local-name: fmauch_universal_robot
+#    uri: https://github.com/fmauch/universal_robot.git
+#    version: calibration_devel
