@@ -80,6 +80,7 @@ install(FILES plugin.xml
 if(CATKIN_ENABLE_TESTING)
   find_package(roscpp REQUIRED)
   find_package(rostest REQUIRED)
+  find_package(cnr_ros_control_test_description REQUIRED)
   add_rostest_gtest(${PROJECT_NAME}_test test/test.launch test/test.cpp)
   target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME} ${catkin_LIBRARIES} ${roscpp_LIBRARIES} )
 

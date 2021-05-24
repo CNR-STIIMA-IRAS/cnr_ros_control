@@ -44,6 +44,8 @@
   <build_depend>code_coverage</build_depend>
   <build_depend>rostest</build_depend>
 
+  <test_depend>cnr_ros_control_test_description</test_depend>
+
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <hardware_interface plugin="${prefix}/plugin.xml" />
