@@ -66,7 +66,7 @@
 
   <test_depend>rosunit</test_depend>
   <test_depend>cnr_fake_hardware_interface</test_depend>
-  <test_depend>ur_description</test_depend>
+  <test_depend>cnr_ros_control_test_description</test_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
