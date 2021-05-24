@@ -63,4 +63,3 @@ repositories:
         type: git
         url: https://github.com/CNR-STIIMA-IRAS/moveit_planning_helper
         version: master
-
