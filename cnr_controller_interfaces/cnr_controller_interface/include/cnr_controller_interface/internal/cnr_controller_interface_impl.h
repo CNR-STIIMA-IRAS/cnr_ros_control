@@ -227,63 +227,78 @@ template<class T>
 void Controller<T>::starting(const ros::Time& time)
 {
   CNR_TRACE_START(m_logger);
-  if(enterStarting() && doStarting(time) && exitStarting())
+  try
   {
-    dump_state("RUNNING");
-    CNR_RETURN_OK(m_logger, void(), "Starting Ok! Ready to go!");
-  }
-  else
-  {
-    CNR_ERROR(m_logger, "The starting of the controller failed. Abort Request to ControllerManager sent.");
-    if(controller_interface::Controller<T>::abortRequest(time))
+    if(enterStarting() && doStarting(time) && exitStarting())
     {
-      dump_state("ABORTED");
+      dump_state("RUNNING");
+      CNR_RETURN_OK(m_logger, void(), "Starting Ok! Ready to go!");
     }
     else
     {
-      dump_state("ERROR");
+      CNR_ERROR(m_logger, "The starting of the controller failed. Abort Request to ControllerManager sent.");
+      if(controller_interface::Controller<T>::abortRequest(time))
+      {
+        dump_state("ABORTED");
+      }
+      else
+      {
+        dump_state("ERROR");
+      }
     }
-    CNR_RETURN_NOTOK(m_logger, void());
   }
+  catch(std::exception& e)
+  {
+    CNR_ERROR(m_logger, "The starting of the controller failed. Exception:" << e.what() );
+  }
+  CNR_RETURN_NOTOK(m_logger, void());
 }
 
 template<class T>
 void Controller<T>::update(const ros::Time& time, const ros::Duration& period)
 {
   CNR_TRACE_START_THROTTLE_DEFAULT(m_logger);
-  timeSpanStrakcer("update")->tick();
-
-  timeSpanStrakcer("enterUpdate")->tick();
-  bool ok = enterUpdate();
-  timeSpanStrakcer("enterUpdate")->tock();
-
-  if(ok)
+  try
   {
-    m_dt = period.toSec() > 1e-4 ? period : ros::Duration(1e-4);
-    timeSpanStrakcer("doUpdate")->tick();
-    ok = doUpdate(time, period);
-    timeSpanStrakcer("doUpdate")->tock();
+
+    timeSpanStrakcer("update")->tick();
+    timeSpanStrakcer("enterUpdate")->tick();
+    bool ok = enterUpdate();
+    timeSpanStrakcer("enterUpdate")->tock();
+
     if(ok)
     {
-      timeSpanStrakcer("exitUpdate")->tick();
-      ok = exitUpdate();
-      timeSpanStrakcer("exitUpdate")->tick();
+      m_dt = period.toSec() > 1e-4 ? period : ros::Duration(1e-4);
+      timeSpanStrakcer("doUpdate")->tick();
+      ok = doUpdate(time, period);
+      timeSpanStrakcer("doUpdate")->tock();
+      if(ok)
+      {
+        timeSpanStrakcer("exitUpdate")->tick();
+        ok = exitUpdate();
+        timeSpanStrakcer("exitUpdate")->tick();
+      }
+    }
+
+    timeSpanStrakcer("update")->tock();
+
+    if(!ok)
+    {
+      CNR_ERROR(m_logger, "Error in update, stop request called to stop the controller quietly.");
+      if(controller_interface::Controller<T>::stopRequest(time))
+      {
+        dump_state("STOPPED");
+      }
+      else
+      {
+        dump_state("ERROR");
+      }
+      CNR_RETURN_NOTOK_THROTTLE(m_logger, void(), 10.0);
     }
   }
-
-  timeSpanStrakcer("update")->tock();
-
-  if(!ok)
+  catch(const std::exception& e)
   {
-    CNR_ERROR(m_logger, "Error in update, stop request called to stop the controller quietly.");
-    if(controller_interface::Controller<T>::stopRequest(time))
-    {
-      dump_state("STOPPED");
-    }
-    else
-    {
-      dump_state("ERROR");
-    }
+    CNR_ERROR_THROTTLE(m_logger, 10.0, "The update of the controller failed. Exception:" << e.what() );
     CNR_RETURN_NOTOK_THROTTLE(m_logger, void(), 10.0);
   }
   CNR_RETURN_OK_THROTTLE_DEFAULT(m_logger, void());
@@ -293,46 +308,77 @@ template<class T>
 void Controller<T>::stopping(const ros::Time& time)
 {
   CNR_TRACE_START(m_logger);
-  if(enterStopping() && doStopping(time) && exitStopping())
-  {
-    dump_state("STOPPED");
-    CNR_RETURN_OK(m_logger, void());
-  }
-  else
-  {
-    if(controller_interface::Controller<T>::abortRequest(time))
+  try
+  {   
+    if(enterStopping() && doStopping(time) && exitStopping())
     {
-      dump_state("ABORTED");
+      dump_state("STOPPED");
+      CNR_RETURN_OK(m_logger, void());
     }
     else
     {
-      dump_state("ERROR");
+      if(controller_interface::Controller<T>::abortRequest(time))
+      {
+        dump_state("ABORTED");
+      }
+      else
+      {
+        dump_state("ERROR");
+      }
+      CNR_RETURN_NOTOK(m_logger, void());
     }
+  }
+  catch(const std::exception& e)
+  {
+    CNR_ERROR(m_logger, "The stopping of the controller failed. Exception:" << e.what() );
     CNR_RETURN_NOTOK(m_logger, void());
   }
+  CNR_RETURN_OK(m_logger, void());
 }
 
 template<class T>
 void Controller<T>::waiting(const ros::Time& time)
 {
   CNR_TRACE_START(m_logger);
-
-  if(enterWaiting() && doWaiting(time) && exitWaiting())
+  try
   {
-    CNR_RETURN_OK(m_logger, void());
+    if(enterWaiting() && doWaiting(time) && exitWaiting())
+    {
+      CNR_RETURN_OK(m_logger, void());
+    }
+    else
+    {
+      controller_interface::Controller<T>::abortRequest(time);
+      CNR_RETURN_NOTOK(m_logger, void());
+    }
   }
-  else
+  catch(const std::exception& e)
   {
-    controller_interface::Controller<T>::abortRequest(time);
+    CNR_ERROR(m_logger, "The waiting of the controller failed. Exception:" << e.what() );
     CNR_RETURN_NOTOK(m_logger, void());
   }
+  CNR_RETURN_OK(m_logger, void());
 }
 
 template<class T>
 void Controller<T>::aborting(const ros::Time& time)
 {
   CNR_TRACE_START(m_logger);
-  CNR_EXIT_EX(m_logger, enterAborting() && doAborting(time)  && exitAborting());
+  try
+  {
+    if(enterAborting() && doAborting(time)  && exitAborting())
+    {
+      CNR_RETURN_OK(m_logger, void());  
+    }
+  }
+  catch(const std::exception& e)
+  {
+    CNR_ERROR(m_logger, "The aborting of the controller failed. Exception:" << e.what() );
+  }
+  
+  //======================================
+  throw std::runtime_error("Aborting failed, and the only way to raise the error is an excpetion!");
+  //======================================
 }
 
 /////////////////////////////////////

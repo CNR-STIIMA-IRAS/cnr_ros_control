@@ -45,6 +45,7 @@
 #include <cnr_hardware_interface/posveleff_command_interface.h>
 #include <sensor_msgs/JointState.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/WrenchStamped.h>
 #include <trajectory_msgs/JointTrajectoryPoint.h>
 
 namespace cnr_hardware_interface
@@ -66,6 +67,7 @@ public:
 protected:
   sensor_msgs::JointState* m_msg;
   void initialJointStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
+  void wrenchCb(const geometry_msgs::WrenchStamped::ConstPtr& msg);
 
   hardware_interface::JointStateInterface           m_js_jh;   //interface for reading joint state
   hardware_interface::PositionJointInterface        m_p_jh;    //interface for writing position target
@@ -86,6 +88,9 @@ protected:
   std::vector<double> m_cmd_pos;   //target position
   std::vector<double> m_cmd_vel;   //target velocity
   std::vector<double> m_cmd_eff;   //target effort
+
+  ros::Subscriber m_wrench_sub;
+  std::string m_frame_id;
 
 
   friend void setParam(FakeRobotHW* hw, const std::string& ns);

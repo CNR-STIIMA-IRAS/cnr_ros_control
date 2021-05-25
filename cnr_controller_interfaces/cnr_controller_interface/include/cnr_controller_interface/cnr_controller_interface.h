@@ -157,7 +157,17 @@ public:
   bool publish(const size_t& idx, const boost::shared_ptr<M>& message);
 
   /**
-   * @brief add_subscriber
+   * @brief Allows the user to easily add a subscriber, eith the correct callback queue, 
+   *        and the timing check
+   * 
+   * The usage of the function is
+   * class A : public Controller<T>
+   * {
+   *    bool doInit()
+   *    {
+   *       this->template add_subscriber< type of the message>(topic, queue_size, callbac, watchdog)
+   *    }
+   * };
    * @param id
    * @param topic
    * @param queue_size

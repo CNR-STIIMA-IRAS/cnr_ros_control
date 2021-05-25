@@ -78,6 +78,23 @@ void FakeRobotHW::initialJointStateCallback(const sensor_msgs::JointState::Const
   *m_msg = *msg;
 }
 
+void FakeRobotHW::wrenchCb(const geometry_msgs::WrenchStamped::ConstPtr &msg)
+{
+  if (msg->header.frame_id.compare(m_frame_id))
+  {
+    CNR_WARN_THROTTLE(m_logger,1,"wrench has wrong frame_id. expected = "<<m_frame_id<<", received = "<<msg->header.frame_id);
+    return;
+  }
+  m_ft_sensor.at(0)=msg->wrench.force.x;
+  m_ft_sensor.at(1)=msg->wrench.force.y;
+  m_ft_sensor.at(2)=msg->wrench.force.z;
+  m_ft_sensor.at(3)=msg->wrench.torque.x;
+  m_ft_sensor.at(4)=msg->wrench.torque.y;
+  m_ft_sensor.at(5)=msg->wrench.torque.z;
+
+  CNR_TRACE_THROTTLE(m_logger,10,"received a wrench");
+}
+
 bool FakeRobotHW::doInit()
 {
   CNR_TRACE_START(m_logger);
@@ -151,18 +168,25 @@ bool FakeRobotHW::doInit()
   }
 
   std::string wrench_name="wrench";
-  if (m_robothw_nh.getParam("wrench_resourse",wrench_name))
+  if (!m_robothw_nh.getParam("wrench_resourse",wrench_name))
   {
     wrench_name="wrench";
     CNR_TRACE(m_logger,"using defalut wrench_resourse name: wrench");
   }
 
-  std::string m_frame_id="tool0";
-  if (m_robothw_nh.getParam("frame_id",wrench_name))
+  if (!m_robothw_nh.getParam("frame_id",m_frame_id))
   {
     m_frame_id="tool0";
     CNR_TRACE(m_logger,"using defalut frame_id name: tool0");
   }
+
+  std::string wrench_topic="fake_wrench";
+  if (!m_robothw_nh.getParam("wrench_topic",wrench_topic))
+  {
+    wrench_topic="fake_wrench";
+    CNR_TRACE(m_logger,"using defalut wrench_topic name: fake_wrench");
+  }
+  m_wrench_sub=m_robothw_nh.subscribe(wrench_topic,1,&FakeRobotHW::wrenchCb,this);
 
 
   hardware_interface::ForceTorqueSensorHandle sensor_handle(wrench_name
