@@ -79,32 +79,46 @@ bool ConfigurationLoader::getHwParam(ros::NodeHandle &nh,
     type = (std::string)hardware_interface["nodelet_type"];
   }
 
-  if ((hardware_interface.hasMember("remap_source_args"))
-    &&(hardware_interface.hasMember("remap_target_args")) )
-  {
-    XmlRpc::XmlRpcValue remap_source_args = hardware_interface["remap_source_args"];
-    XmlRpc::XmlRpcValue remap_target_args = hardware_interface["remap_target_args"];
+  std::vector<std::string> postfix = {"","_0","_1","_2","_3","_4","_5","_6","_7","_8","_9","_10","_11","_12"};
 
-    if (remap_source_args.getType() != XmlRpc::XmlRpcValue::TypeArray)
+  for(const auto & p : postfix )
+  {
+    if ((hardware_interface.hasMember("remap_source_args" + p))
+      &&(hardware_interface.hasMember("remap_target_args" + p )) )
     {
-      error = "The remap_source_args is not a list of names" ;
-      return false;
-    }
-    if (remap_target_args.getType() != XmlRpc::XmlRpcValue::TypeArray)
-    {
-      error = "The remap_target_args is not a list of names" ;
-      return false;
-    }
-    if (remap_source_args.size() != remap_target_args.size() )
-    {
-      error = "The remap_source_args and remap_target_args have a different dimension!" ;
-      return false;
-    }
-    for (int i = 0; i < remap_source_args.size(); i++)
-    {
-      std::string from = (std::string)remap_source_args[i];
-      std::string to = (std::string)remap_target_args[i];
-      remappings[ros::names::resolve(from)] = ros::names::resolve(to);
+      XmlRpc::XmlRpcValue remap_source_args = hardware_interface["remap_source_args" + p];
+      XmlRpc::XmlRpcValue remap_target_args = hardware_interface["remap_target_args" + p];
+
+      if (remap_source_args.getType() != XmlRpc::XmlRpcValue::TypeArray)
+      {
+        error = "The remap_source_args is not a list of names" ;
+        return false;
+      }
+      if (remap_target_args.getType() != XmlRpc::XmlRpcValue::TypeArray)
+      {
+        error = "The remap_target_args is not a list of names" ;
+        return false;
+      }
+      if (remap_source_args.size() != remap_target_args.size() )
+      {
+        error = "The remap_source_args and remap_target_args have a different dimension!" ;
+        return false;
+      }
+      for (int i = 0; i < remap_source_args.size(); i++)
+      {
+        std::string from = (std::string)remap_source_args[i];
+        std::string to = (std::string)remap_target_args[i];
+        if(remappings.find(ros::names::resolve(from))==remappings.end())
+        {
+          remappings[ros::names::resolve(from)] = ros::names::resolve(to);
+        }
+        else
+        {
+          error += "The remap argument " + from + "[" + ros::names::resolve(from)
+                    + "] has been already used. Check the configuration! Abort.";
+          return false;
+        }
+      }
     }
   }
   return true;
