@@ -270,7 +270,8 @@ bool RobotHwDriverInterface::init(const std::string& hw_name, const std::map<std
     //==========================================================
     // CREATE THE CONTROLLER MANAGER
     m_cm.reset(new controller_manager::ControllerManager( m_hw.get(), m_hw_nh));
-    // CREATE THE CONTROLLER MANAGER INTERFACE: it redirects the 
+    
+    // CREATE THE CONTROLLER MANAGER INTERFACE FROM THE ControllerManager
     m_cmi.reset(new cnr_controller_manager_interface::ControllerManagerInterface(m_logger, m_hw_name, m_cm.get()));
     //==========================================================
   }
