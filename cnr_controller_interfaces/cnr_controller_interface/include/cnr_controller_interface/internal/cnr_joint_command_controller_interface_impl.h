@@ -128,10 +128,13 @@ inline bool JointCommandController<H,T>::enterInit()
   m_safe_override_2 = 1;
 
   bool pub_log_target = false;
-  this->getRootNh().getParam("pub_log_target", pub_log_target);
+
+  this->getControllerNh().getParam("pub_log_target", pub_log_target);
   if(pub_log_target)
   {
-    m_target_pub.reset(new rosdyn::ChainStatePublisher(this->getControllerNh(), "log_target", this->chainNonConst(), &(this->m_target)));
+    m_target_pub.reset(
+      new rosdyn::ChainStatePublisher(this->getControllerNh(), this->getControllerNamespace() + "/target",
+                                        this->chainNonConst(), &(this->m_target)));
   }
   else
   {
@@ -234,7 +237,9 @@ inline bool JointCommandController<H,T>::exitUpdate()
     m_last_target.copy(m_target, m_target.ONLY_JOINT);
 
     if(m_target_pub)
+    {
       m_target_pub->publish();
+    }
     // ==============================
   }
   catch(...)
