@@ -1,10 +1,12 @@
 # Extension of ROS-CONTROL #
 
-[![Build Status](https://travis-ci.com/CNR-STIIMA-IRAS/cnr_ros_control.svg?branch=master)](https://travis-ci.com/CNR-STIIMA-IRAS/cnr_ros_control) [![codecov](https://codecov.io/gh/CNR-STIIMA-IRAS/cnr_ros_control/branch/master/graph/badge.svg)](https://codecov.io/gh/CNR-STIIMA-IRAS/cnr_ros_control) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/fd683d54c39443df9c685fb189300695)](https://app.codacy.com/gh/CNR-STIIMA-IRAS/cnr_ros_control?utm_source=github.com&utm_medium=referral&utm_content=CNR-STIIMA-IRAS/cnr_ros_control&utm_campaign=Badge_Grade_Dashboard)
+[![CI][a]][1]
+[![codecov][c]][3]
+[![Codacy Badge][d]][4]
 
 ## The design of the framework ##
 
-The repository contains the implementation of an exstension of the [ros_control](http://wiki.ros.org/ros_control "ros_control") framework
+The repository contains the implementation of an extension of the [ros_control](http://wiki.ros.org/ros_control "ros_control") framework
 developed by the Institute of Intelligent Industrial Technologies and Systems for Advanced Manufacturing [(STIIMA)](http://www.stiima.cnr.it),
 of the National Research Council of Italy [(CNR)](www.cnr.it).
 
@@ -20,7 +22,7 @@ This design choice allows the implementation of cascade controller architectures
 
 A special `RobotHw` called `TopicRobotHw` is provided by the `cnr_hardware_interfaces` package, and it has been designed in order to encaspulate generic topics in the standard `hardware_interface` [(link)](https://github.com/ros-controls/ros_control/wiki/hardware_interface), and therefore to allows the controller accessing the topic content using the handle-based mechanism.  
 
- [![Alternate Text](.media/Picture1.png)](https://youtu.be/JGmhB_9PjZk "Online presentation")
+[![Alternate Text](.media/Picture1.png)](https://youtu.be/JGmhB_9PjZk "Online presentation")
 
 ## Example of Usage ##
 
@@ -55,7 +57,7 @@ $ rosdep install -y --from-paths src --ignore-src --rosdistro $ROS_DISTRO
 
 ## Example to download ##
 
-
+TODO
 
 ## Developer Contact ##
 
@@ -77,3 +79,15 @@ _All rights reserved._
 
 This project has received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No. 820807.
 This website reflects only the author’s view and the European Commission is not responsible for any use that may be made of the information it contains.|
+
+[a]:https://github.com/CNR-STIIMA-IRAS/cnr_ros_control/actions/workflows/industrial_ci_action.yml/badge.svg
+[1]:https://github.com/CNR-STIIMA-IRAS/cnr_ros_control/actions/workflows/industrial_ci_action.yml
+
+[b]:https://travis-ci.com/CNR-STIIMA-IRAS/cnr_ros_control.svg?branch=master
+[2]:https://travis-ci.com/CNR-STIIMA-IRAS/cnr_ros_control
+
+[c]:https://codecov.io/gh/CNR-STIIMA-IRAS/cnr_ros_control/branch/master/graph/badge.svg
+[3]:https://codecov.io/gh/CNR-STIIMA-IRAS/cnr_ros_control
+
+[d]:https://api.codacy.com/project/badge/Grade/fd683d54c39443df9c685fb189300695
+[4]:https://app.codacy.com/gh/CNR-STIIMA-IRAS/cnr_ros_control?utm_source=github.com&utm_medium=referral&utm_content=CNR-STIIMA-IRAS/cnr_ros_control&utm_campaign=Badge_Grade_Dashboard

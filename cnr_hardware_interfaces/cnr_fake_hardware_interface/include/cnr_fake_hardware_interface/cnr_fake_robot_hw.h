@@ -40,10 +40,12 @@
 #include <cnr_hardware_interface/cnr_robot_hw.h>
 #include <hardware_interface/posvelacc_command_interface.h>
 #include <hardware_interface/joint_command_interface.h>
+#include <hardware_interface/force_torque_sensor_interface.h>
 
 #include <cnr_hardware_interface/posveleff_command_interface.h>
 #include <sensor_msgs/JointState.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/WrenchStamped.h>
 #include <trajectory_msgs/JointTrajectoryPoint.h>
 
 namespace cnr_hardware_interface
@@ -65,25 +67,31 @@ public:
 protected:
   sensor_msgs::JointState* m_msg;
   void initialJointStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
+  void wrenchCb(const geometry_msgs::WrenchStamped::ConstPtr& msg);
 
-  hardware_interface::JointStateInterface     m_js_jh;   //interface for reading joint state
-  hardware_interface::PositionJointInterface  m_p_jh;    //interface for writing position target
-  hardware_interface::VelocityJointInterface  m_v_jh;    //interface for writing velocity target
-  hardware_interface::EffortJointInterface    m_e_jh;    //interface for writing effort target
-  hardware_interface::PosVelEffJointInterface m_pve_jh;
-  hardware_interface::VelEffJointInterface    m_ve_jh;
+  hardware_interface::JointStateInterface           m_js_jh;   //interface for reading joint state
+  hardware_interface::PositionJointInterface        m_p_jh;    //interface for writing position target
+  hardware_interface::VelocityJointInterface        m_v_jh;    //interface for writing velocity target
+  hardware_interface::EffortJointInterface          m_e_jh;    //interface for writing effort target
+  hardware_interface::PosVelEffJointInterface       m_pve_jh;
+  hardware_interface::VelEffJointInterface          m_ve_jh;
+  hardware_interface::ForceTorqueSensorInterface    m_ft_jh;   // sensor interface
 
   bool m_p_jh_active;
   bool m_v_jh_active;
   bool m_e_jh_active;
 
-  std::vector<double> m_pos; // feedback position
-  std::vector<double> m_vel; // feedback velocity
-  std::vector<double> m_eff; // feedback effort
+  std::vector<double> m_pos;       // feedback position
+  std::vector<double> m_vel;       // feedback velocity
+  std::vector<double> m_eff;       // feedback effort
+  std::vector<double> m_ft_sensor; // feedback force/torque
+  std::vector<double> m_cmd_pos;   //target position
+  std::vector<double> m_cmd_vel;   //target velocity
+  std::vector<double> m_cmd_eff;   //target effort
 
-  std::vector<double> m_cmd_pos; //target position
-  std::vector<double> m_cmd_vel; //target velocity
-  std::vector<double> m_cmd_eff; //target effort
+  ros::Subscriber m_wrench_sub;
+  std::string m_frame_id;
+
 
   friend void setParam(FakeRobotHW* hw, const std::string& ns);
 };
