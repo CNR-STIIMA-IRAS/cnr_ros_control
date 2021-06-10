@@ -60,6 +60,22 @@ public:
     drivers_.clear();
   }
 
+  cnr_hardware_driver_interface::RobotHwDriverInterfacePtr getDriver(const std::string& hw)
+  {
+    return drivers_.find(hw) != drivers_.end() ? drivers_.at(hw) :  nullptr;
+  }
+
+  const cnr_hardware_driver_interface::RobotHwDriverInterfacePtr& getDriver(const std::string& hw) const
+  {
+    static cnr_hardware_driver_interface::RobotHwDriverInterfacePtr nullret; nullret.reset();
+    return drivers_.find(hw) != drivers_.end() ? drivers_.at(hw) :  nullret;
+  }
+
+  const ConfigurationStruct& getRunningConfiguration() const
+  {
+    return running_configuration_;
+  }
+
   ros::NodeHandle& getRootNh();
 
   /**
@@ -76,27 +92,35 @@ public:
    */
   bool purgeHw(const ros::Duration& watchdog, std::string& error);
   
-  /**
+  /** @brief Loading of a single RobotHW (embedded in the RobotHwDriverInterfaces)
    */
   bool loadHw(const std::string& hw_to_load_name, const ros::Duration& watchdog, std::string& error);
   
-  /**
+  /** @brief Parallel Loading of a set of RobotHW (embedded in the RobotHwDriverInterfaces)
    */
   bool loadHw(const std::vector<std::string>& hw_to_load_names,
                 const ros::Duration& watchdog, std::string& error);
 
-  /**
+  /** @brief Parallel Unloading of a set of RobotHW (embedded in the RobotHwDriverInterfaces)
    */
   bool unloadHw(const std::vector<std::string>& hw_to_unload_names, const ros::Duration& watchdog, 
                 std::string& error);
 
+  /** @brief Load of the RobotHW (if needed) and load and Start of the controllers for such RobotHW
+   */ 
   bool loadAndStartControllers(const std::string& hw_name, const ConfigurationStruct& next_configuration,
                                 const size_t& strictness, std::string& error);
 
+  /** @brief Parallel Load of a set of RobotHW (if needed) and load and Start of the controllers for such RobotHW
+   * 
+   * NOTE: First the HW are loaded, if needed, and then the controllers are launched.
+   */ 
   bool loadAndStartControllers(const std::vector<std::string>& hw_next_names,
                                 const ConfigurationStruct& next_configuration, const size_t& strictness,
                                   std::string& error);
 
+  /** @brief stop and unloads the controller, and unload the RobotHW
+   */
   bool stopAndUnloadAllControllers(const std::vector<std::string>& hw_to_unload_names,
                                     const ros::Duration& watchdog, std::string& error);
 

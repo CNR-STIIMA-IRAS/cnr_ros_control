@@ -78,6 +78,12 @@ ConfigurationManager::ConfigurationManager(std::shared_ptr<cnr_logger::TraceLogg
 
 }
 
+
+/**
+ * 
+ * 
+ * 
+ */
 ConfigurationManager::~ConfigurationManager() noexcept(false)
 {
   try
@@ -110,6 +116,12 @@ ConfigurationManager::~ConfigurationManager() noexcept(false)
   }
 }
 
+
+/**
+ * 
+ * 
+ * 
+ */
 bool ConfigurationManager::startCallback(configuration_msgs::StartConfiguration::Request& req,
                                          configuration_msgs::StartConfiguration::Response& res)
 {
@@ -138,7 +150,6 @@ bool ConfigurationManager::startCallback(configuration_msgs::StartConfiguration:
       res.ok = callback(m_configurations.at(req.start_configuration), req.strictness,  ros::Duration(10.0));
       if (res.ok)
       {
-        m_active_configuration      = m_configurations.at(req.start_configuration);
         m_active_configuration_name = req.start_configuration;
         m_nh.setParam("status/active_configuration", m_active_configuration_name);
       }
@@ -161,6 +172,12 @@ bool ConfigurationManager::startCallback(configuration_msgs::StartConfiguration:
   CNR_RETURN_TRUE(m_logger);
 }
 
+
+/**
+ * 
+ * 
+ * 
+ */
 bool ConfigurationManager::stopCallback(configuration_msgs::StopConfiguration::Request& req,
                                         configuration_msgs::StopConfiguration::Response& res)
 {
@@ -176,7 +193,6 @@ bool ConfigurationManager::stopCallback(configuration_msgs::StopConfiguration::R
     res.ok = callback(empty, req.strictness, ros::Duration(10.0));
     if (res.ok)
     {
-      m_active_configuration      = ConfigurationStruct();
       m_active_configuration_name = "";
       m_nh.setParam("status/active_configuration", m_active_configuration_name);
     }
@@ -192,6 +208,12 @@ bool ConfigurationManager::stopCallback(configuration_msgs::StopConfiguration::R
   CNR_RETURN_TRUE(m_logger);
 }
 
+
+/**
+ * 
+ * 
+ * 
+ */
 bool ConfigurationManager::listConfigurations(configuration_msgs::ListConfigurations::Request& req,
                                               configuration_msgs::ListConfigurations::Response& res)
 {
@@ -215,6 +237,12 @@ bool ConfigurationManager::listConfigurations(configuration_msgs::ListConfigurat
   CNR_RETURN_TRUE(m_logger);
 }
 
+
+/**
+ * 
+ * 
+ * 
+ */
 bool ConfigurationManager::updateConfigurations(configuration_msgs::UpdateConfigurations::Request& req,
                                                 configuration_msgs::UpdateConfigurations::Response& res)
 {
@@ -224,6 +252,12 @@ bool ConfigurationManager::updateConfigurations(configuration_msgs::UpdateConfig
   CNR_RETURN_TRUE(m_logger);
 }
 
+
+/**
+ * 
+ * 
+ * 
+ */
 bool ConfigurationManager::init()
 {
   CNR_TRACE_START(m_logger);
@@ -258,6 +292,12 @@ bool ConfigurationManager::init()
   CNR_RETURN_TRUE(m_logger);
 }
 
+
+/**
+ * 
+ * 
+ * 
+ */
 bool ConfigurationManager::run()
 {
   CNR_TRACE_START(m_logger);
@@ -270,7 +310,7 @@ bool ConfigurationManager::run()
     while (ros::ok())
     {
       bool full_check = (((cnt++) % decimator) == 0);
-      if (!isOk(false))
+      if (!isOk())
       {
         CNR_WARN_THROTTLE(m_logger, 2, "\n\nRaised an Error by one of the Hw! Stop Configuration start!\n\n");
         configuration_msgs::StopConfiguration srv;
@@ -312,25 +352,26 @@ bool ConfigurationManager::run()
   CNR_RETURN_TRUE(m_logger);
 }
 
-bool ConfigurationManager::isOk(bool nodelet_check)
+
+/**
+ * 
+ * 
+ * 
+ */
+bool ConfigurationManager::isOk( )
 {
   std::string error;
   try
   {
     const std::lock_guard<std::mutex> lock(m_callback_mutex);
 
-    std::string prefix = "Configuration '" + m_active_configuration.data.name + "': ";
+    std::string prefix = "Configuration '" + m_conf_loader.getRunningConfiguration().data.name + "': ";
 
-    for (auto const & component : m_active_configuration.components)
+    for (auto const & component : m_conf_loader.getRunningConfiguration().components)
     {
       const std::string& hw = component.first;
-      cnr_hardware_interface::StatusHw hw_status;
-
-      if(!cnr_hardware_interface::hw_get_state(m_nh, hw, hw_status, ros::Duration(0.01), error))
-      {
-        CNR_FATAL(m_logger, prefix << "The HW " << hw << " has not any valid state: " << error);
-        return false;
-      }
+      cnr_hardware_interface::StatusHw hw_status = 
+            m_conf_loader.getDriver(hw) ? m_conf_loader.getDriver(hw)->getState() : cnr_hardware_interface::ERROR;
 
       if((hw_status == cnr_hardware_interface::ERROR) || (hw_status == cnr_hardware_interface::CTRL_ERROR)
         || (hw_status == cnr_hardware_interface::SRV_ERROR))
@@ -339,65 +380,8 @@ bool ConfigurationManager::isOk(bool nodelet_check)
                               << "' is " << cnr_hardware_interface::to_string(hw_status));
         return false;
       }
-      for (auto const & ctrl : component.second)
-      {
-        std::string ctrl_name = ctrl.id;
-        bool runtime_check = ctrl.check_state;
-        if(runtime_check)
-        {
-          std::string ctrl_status;
-          if (!cnr::control::ctrl_get_state(hw, ctrl_name, ctrl_status, error, ros::Duration(0.01)))
-          {
-            CNR_FATAL(m_logger,  prefix << "The HW '" << hw << "' and CTRL '" << ctrl << "' has not any valid state: "
-                                  << error);
-            return false;
-          }
-          if (ctrl_status == "ERROR")
-          {
-            CNR_FATAL(m_logger, prefix << "The status of HW '" << hw << "' and CTRL '" << ctrl 
-                                  << "' is " << ctrl_status << " while it should be 'RUNNING'");
-            return false;
-          }
-        }
-      }
     }
 
-    if (nodelet_check)
-    {
-      std::vector<std::string> hw_names_from_nodelet;
-      std::string error;
-      if (!m_conf_loader.listHw(hw_names_from_nodelet, ros::Duration(0.1), error))
-      {
-        CNR_FATAL(m_logger, prefix << "HW Nodelet Manager failed: " << error);
-        return false;
-      }
-
-      for (auto const & component : m_active_configuration.components)
-      {
-        const std::string& hw = component.first;
-        if (std::find(hw_names_from_nodelet.begin(), hw_names_from_nodelet.end(), hw) == hw_names_from_nodelet.end())
-        {
-          CNR_FATAL(m_logger, prefix << "HW " << hw << " seems not loaded in memory!");
-          return false;
-        }
-        std::vector< controller_manager_msgs::ControllerState >  running;
-        std::vector< controller_manager_msgs::ControllerState >  stopped;
-        if (!m_conf_loader.listControllers(hw, running, stopped, error))
-        {
-          CNR_FATAL(m_logger, prefix << "The Ctrl of the HW" << hw << " seems not working properly. "
-                               << "Error: " << error);
-          return false;
-        }
-        for (auto const & ctrl : component.second)
-        {
-          if(running.end() == std::find_if(running.begin(), running.end(), [&ctrl](auto r){return r.name == ctrl.id;}))
-          {
-            CNR_WARN(m_logger, prefix << "CTRL " << ctrl << " of the HW '" << hw << "' is not running! ");
-            return false;
-          }
-        }
-      }
-    }
   }
   catch (std::exception& e)
   {
@@ -411,16 +395,17 @@ bool ConfigurationManager::isOk(bool nodelet_check)
   return true;
 }
 
+
+/**
+ * 
+ * 
+ * 
+ */
 bool ConfigurationManager::checkRobotHwState(const std::string& hw, const cnr_hardware_interface::StatusHw& target)
 {
-  cnr_hardware_interface::StatusHw hw_status;
-  ros::NodeHandle n("/");
-  std::string error;
-  if (!cnr_hardware_interface::hw_get_state(n, hw, hw_status, ros::Duration(10), error))
-  {
-    CNR_FATAL_THROTTLE(m_logger, 5.0, "The HW " << hw << " has not any valid state: " << error);
-    return false;
-  }
+  cnr_hardware_interface::StatusHw hw_status = 
+    m_conf_loader.getDriver(hw) ? m_conf_loader.getDriver(hw)->getState() : cnr_hardware_interface::ERROR;
+    
   if(hw_status != target)
   {
 //    CNR_FATAL_THROTTLE(m_logger, 5.0, "The status of the HW '" << hw << "' is " << cnr_hardware_interface::to_string(hw_status)
@@ -430,13 +415,19 @@ bool ConfigurationManager::checkRobotHwState(const std::string& hw, const cnr_ha
   return true;
 }
 
+
+/**
+ * 
+ * 
+ * 
+ */
 bool ConfigurationManager::callback(const ConfigurationStruct& next_configuration,
                                     const int&                 strictness,
                                     const ros::Duration&       watchdog)
 {
   CNR_TRACE_START(m_logger);
 
-  const std::vector<std::string>  hw_active_names = getHardwareInterfacesNames(m_active_configuration);
+  const std::vector<std::string>  hw_active_names = getHardwareInterfacesNames(m_conf_loader.getRunningConfiguration());
   const std::vector<std::string>  hw_next_names   = getHardwareInterfacesNames(next_configuration);
   std::vector<std::string>        hw_to_load_names;
   std::vector<std::string>        hw_to_unload_names;
@@ -458,7 +449,7 @@ bool ConfigurationManager::callback(const ConfigurationStruct& next_configuratio
   CNR_DEBUG(m_logger, "HW NAMES - TO LOAD         : " << to_string(hw_to_load_names));
   CNR_DEBUG(m_logger, "HW NAMES - TO UNLOAD       : " << to_string(hw_to_unload_names));
 
-  CNR_INFO(m_logger, "Check rosparam availability"); 
+  CNR_DEBUG(m_logger, "Check rosparam availability"); 
   for( const auto & hw_name : hw_next_names)
   {
     if(!ros::param::has("/" + hw_name))
@@ -485,7 +476,7 @@ bool ConfigurationManager::callback(const ConfigurationStruct& next_configuratio
     }
   }
 
-  CNR_INFO(m_logger, "Check coherence between nodelet status and configuration manager status");
+  CNR_DEBUG(m_logger, "Check coherence between nodelet status and configuration manager status");
   if (!equal(hw_active_names, hw_names_from_nodelet))
   {
     CNR_WARN(m_logger,"Active configuration and the nodelet status is different."
@@ -497,7 +488,7 @@ bool ConfigurationManager::callback(const ConfigurationStruct& next_configuratio
     hw_to_load_names.insert(hw_to_load_names.begin(), hw_active_names.begin(), hw_active_names.end());
   }
 
-  CNR_INFO(m_logger, "Load the needed hardware interfaces by nodelets: " << to_string(hw_to_load_names, ""));
+  CNR_DEBUG(m_logger, "Load the needed hardware interfaces by nodelets: " << to_string(hw_to_load_names, ""));
   for (const auto & hw_to_load_name : hw_to_load_names)
   {
     if (!m_conf_loader.loadHw(hw_to_load_name, watchdog, error))
@@ -571,11 +562,11 @@ bool ConfigurationManager::callback(const ConfigurationStruct& next_configuratio
   if (!m_conf_loader.stopAndUnloadAllControllers(hw_to_unload_names, watchdog, error))
   {
     CNR_ERROR(m_logger, error );
-    CNR_INFO(m_logger, cnr_logger::BM() << "<<<<<<<<<<<< Unload and Stop Controllers unload "
+    CNR_INFO(m_logger, cnr_logger::BM() << "<<<<<<<<<<<< Unload and Stop Controllers "
                      << cnr_logger::RED() << "FAILED" << cnr_logger::RST());
     CNR_RETURN_FALSE(m_logger);
   }
-  CNR_INFO(m_logger, cnr_logger::BM() << "<<<<<<<<<<<< Unload and Stop Controllers unload "
+  CNR_INFO(m_logger, cnr_logger::BM() << "<<<<<<<<<<<< Unload and Stop Controllers "
                    << cnr_logger::BG() << "DONE" << cnr_logger::RST());
 
 
@@ -592,6 +583,12 @@ bool ConfigurationManager::callback(const ConfigurationStruct& next_configuratio
   CNR_RETURN_TRUE(m_logger);
 }
 
+
+/**
+ * 
+ * 
+ * 
+ */
 bool ConfigurationManager::getAvailableConfigurationsFromParam()
 {
   CNR_TRACE_START_THROTTLE_DEFAULT(m_logger);

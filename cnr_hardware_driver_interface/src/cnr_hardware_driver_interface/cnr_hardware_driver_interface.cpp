@@ -140,6 +140,9 @@ RobotHwDriverInterface::~RobotHwDriverInterface()
   try
   {
     CNR_INFO(m_logger, "Reset the HW (watchdog: 10sec)");
+
+    m_cmi->stopUnloadAllControllers(ros::Duration(10.0));
+    /*
     std::vector<std::string> ctrls;
     if (ros::param::has(cnr::control::ctrl_list_param_name(m_hw_name)))
     {
@@ -158,6 +161,7 @@ RobotHwDriverInterface::~RobotHwDriverInterface()
         }
       }
     }
+    */
 
     CNR_WARN(m_logger, "Join the diagnostic thread");
     m_stop_diagnostic_thread = true;
@@ -192,7 +196,6 @@ RobotHwDriverInterface::~RobotHwDriverInterface()
 
 bool RobotHwDriverInterface::init(const std::string& hw_name, const std::map<std::string, std::string>& remappings)
 {
-  std::cerr << __PRETTY_FUNCTION__ << ":" << __LINE__ <<": creating the dirver for the RobotHW '" << hw_name <<"' " << std::endl;
   m_hw_nh = ros::NodeHandle(hw_name, remappings);
   m_root_nh = ros::NodeHandle(ros::names::parentNamespace(hw_name), remappings);
 
@@ -218,7 +221,7 @@ bool RobotHwDriverInterface::init(const std::string& hw_name, const std::map<std
   }
 
   m_period = ros::Duration(sampling_period);
-  m_state  = cnr_hardware_interface::CREATED;
+  dumpState(cnr_hardware_interface::UNLOADED);
   realtime_utilities::DiagnosticsInterface::init(m_hw_name, "RobotHwDriverInterface", "Main Loop");
   realtime_utilities::DiagnosticsInterface::addTimeTracker("cycle",sampling_period);
   realtime_utilities::DiagnosticsInterface::addTimeTracker("read",sampling_period);
@@ -252,14 +255,15 @@ bool RobotHwDriverInterface::init(const std::string& hw_name, const std::map<std
       CNR_RETURN_FALSE(m_logger, "The RobotHw has not been properly initialized in the doOnInit() function. Abort.");
     }
     m_cnr_hw = dynamic_cast<cnr_hardware_interface::RobotHW*>(m_hw.get()); // if not null, there are many fancy & funny functions
+    dumpState( m_cnr_hw ? m_cnr_hw->getState() : cnr_hardware_interface::CREATED );
 
-    m_state = cnr_hardware_interface::INITIALIZED;
     if (!m_hw->init(m_root_nh, m_hw_nh))
     {
       dumpState(cnr_hardware_interface::ERROR);
       CNR_RETURN_FALSE(m_logger, "The RobotHw '" + m_hw_name + "'Initialization failed. Abort.");
     }
-
+    dumpState( m_cnr_hw ? m_cnr_hw->getState() : cnr_hardware_interface::INITIALIZED);
+    
     if ( m_cnr_hw && (m_cnr_hw->getRobotHwNamespace() != m_hw_namespace) )
     {
       CNR_WARN(m_logger, "Mismatch between the namespace of the RobotHw '" + m_cnr_hw->getRobotHwNamespace()
@@ -342,7 +346,7 @@ bool RobotHwDriverInterface::start(const ros::Duration& watchdog)
     {
       CNR_RETURN_FALSE(m_logger);
     }
-    if(m_state==cnr_hardware_interface::RUNNING)
+    if(retriveState() == cnr_hardware_interface::RUNNING)
     {
       CNR_WARN(m_logger, "RobotHW RT-Control Loop Started!");
       break;
@@ -370,7 +374,7 @@ bool RobotHwDriverInterface::stop(const ros::Duration& watchdog)
         CNR_ERROR(m_logger, "The thread did not stopped within the expected watchdog. Abort");
         CNR_RETURN_FALSE(m_logger);
       }
-      if(m_state!=cnr_hardware_interface::RUNNING)
+      if(retriveState()!=cnr_hardware_interface::RUNNING)
       {
         CNR_WARN(m_logger, "RobotHW RT-Control Loop Ended!");
         break;
@@ -395,22 +399,23 @@ void RobotHwDriverInterface::run()
     CNR_ERROR(m_logger, "Fetching the state failed: '" << error << "'");  
     CNR_RETURN_NOTOK(m_logger, void());
   }
-  if(m_state==cnr_hardware_interface::RUNNING)
+  if(retriveState()==cnr_hardware_interface::RUNNING)
   {
     CNR_ERROR(m_logger, "The Driver is already in running state.. have you called both 'start' and 'run'?");  
     CNR_RETURN_NOTOK(m_logger, void());
   }
-  CNR_WARN(m_logger, "Start update thread (period: " << m_period << ")");
 
+  CNR_DEBUG(m_logger, "Supported Hardware Interfaces:");
+  for (auto& elem : m_hw->getNames())
+  {
+    CNR_DEBUG(m_logger, "[ " << m_hw_name << " ] - '" <<  elem << "'");
+  }
+
+  CNR_WARN(m_logger, "Start update thread (period: " << m_period << ")");    
   if(m_cnr_hw)
   {
-    CNR_DEBUG(m_logger, "Diagnostic started ");
+    CNR_DEBUG(m_logger, "Start the Diagnostic thread");
     CNR_DEBUG(m_logger, "Frequency: '" << 1.0 / m_period.toSec() << "'");
-    CNR_DEBUG(m_logger, "Supported Hardware Interfaces:");
-    for (auto& elem : m_hw->getNames())
-    {
-      CNR_DEBUG(m_logger, "[ " << m_hw_name << " ] - '" <<  elem << "'");
-    }
 
     m_diagnostics_thread_running = false;
     m_stop_diagnostic_thread     = false;
@@ -426,7 +431,10 @@ void RobotHwDriverInterface::run()
     }
   }
 
-  dumpState(cnr_hardware_interface::RUNNING);
+  if(!m_cnr_hw)
+  {
+    dumpState(cnr_hardware_interface::RUNNING);
+  }
 
 #if PREEMPTIVE_RT
   realtime_utilities::period_info  pinfo;
@@ -534,7 +542,7 @@ void RobotHwDriverInterface::run()
       CNR_RETURN_NOTOK(m_logger, void());
     }
 
-    if (m_cnr_hw && m_cnr_hw->getStatus() == cnr_hardware_interface::ERROR)
+    if (m_cnr_hw && m_cnr_hw->getState() == cnr_hardware_interface::ERROR)
     {
       CNR_ERROR_THROTTLE(m_logger, 1.0, "RobotHw is in error");
       dumpState(cnr_hardware_interface::ERROR);
@@ -547,9 +555,26 @@ void RobotHwDriverInterface::run()
   CNR_RETURN_OK(m_logger, void());
 }
 
+
+//==================================================
 bool RobotHwDriverInterface::dumpState(const cnr_hardware_interface::StatusHw& status)
 {
-  ros::param::set(cnr_hardware_interface::hw_last_status_param_name(m_hw_namespace), status);
+  std::string last_status = cnr_hardware_interface::to_string(retriveState());
+  if(m_state_history.size() == 0)
+  {
+    m_state_history.push_back(last_status);
+  }
+  else
+  {
+    if(m_state_history.back() != last_status)
+    {
+      m_state_history.push_back(last_status);
+      ros::param::set(hw_last_status_param_name(m_hw_namespace), last_status);
+      ros::param::set(hw_status_param_name(m_hw_namespace), m_state_history);
+      CNR_DEBUG(m_logger, "RobotHW '" << m_hw_namespace
+                            << "' New Status " <<  cnr_hardware_interface::to_string(retriveState()));
+    }
+  }
   m_state = status;
   return true;
 }
@@ -557,7 +582,7 @@ bool RobotHwDriverInterface::dumpState(const cnr_hardware_interface::StatusHw& s
 bool RobotHwDriverInterface::fetchState(std::string& error)
 {
   std::string status;
-  if(!ros::param::get(cnr_hardware_interface::hw_last_status_param_name(m_hw_namespace), status))
+  if(!ros::param::get(hw_last_status_param_name(m_hw_namespace), status))
   {
     error = "The param status does not exists...";
     return false;
@@ -572,6 +597,74 @@ bool RobotHwDriverInterface::fetchState(std::string& error)
   }
   error = "The param status '"+status+"' is unrecongnized...";
   return false;
+}
+//==================================================
+
+
+//! It stop and unload the controllers. It does not change the state of the Driver/RobotHW
+//! Indeed, the loop in run() still work, without any running controller
+bool RobotHwDriverInterface::stopUnloadAllControllers(const ros::Duration& watchdog)
+{
+  CNR_TRACE_START(m_logger);
+  static const std::vector<controller_manager_msgs::ControllerState> vc_empty;
+  static const std::vector<std::string> vs_empty;
+
+  std::vector<controller_manager_msgs::ControllerState> running;
+  std::vector<controller_manager_msgs::ControllerState> stopped;
+
+  if (!m_cmi->listControllers(running, stopped, watchdog))
+  {
+    CNR_ERROR(m_logger, m_hw_name << " Error in getting the information of the status of the controllers." 
+                          << m_cmi->error() );
+    CNR_RETURN_FALSE(m_logger);
+  }
+  stopped.insert(stopped.end(), running.begin(), running.end());
+
+  if (!m_cmi->switchControllers(vc_empty, running, 1, watchdog))
+  {
+    CNR_ERROR(m_logger, m_hw_name << " Error in stopping controllers:" 
+                      << m_cmi->error() );
+    CNR_RETURN_FALSE(m_logger); 
+  }
+
+  if (!m_cmi->unloadControllers(stopped, watchdog))
+  {
+    CNR_ERROR(m_logger, m_hw_name << " Error in unloading controllers:" 
+                      << m_cmi->error() );
+    CNR_RETURN_FALSE(m_logger); 
+  }
+  CNR_RETURN_TRUE(m_logger); 
+}
+
+
+
+bool RobotHwDriverInterface::loadAndStartControllers(const std::vector<std::string>& next_controllers,
+                                                      const size_t& strictness, const ros::Duration& watchdog)
+{
+  CNR_TRACE_START(m_logger);
+
+  try
+  { 
+    if(!m_cmi->switchControllers(strictness, next_controllers, watchdog))
+    {
+      CNR_ERROR(m_logger, m_hw_name << " Error in loading and starting the controllers:" 
+                      << m_cmi->error() );
+      CNR_RETURN_FALSE(m_logger); 
+    }
+  }
+  catch(std::exception& e)
+  {
+    CNR_ERROR(m_logger, m_hw_name << "Exception in starting the controllers. Error: " << std::string(e.what())
+                    << m_cmi->error() );
+    CNR_RETURN_FALSE(m_logger); 
+  }
+  catch(...)
+  {
+    CNR_ERROR(m_logger, m_hw_name << "Unhandled Exception in switch controllers."
+                    << m_cmi->error() );
+    CNR_RETURN_FALSE(m_logger); 
+  }
+  CNR_RETURN_TRUE(m_logger); 
 }
 
 }

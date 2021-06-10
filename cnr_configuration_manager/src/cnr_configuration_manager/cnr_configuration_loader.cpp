@@ -56,6 +56,7 @@ ros::NodeHandle& ConfigurationLoader::getRootNh()
 {
   return root_nh_;
 }
+
 bool ConfigurationLoader::getHwParam(ros::NodeHandle &nh,
                                      const std::string& hw_name,
                                      std::string& type,
@@ -134,16 +135,12 @@ bool ConfigurationLoader::listHw(std::vector<std::string>& hw_names_from_nodelet
 
 bool ConfigurationLoader::purgeHw(const ros::Duration& watchdog, std::string& error)
 {
-  for (auto & driver : drivers_)
+  std::vector<std::string> hw_names;
+  if(!listHw(hw_names, watchdog, error))
   {
-    if(driver.second->getState() )
-    if(!driver.second->getControllerManagerInterface()->stopUnloadAllControllers(watchdog))
-    {
-      error = "Error in stopping and unloading the controllers";
-      return false;
-    }
+    return false;
   }
-  return true;
+  return unloadHw(hw_names, watchdog, error);
 }
 
 bool ConfigurationLoader::loadHw(const std::string& hw_to_load_name, 
@@ -227,7 +224,6 @@ bool ConfigurationLoader::loadHw(const std::vector<std::string>& hw_to_load_name
   //=====================================================================================
 }
 
-
 bool ConfigurationLoader::unloadHw(const std::vector<std::string>& hw_to_unload_names, 
                                     const ros::Duration& watchdog, std::string& error)
 {
@@ -235,54 +231,34 @@ bool ConfigurationLoader::unloadHw(const std::vector<std::string>& hw_to_unload_
   static const std::vector<std::string> vs_empty;
   
   error = "Loop over the hw: " + to_string(hw_to_unload_names) + "\n";
-  for (auto old : hw_to_unload_names)
+  for (auto hw : hw_to_unload_names)
   {
-    error += "hw: '" + old + "'\n";
-    std::vector<controller_manager_msgs::ControllerState> running;
-    std::vector<controller_manager_msgs::ControllerState> stopped;
-
-    auto cm = drivers_[old]->getControllerManagerInterface();
-    error += "get the ctrl list\n";
-    if (!cm->listControllers(running, stopped, watchdog))
-    {
-      error += "error in getting the information of the status of the controllers." + cm->error();
-      return false;
-    }
-    stopped.insert(stopped.end(), running.begin(), running.end());
-
-    error += "ctrl doswitch (stop)\n";
-    if (!cm->switchControllers(vc_empty, running, 1, watchdog))
-    {
-      error += "error in unloding the controllers: " + cm->error();
-      return false; 
-    }
-
-    error += "ctrl unload\n";
-    if (!cm->unloadControllers(stopped, watchdog))
-    {
-      error += "error in unloading the controllers: " + cm->error();
-      return false;
-    }
-
-    error += "hw nodelet unload (watchdog: " + std::to_string(watchdog.toSec()) + ")\n";
     try
     {
-      auto it = drivers_.find(old);
+      auto it = drivers_.find(hw);
       if(it != drivers_.end())
       {
-        drivers_[old].reset();
+        if(!drivers_[hw]->stopUnloadAllControllers(watchdog))
+        {
+          error += "Failed in stopping and unloading the controllers";
+          return false; 
+        }
+      
+        error += "hw nodelet unload (watchdog: " + std::to_string(watchdog.toSec()) + ")\n";
+
+        drivers_[hw].reset();
         drivers_.erase(it);
       }
     }
     catch(const std::exception& e)
     {
       error += "Error in deleting the Robot Hardware Driver ...." + std::string(e.what());
-      hw_set_state(getRootNh(), old, cnr_hardware_interface::SRV_ERROR);
+      cnr_hardware_driver_interface::hw_set_state(hw, cnr_hardware_interface::SRV_ERROR);
       return false;
     }
     
     error += "set hw nodelet state to UNLOADED";
-    hw_set_state(getRootNh(), old, cnr_hardware_interface::UNLOADED);
+    cnr_hardware_driver_interface::hw_set_state(hw, cnr_hardware_interface::UNLOADED);
   }
   return true;
 }
@@ -310,16 +286,8 @@ bool ConfigurationLoader::loadAndStartControllers(const std::string& hw_name,
   // }
   //================================================
 
+
   //================================================
-  // If the proper Controller Manager Interface does not exist, we created a neu CMI
-  // The Controller Manager Interface, is like the standard ControlleManager.
-  // Specifically: 
-  // - A Controller Manager Proxy is created within the scope of the RobotHwNodelet. 
-  //   When a new RobotHw must be created, a RobotHwNodelet is created (i.e., a nodelet is loaded by loadHw function)
-  //   The RobotHwNodelet stores a Therefore, when a Controller Manager Proxy, that is a standard 
-  //   Controller Manager, with the services exposed under a proper namespace
-  // - The Controller Manager Interface is the 'client' side, that is configured to find the services offered by the 
-  //   Controller Manager Proxy
   if (drivers_.find(hw_name) == drivers_.end())
   {
     loadHw(hw_name, ros::Duration(2.0), error);
@@ -337,11 +305,11 @@ bool ConfigurationLoader::loadAndStartControllers(const std::string& hw_name,
     watchdog = std::find(runtime_check.begin(), runtime_check.end(), false) != runtime_check.end() 
              ? ros::Duration(0.0) : ros::Duration(2.0);
   }
-
   //================================================
 
+
   //================================================
-  if (!drivers_[hw_name]->getControllerManagerInterface()->switchControllers(strictness, next_controllers, watchdog))
+  if (!drivers_[hw_name]->loadAndStartControllers(next_controllers, strictness, watchdog))
   {
     error = "Error in switching the controller: " 
             + drivers_[hw_name]->getControllerManagerInterface()->error();
@@ -356,8 +324,10 @@ bool ConfigurationLoader::loadAndStartControllers(const std::string& hw_name,
 
 bool ConfigurationLoader::loadAndStartControllers(const std::vector<std::string>& hw_next_names,
                                                   const ConfigurationStruct& next_conf,
-                                                  const size_t& strictness, std::string& error)
+                                                  const size_t& strictness, 
+                                                  std::string& error)
 {
+  // PARALLEL START OF THE CONTROLLERS
   std::map<std::string, std::thread* > starters;
   std::map< std::string, bool > start_ok;
   for (auto const & hw_name : hw_next_names)
@@ -372,8 +342,8 @@ bool ConfigurationLoader::loadAndStartControllers(const std::vector<std::string>
     }
   }
 
-  auto starter=[&](const std::string & hw_name, cnr_controller_manager_interface::ControllerManagerInterfacePtr ctrl,
-                    const ConfigurationStruct& next, bool& ok, std::string& error)
+  // PARALLEL START OF THE CONTROLLERS
+  auto starter=[&](const std::string & hw_name, const ConfigurationStruct& next, bool& ok, std::string& error)
   {
     try
     { 
@@ -388,7 +358,7 @@ bool ConfigurationLoader::loadAndStartControllers(const std::vector<std::string>
                               ? ros::Duration(0.0) : ros::Duration(2.0);
       }
 
-      ok = ctrl->switchControllers(strictness, next_controllers, watchdog);
+      ok = drivers_[hw_name]->loadAndStartControllers(next_controllers,strictness, watchdog);
     }
     catch(std::exception& e)
     {
@@ -408,13 +378,11 @@ bool ConfigurationLoader::loadAndStartControllers(const std::vector<std::string>
   { 
     errors[hw_name] = "";
     starters[hw_name] = new std::thread(starter, hw_name, 
-                                          drivers_.at(hw_name)->getControllerManagerInterface(),
                                             next_conf, std::ref(start_ok[hw_name]), std::ref(errors[hw_name]) );
   }
 
   for (auto& thread : starters)
   {
-    auto cm = drivers_.at(thread.first)->getControllerManagerInterface();
     if (thread.second->joinable())
     {
       thread.second->join();
@@ -425,15 +393,9 @@ bool ConfigurationLoader::loadAndStartControllers(const std::vector<std::string>
   bool ok = true;
   std::for_each(start_ok.begin(), start_ok.end(), [&](std::pair<std::string, bool> b)
   {
-    auto cm = drivers_.at(b.first)->getControllerManagerInterface();
-    if(b.second)
+    if(!b.second)
     {
-      //CNR_INFO(cm->getLogger(), "Successful starting the controllers of HW '" + b.first + "'");
-    }
-    else
-    {
-      error = "Error in starting the controllers of HW '" + b.first + "': " 
-                  + cm->error() + " (" + errors[b.first] + ")";
+      error = "Error in starting the controllers of HW '" + b.first + "'";
     }
     ok &= b.second;
   });
@@ -453,8 +415,7 @@ bool ConfigurationLoader::stopAndUnloadAllControllers(const std::vector<std::str
   {
     unload_ok[hw_name] = false;
   }
-  auto stopper=[&](const std::string & hw, cnr_controller_manager_interface::ControllerManagerInterfacePtr ctrl, 
-                   bool& ok, std::string& error)
+  auto stopper=[&](const std::string & hw, bool& ok, std::string& error)
   {
     // if (mail_senders_.find(hw) == mail_senders_.end())
     // {
@@ -478,7 +439,7 @@ bool ConfigurationLoader::stopAndUnloadAllControllers(const std::vector<std::str
         auto runtime_check = extract_runtime_checks(component.second);
         null_watchdog  |= std::find(runtime_check.begin(), runtime_check.end(), false) != runtime_check.end();
       }
-      ok = ctrl->stopUnloadAllControllers( null_watchdog ? ros::Duration(0.0) : ros::Duration(10.0) );
+      ok = drivers_[hw]->stopUnloadAllControllers( null_watchdog ? ros::Duration(0.0) : ros::Duration(10.0) );
     }
    catch(std::exception& e)
     {
@@ -497,13 +458,12 @@ bool ConfigurationLoader::stopAndUnloadAllControllers(const std::vector<std::str
   for (auto const & hw_name : hw_to_unload_names)
   {
     errors[hw_name]="";
-    stoppers[hw_name] = new std::thread(stopper, hw_name,  drivers_.at(hw_name)->getControllerManagerInterface(), 
+    stoppers[hw_name] = new std::thread(stopper, hw_name,
                                         std::ref(unload_ok[hw_name]), std::ref(errors[hw_name]));
   }
   
   for (auto& thread : stoppers)
   {
-    auto cm = drivers_.at(thread.first)->getControllerManagerInterface();
     if (thread.second->joinable())
     {
       thread.second->join();
@@ -513,15 +473,9 @@ bool ConfigurationLoader::stopAndUnloadAllControllers(const std::vector<std::str
   bool ok = true;
   std::for_each(unload_ok.begin(), unload_ok.end(), [&](std::pair<std::string, bool> b)
   {
-    auto cm = drivers_.at(b.first)->getControllerManagerInterface();
-    if(b.second)
+    if(!b.second)
     {
-      //CNR_INFO(cm->getLogger(), "Successful stopping the controllers of HW '" + b.first + "'");
-    }
-    else
-    {
-      error = "Error in stopping the controllers of HW '" + b.first + "': " 
-                + cm->error()+ "(" + errors[b.first]+")";
+      error = "Error in stopping the controllers of HW '" + b.first + "'";
     }
     ok &= b.second;
   });

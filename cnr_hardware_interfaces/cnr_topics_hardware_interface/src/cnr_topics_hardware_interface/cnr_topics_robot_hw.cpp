@@ -62,11 +62,11 @@ namespace cnr_hardware_interface
 
 void setParam(TopicsRobotHW* hw, const std::string& ns)
 {
-  if (hw->m_resources.count(JOINT_RESOURCE)) hw->m_joint_resource              ->setParam(ns);
+  if (hw->m_resources.count(JOINT_RESOURCE))  hw->m_joint_resource              ->setParam(ns);
   if (hw->m_resources.count(ANALOG_RESOURCE)) hw->m_analog_resource             ->setParam(ns);
   if (hw->m_resources.count(WRENCH_RESOURCE)) hw->m_force_torque_sensor_resource->setParam(ns);
-  if (hw->m_resources.count(POSE_RESOURCE)) hw->m_pose_resource               ->setParam(ns);
-  if (hw->m_resources.count(TWIST_RESOURCE)) hw->m_twist_resource              ->setParam(ns);
+  if (hw->m_resources.count(POSE_RESOURCE))   hw->m_pose_resource               ->setParam(ns);
+  if (hw->m_resources.count(TWIST_RESOURCE))  hw->m_twist_resource              ->setParam(ns);
 }
 
 std::vector<std::string> getResourceNames(const std::map< cnr_hardware_interface::RESOURCE_ID,
@@ -357,7 +357,7 @@ bool TopicsRobotHW::doRead(const ros::Time& time, const ros::Duration& period)
   }
   else if(m_missing_messages > m_max_missing_messages)
   {
-    if (getStatus() == cnr_hardware_interface::RUNNING)
+    if (getState() == cnr_hardware_interface::RUNNING)
     {
       std::string all_topics = "[";
       for (const std::pair<std::string, bool>& topic_received : m_topics_subscribed)
