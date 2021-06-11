@@ -111,9 +111,9 @@ bool JointController<H,T>::enterInit()
       CNR_RETURN_FALSE(this->m_logger);
     }
 
-    if(!this->getRootNh().getParam("kin_update_period", m_fkin_update_period))
+    if(!this->getControllerNh().getParam("kin_update_period", m_fkin_update_period))
     {
-      CNR_WARN(this->m_logger, "The parameter '" + this->getRootNamespace() + "/kin_update_period' is not set. "
+      CNR_WARN(this->m_logger, "The parameter '" + this->getControllerNamespace() + "/kin_update_period' is not set. "
                                 "The chain status will not be updated.");
       m_fkin_update_period = -1;
     }
