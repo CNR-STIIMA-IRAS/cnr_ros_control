@@ -84,8 +84,7 @@ public:
   virtual bool enterUpdate() override;
   virtual bool exitUpdate() override;
   virtual bool exitStopping() override;
-
-protected:
+/home/brontolo/cnr_ws/src/cnr_ros_control/cnr_controller_interfaces/cnr_controller_interface/include/cnr_controller_interface/i
   const rosdyn::ChainState& chainCommand() const;
   rosdyn::ChainState&       chainCommand();
 

@@ -73,6 +73,57 @@ template<class T>
 bool Controller<T>::init(T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh)
 {
   size_t l = __LINE__;
+  try
+  {
+    if(!this->prepareInit(hw, root_nh.getNamespace(), controller_nh.getNamespace(), root_nh, controller_nh))
+    {
+      CNR_RETURN_FALSE(m_logger);
+    }
+
+    l = __LINE__;
+    if(!enterInit())
+    {
+      CNR_RETURN_FALSE(m_logger);
+    }
+
+    l = __LINE__;
+    if(!doInit())
+    {
+      CNR_RETURN_FALSE(m_logger);
+    }
+
+    l = __LINE__;
+    if(!exitInit())
+    {
+      CNR_RETURN_FALSE(m_logger);
+    }
+  }
+  catch(std::exception& e)
+  {
+    std::cerr << cnr_logger::RED() << __PRETTY_FUNCTION__ << ":" << __LINE__ << ": " ;
+    std::cerr << "Exception at line: "
+              << std::to_string(l) << " error: " + std::string(e.what());
+    std::cerr << " root ns (the namespace of the hw): " << root_nh.getNamespace() << std::endl;
+    std::cerr << " controller ns (the namespace of the ctrl): " << controller_nh.getNamespace() << cnr_logger::RST()
+              << std::endl;
+  }
+
+  bool ret = dump_state("INITIALIZED");
+  if(!ret)
+  {
+    CNR_ERROR(m_logger, "Failed in dumping the state");
+    CNR_RETURN_FALSE(m_logger);
+  }
+  CNR_RETURN_TRUE(m_logger);
+}
+
+template<class T>
+bool Controller<T>::prepareInit(T* hw,
+                                const std::string& hw_name,
+                                const std::string& ctrl_name,
+                                ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh)
+{
+  size_t l = __LINE__;
   if(!hw)
   {
     std::cerr << cnr_logger::RED() << __PRETTY_FUNCTION__ << ":" << __LINE__ << ": " ;
@@ -82,29 +133,29 @@ bool Controller<T>::init(T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& contr
   try
   {
     l = __LINE__;
-    m_hw_name   = root_nh.getNamespace();
-    m_ctrl_name = controller_nh.getNamespace();
+    m_hw_name   = hw_name;
+    m_ctrl_name = ctrl_name;
     if(m_ctrl_name.find(m_hw_name) != std::string::npos)
     {
       m_ctrl_name.erase(m_ctrl_name.find(m_hw_name), m_hw_name.length());
     }
-    else
+    /*else
     {
       std::cerr << cnr_logger::RED() << __PRETTY_FUNCTION__ << ":" << __LINE__ << ": " ;
       std::cerr << "Controller configurations seems broken. " << std::endl;
-      std::cerr << " root ns (the namespace of the hw): " << root_nh.getNamespace() << std::endl;
-      std::cerr << " controller ns (the namespace of the ctrl): " << controller_nh.getNamespace() << cnr_logger::RST()
+      std::cerr << " root ns (the namespace of the hw): " << hw_name << std::endl;
+      std::cerr << " controller ns (the namespace of the ctrl): " << ctrl_name << cnr_logger::RST()
                 << std::endl;
       return false;
-    }
+    }*/
     l = __LINE__;
     std::replace(m_hw_name.begin(), m_hw_name.end(), '/', '_');
     if(m_hw_name.size()==0)
     {
       std::cerr << cnr_logger::RED() << __PRETTY_FUNCTION__ << ":" << __LINE__ << ": " ;
       std::cerr << "The namespaces are incorrect. " << std::endl;
-      std::cerr << " root ns (the namespace of the hw): " << root_nh.getNamespace() << std::endl;
-      std::cerr << " controller ns (the namespace of the ctrl): " << controller_nh.getNamespace() << cnr_logger::RST()
+      std::cerr << " root ns (the namespace of the hw): " << hw_name << std::endl;
+      std::cerr << " controller ns (the namespace of the ctrl): " << ctrl_name << cnr_logger::RST()
                 << std::endl;
       return false;
     }
@@ -116,8 +167,8 @@ bool Controller<T>::init(T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& contr
     {
       std::cerr << cnr_logger::RED() << __PRETTY_FUNCTION__ << ":" << __LINE__ << ": " ;
       std::cerr << "The namespace are incorrect. " << std::endl;
-      std::cerr << " root ns (the namespace of the hw): " << root_nh.getNamespace() << std::endl;
-      std::cerr << " controller ns (the namespace of the ctrl): " << controller_nh.getNamespace() << cnr_logger::RST()
+      std::cerr << " root ns (the namespace of the hw): " << hw_name << std::endl;
+      std::cerr << " controller ns (the namespace of the ctrl): " << ctrl_name << cnr_logger::RST()
                 << std::endl;
       return false;
     }
@@ -126,14 +177,14 @@ bool Controller<T>::init(T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& contr
 
     l = __LINE__;
     m_logger.reset(new cnr_logger::TraceLogger());
-    if(!m_logger->init(m_hw_name + "-" + m_ctrl_name, controller_nh.getNamespace(), false, false))
+    if(!m_logger->init(m_hw_name + "-" + m_ctrl_name, ctrl_name, false, false))
     {
-      if(!m_logger->init(m_hw_name + "-" + m_ctrl_name, root_nh.getNamespace(), false, false))
+      if(!m_logger->init(m_hw_name + "-" + m_ctrl_name, hw_name, false, false))
       {
         std::cerr << cnr_logger::RED() << __PRETTY_FUNCTION__ << ":" << __LINE__ << ": " ;
         std::cerr << "The logger cannot be configured:" << std::endl;
-        std::cerr << " root ns (the namespace of the hw): " << root_nh.getNamespace() << std::endl;
-        std::cerr << " controller ns (the namespace of the ctrl): " << controller_nh.getNamespace() << cnr_logger::RST()
+        std::cerr << " root ns (the namespace of the hw): " << hw_name << std::endl;
+        std::cerr << " controller ns (the namespace of the ctrl): " << ctrl_name << cnr_logger::RST()
                   << std::endl;
         return false;
       }
@@ -185,40 +236,16 @@ bool Controller<T>::init(T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& contr
     realtime_utilities::DiagnosticsInterface::addTimeTracker("enterUpdate", m_sampling_period);
     realtime_utilities::DiagnosticsInterface::addTimeTracker("doUpdate", m_sampling_period);
     realtime_utilities::DiagnosticsInterface::addTimeTracker("exitUpdate", m_sampling_period);
-
-    l = __LINE__;
-    if(!enterInit())
-    {
-      CNR_RETURN_FALSE(m_logger);
-    }
-
-    l = __LINE__;
-    if(!doInit())
-    {
-      CNR_RETURN_FALSE(m_logger);
-    }
-
-    l = __LINE__;
-    if(!exitInit())
-    {
-      CNR_RETURN_FALSE(m_logger);
-    }
   }
   catch(std::exception& e)
+
   {
     std::cerr << cnr_logger::RED() << __PRETTY_FUNCTION__ << ":" << __LINE__ << ": " ;
     std::cerr << "Exception at line: "
               << std::to_string(l) << " error: " + std::string(e.what());
-    std::cerr << " root ns (the namespace of the hw): " << root_nh.getNamespace() << std::endl;
-    std::cerr << " controller ns (the namespace of the ctrl): " << controller_nh.getNamespace() << cnr_logger::RST()
+    std::cerr << " root ns (the namespace of the hw): " << hw_name << std::endl;
+    std::cerr << " controller ns (the namespace of the ctrl): " << ctrl_name << cnr_logger::RST()
               << std::endl;
-  }
-
-  bool ret = dump_state("INITIALIZED");
-  if(!ret)
-  {
-    CNR_ERROR(m_logger, "Failed in dumping the state");
-    CNR_RETURN_FALSE(m_logger);
   }
   CNR_RETURN_TRUE(m_logger);
 }

@@ -183,8 +183,9 @@ public:
   std::shared_ptr<ros::Subscriber> getSubscriber(const size_t& id);
   std::shared_ptr<ros::Publisher>  getPublisher(const size_t &id);
 
-protected:
+//protected:
 
+  virtual bool prepareInit(T* hw, const std::string& hw_name, const std::string& ctrl_name, ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh);
   virtual bool enterInit();
   virtual bool exitInit();
 
