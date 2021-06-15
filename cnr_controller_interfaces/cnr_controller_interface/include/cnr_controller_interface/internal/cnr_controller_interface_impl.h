@@ -108,12 +108,12 @@ bool Controller<T>::init(T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& contr
               << std::endl;
   }
 
-  bool ret = dump_state("INITIALIZED");
-  if(!ret)
-  {
-    CNR_ERROR(m_logger, "Failed in dumping the state");
-    CNR_RETURN_FALSE(m_logger);
-  }
+  //this->controller_state_ = dump_state("INITIALIZED");
+  //if(!ret)
+  //{
+  //  CNR_ERROR(m_logger, "Failed in dumping the state");
+  //  CNR_RETURN_FALSE(m_logger);
+  //}
   CNR_RETURN_TRUE(m_logger);
 }
 
@@ -229,7 +229,7 @@ bool Controller<T>::prepareInit(T* hw,
     CNR_DEBUG(m_logger, "Watchdog: " << m_watchdog);
 
     m_controller_nh.setCallbackQueue(&m_controller_nh_callback_queue);
-    m_status_history.clear();
+    //m_status_history.clear();
 
     realtime_utilities::DiagnosticsInterface::init( m_hw_name, "Ctrl", m_ctrl_name );
     realtime_utilities::DiagnosticsInterface::addTimeTracker("update", m_sampling_period);
@@ -258,7 +258,7 @@ void Controller<T>::starting(const ros::Time& time)
   {
     if(enterStarting() && doStarting(time) && exitStarting())
     {
-      dump_state("RUNNING");
+      //dump_state("RUNNING");
       CNR_RETURN_OK(m_logger, void(), "Starting Ok! Ready to go!");
     }
     else
@@ -266,11 +266,12 @@ void Controller<T>::starting(const ros::Time& time)
       CNR_ERROR(m_logger, "The starting of the controller failed. Abort Request to ControllerManager sent.");
       if(controller_interface::Controller<T>::abortRequest(time))
       {
-        dump_state("ABORTED");
+        //dump_state("ABORTED");
       }
       else
       {
-        dump_state("ERROR");
+        this->state_ = controller_interface::ControllerBase::ControllerState::ABORTED;
+        //dump_state("ERROR");
       }
     }
   }
@@ -314,11 +315,11 @@ void Controller<T>::update(const ros::Time& time, const ros::Duration& period)
       CNR_ERROR(m_logger, "Error in update, stop request called to stop the controller quietly.");
       if(controller_interface::Controller<T>::stopRequest(time))
       {
-        dump_state("STOPPED");
+        //dump_state("STOPPED");
       }
       else
       {
-        dump_state("ERROR");
+        //dump_state("ERROR");
       }
       CNR_RETURN_NOTOK_THROTTLE(m_logger, void(), 10.0);
     }
@@ -339,18 +340,18 @@ void Controller<T>::stopping(const ros::Time& time)
   {   
     if(enterStopping() && doStopping(time) && exitStopping())
     {
-      dump_state("STOPPED");
+      //dump_state("STOPPED");
       CNR_RETURN_OK(m_logger, void());
     }
     else
     {
       if(controller_interface::Controller<T>::abortRequest(time))
       {
-        dump_state("ABORTED");
+        //dump_state("ABORTED");
       }
       else
       {
-        dump_state("ERROR");
+        //dump_state("ERROR");
       }
       CNR_RETURN_NOTOK(m_logger, void());
     }
@@ -450,12 +451,14 @@ bool Controller<T>::enterUpdate()
   CNR_TRACE_START_THROTTLE_DEFAULT(m_logger);
   if(!callAvailable( ))
   {
-    dump_state("CALLBACK_TIMEOUT_ERROR");
+    //dump_state("CALLBACK_TIMEOUT_ERROR");
     CNR_RETURN_FALSE_THROTTLE(m_logger, 5.0, "Callback Timeout Error");
   }
 
-  std::string status = m_status_history.back();
-  if( status != "RUNNING" )
+
+  //std::string status = m_status_history.back();
+  //if( status != "RUNNING" )
+  if(this->state_ != controller_interface::ControllerBase::ControllerState::RUNNING)
   {
     CNR_RETURN_FALSE_THROTTLE(m_logger, 5.0, "The status is not 'RUNNING' as expected. Abort.");
   }
@@ -547,6 +550,7 @@ bool Controller<T>::exitAborting()
   CNR_RETURN_BOOL(m_logger, ret);
 }
 
+/*
 template<class T>
 bool Controller<T>::dump_state(const std::string& status)
 {
@@ -567,7 +571,7 @@ bool Controller<T>::dump_state(const std::string& status)
   }
 
   return true;
-}/*
+}
 
 template<class T>
 bool Controller<T>::dump_state()
@@ -618,9 +622,9 @@ bool Controller<T>::shutdown(const std::string& state_final)
   m_pub_last.clear();
   m_pub_time_track.clear();
 
-  ret = dump_state(state_final != "" ? state_final : "STOPPED" );
+  //dump_state(state_final != "" ? state_final : "STOPPED" );
 
-  CNR_RETURN_BOOL(m_logger, ret);
+  CNR_RETURN_TRUE(m_logger);
 }
 
 

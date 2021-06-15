@@ -195,10 +195,10 @@ bool ControllerManagerInterfaceSrv::switchController(const std::vector<std::stri
     // check the param, and exit only if the state is running!
     for (const std::string ctrl_name : switch_ctrl_srv.request.start_controllers)
     {
-      if (!cnr::control::ctrl_check_state(getNamespace(), ctrl_name, "RUNNING", error_, watchdog))
-      {
-        CNR_RETURN_FALSE(logger_, "HW: " + getHwName() + ": " + error_);
-      }
+      // if (!cnr::control::ctrl_check_state(getNamespace(), ctrl_name, "RUNNING", error_, watchdog))
+      // {
+      //   CNR_RETURN_FALSE(logger_, "HW: " + getHwName() + ": " + error_);
+      // }
 //      if ((status != "INITIALIZED") && (status != ))
 //      {
 //        error_ += "Failed while checking '"+ctrl_name +"' state. The state is "+status+" while RUNNING is expected";
@@ -208,10 +208,10 @@ bool ControllerManagerInterfaceSrv::switchController(const std::vector<std::stri
     }
     for (const std::string ctrl_name : switch_ctrl_srv.request.stop_controllers)
     {
-      if (!cnr::control::ctrl_check_state(getNamespace(), ctrl_name, "STOPPED", error_, watchdog))
-      {
-        CNR_RETURN_FALSE(logger_, "HW: " + getHwName() + ": " + error_);
-      }
+      // if (!cnr::control::ctrl_check_state(getNamespace(), ctrl_name, "STOPPED", error_, watchdog))
+      // {
+      //   CNR_RETURN_FALSE(logger_, "HW: " + getHwName() + ": " + error_);
+      // }
     }
   }
   CNR_RETURN_TRUE(logger_, "HW: " + getHwName());
@@ -238,11 +238,11 @@ bool ControllerManagerInterfaceSrv::unloadController(const std::string& ctrl_to_
 
   std::string st = (ret  ? "UNLOADED" : "ERROR_UNLOAD");
   std::vector<std::string> status_history;
-  ros::param::get(cnr::control::ctrl_status_param_name(getHwName(), ctrl_to_unload_name),  status_history);
+  //ros::param::get(cnr::control::ctrl_status_param_name(getHwName(), ctrl_to_unload_name),  status_history);
 
   status_history.push_back(st);
-  ros::param::set(cnr::control::ctrl_status_param_name(getHwName(), ctrl_to_unload_name),  status_history);
-  ros::param::set(cnr::control::ctrl_last_status_param_name(getHwName(), ctrl_to_unload_name), st) ;
+  //ros::param::set(cnr::control::ctrl_status_param_name(getHwName(), ctrl_to_unload_name),  status_history);
+  //ros::param::set(cnr::control::ctrl_last_status_param_name(getHwName(), ctrl_to_unload_name), st) ;
 
   CNR_RETURN_BOOL(logger_, ret, "HW: " + getHwName() + ", CTRL: " + ctrl_to_unload_name);
 }

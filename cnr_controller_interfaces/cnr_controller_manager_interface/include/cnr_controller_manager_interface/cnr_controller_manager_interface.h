@@ -164,6 +164,23 @@ public:
   {
     return cm_ ? cm_->getControllerByName(name) : nullptr;
   }
+
+  /** \brief Get the controller names. It does not call the service listControllers, 
+   * but it retrives the keys of the internal map
+   * 
+   * \returns The vector of names stroed in the internal map
+   */
+  std::vector<std::string> getControllerNames() const;
+
+  static std::string controllerStateToString(const controller_interface::ControllerBase::ControllerState& st)
+  {
+    return  ( st == controller_interface::ControllerBase::ControllerState::CONSTRUCTED ? "CONSTRUCTED"
+            : st == controller_interface::ControllerBase::ControllerState::INITIALIZED ? "INITIALIZED"
+            : st == controller_interface::ControllerBase::ControllerState::INITIALIZED ? "RUNNING"
+            : st == controller_interface::ControllerBase::ControllerState::STOPPED     ? "STOPPED"
+            : st == controller_interface::ControllerBase::ControllerState::WAITING     ? "WAITING"
+            : "ABORTED");
+  }
   /*\}*/
 
 

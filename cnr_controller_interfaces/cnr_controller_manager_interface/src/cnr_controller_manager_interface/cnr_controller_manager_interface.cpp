@@ -180,38 +180,59 @@ bool ControllerManagerInterface::switchController(const std::vector<std::string>
     CNR_RETURN_TRUE(logger_, "HW: " + getHwName());
   }
 
+  CNR_DEBUG(logger_, "HW: " + getHwName() + " Call the switchController of the ControllerManager");
   if (!cm_->switchController(start_controllers, stop_controllers, strictness) )
   {
     error_ = "The ControllerManagerInterface failed in switchin the controller. Abort.";
     CNR_RETURN_FALSE(logger_, "HW: " + getHwName());
   }
+  CNR_DEBUG(logger_, "HW: " + getHwName() + " Call the switchController of the ControllerManager DONE!!!!!!!");
   // ===========================================
 
   // =====================================================
   // check if properly switched
-  if (watchdog.toSec() > 0)
+  ros::Time st = ros::Time::now();
+  while(ros::ok())
   {
-    // check the param, and exit only if the state is running!
+    error_ = "";
     for (const std::string ctrl_name : start_controllers)
     {
-      realtime_utilities::DiagnosticsInterface* cnr_ctrl =
-        dynamic_cast<realtime_utilities::DiagnosticsInterface*>(controllers_.at(ctrl_name));
-      if (cnr_ctrl && 
-            !cnr::control::ctrl_check_state(getNamespace(), ctrl_name, "RUNNING", error_, watchdog))
+      if(!cm_->getControllerByName(ctrl_name))
       {
-        CNR_RETURN_FALSE(logger_, "HW: " + getHwName()+": " + error_);
+        error_ += "The controller " + getHwName()+"/" + ctrl_name + " does not still exist...";
+      }
+      
+      if(cm_->getControllerByName(ctrl_name)->state_ != controller_interface::ControllerBase::ControllerState::RUNNING)
+      {
+        error_ += "The controller " + getHwName()+"/" + ctrl_name + " is in '"
+               + ControllerManagerInterface::controllerStateToString(cm_->getControllerByName(ctrl_name)->state_)
+               +"' while 'RUNNING' was expected";
       }
     }
     for (const std::string ctrl_name : stop_controllers)
     {
-      realtime_utilities::DiagnosticsInterface* cnr_ctrl =
-        dynamic_cast<realtime_utilities::DiagnosticsInterface*>(controllers_.at(ctrl_name));
-
-      if (cnr_ctrl && 
-            !cnr::control::ctrl_check_state(getNamespace(), ctrl_name, "STOPPED", error_, watchdog))
+      if(!cm_->getControllerByName(ctrl_name))
       {
-        CNR_RETURN_FALSE(logger_, "HW: " + getHwName()+ ": " + error_);
+        error_ += "The controller " + getHwName()+"/" + ctrl_name + " does not still exist...";
       }
+      if(cm_->getControllerByName(ctrl_name)->state_ != controller_interface::ControllerBase::ControllerState::STOPPED)
+      {
+        error_ += "The controller " + getHwName()+"/" + ctrl_name + " is in '"
+               + ControllerManagerInterface::controllerStateToString(cm_->getControllerByName(ctrl_name)->state_)
+               +"' while 'STOPPED' was expected";
+      }
+    }
+
+    // return false if any error present, and the watchdog expires
+    if((error_.length() >0) && ((ros::Time::now() - st).toSec() > watchdog.toSec()) )
+    {
+      CNR_ERROR(logger_, "HW: " + getHwName()+": " + error_);
+      CNR_RETURN_FALSE(logger_);
+    }
+    else
+    {
+      CNR_INFO(logger_, "HW: " + getHwName() + " switchController SUCCESS!");    
+      break;
     }
   }
   // ======================================================
@@ -231,6 +252,15 @@ bool ControllerManagerInterface::listControllers(std::vector<controller_manager_
     ret = ControllerManagerInterfaceBase::listControllers(running, stopped, watchdog);
   }
   CNR_RETURN_BOOL(logger_, ret, "HW: "+ getHwName());
+}
+
+std::vector<std::string>  ControllerManagerInterface::getControllerNames() const
+{
+  std::vector<std::string> ret;
+  for(const auto & ctrl : controllers_)
+    ret.push_back(ctrl.first);
+
+  return ret;
 }
   
 
@@ -254,11 +284,11 @@ bool ControllerManagerInterface::unloadController(const std::string& ctrl_to_unl
 
   std::string st = (ret  ? "UNLOADED" : "ERROR_UNLOAD");
   std::vector<std::string> status_history;
-  ros::param::get(cnr::control::ctrl_status_param_name(getHwName(), ctrl_to_unload_name),  status_history);
+  //ros::param::get(cnr::control::ctrl_status_param_name(getHwName(), ctrl_to_unload_name),  status_history);
 
   status_history.push_back(st);
-  ros::param::set(cnr::control::ctrl_status_param_name(getHwName(), ctrl_to_unload_name),  status_history);
-  ros::param::set(cnr::control::ctrl_last_status_param_name(getHwName(), ctrl_to_unload_name), st) ;
+  //ros::param::set(cnr::control::ctrl_status_param_name(getHwName(), ctrl_to_unload_name),  status_history);
+  //ros::param::set(cnr::control::ctrl_last_status_param_name(getHwName(), ctrl_to_unload_name), st) ;
 
   if( ret )
   {

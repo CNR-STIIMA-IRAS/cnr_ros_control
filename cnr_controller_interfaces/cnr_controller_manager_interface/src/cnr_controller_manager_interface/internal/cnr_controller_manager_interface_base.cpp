@@ -105,31 +105,32 @@ bool ControllerManagerInterfaceBase::listControllers(std::vector< controller_man
   CNR_RETURN_TRUE_THROTTLE_DEFAULT(logger_);
 }
 
-bool ControllerManagerInterfaceBase::matchControllers(const std::vector<std::string>& ctrl_names, const ros::Duration& watchdog)
-{
-  CNR_TRACE_START(logger_, "HW: " + getHwName() );
-  std::vector<controller_manager_msgs::ControllerState> running;
-  std::vector<controller_manager_msgs::ControllerState> stopped;
+// bool ControllerManagerInterfaceBase::matchControllers(const std::vector<std::string>& ctrl_names,
+//                                                       const ros::Duration& watchdog)
+// {
+//   CNR_TRACE_START(logger_, "HW: " + getHwName() );
+//   std::vector<controller_manager_msgs::ControllerState> running;
+//   std::vector<controller_manager_msgs::ControllerState> stopped;
 
-  if (!listControllers(running, stopped, watchdog))
-  {
-    error_ = "Failed in getting the controllers info: " + error_;
-    CNR_RETURN_FALSE(logger_, "HW: " + getHwName());
-  }
-  std::vector<std::string> running_names = cnr::control::ctrl_get_names(running);
-  std::vector<std::string> stopped_names = cnr::control::ctrl_get_names(stopped);
-  running_names.insert(running_names.end(), stopped_names.begin(), stopped_names.end());
+//   if (!listControllers(running, stopped, watchdog))
+//   {
+//     error_ = "Failed in getting the controllers info: " + error_;
+//     CNR_RETURN_FALSE(logger_, "HW: " + getHwName());
+//   }
+//   std::vector<std::string> running_names = cnr::control::ctrl_get_names(running);
+//   std::vector<std::string> stopped_names = cnr::control::ctrl_get_names(stopped);
+//   running_names.insert(running_names.end(), stopped_names.begin(), stopped_names.end());
 
-  if (ctrl_names.size() != running_names.size())
-  {
-    CNR_RETURN_FALSE(logger_, "HW: " + getHwName());
-  }
-  for (auto const l : ctrl_names)
-  {
-    if (std::find(running_names.begin(), running_names.end(), l) == running_names.end()) return false;
-  }
-  CNR_RETURN_TRUE(logger_, "HW: " + getHwName());
-}
+//   if (ctrl_names.size() != running_names.size())
+//   {
+//     CNR_RETURN_FALSE(logger_, "HW: " + getHwName());
+//   }
+//   for (auto const l : ctrl_names)
+//   {
+//     if (std::find(running_names.begin(), running_names.end(), l) == running_names.end()) return false;
+//   }
+//   CNR_RETURN_TRUE(logger_, "HW: " + getHwName());
+// }
 
 bool ControllerManagerInterfaceBase::loadControllers(const std::vector<std::string>& ctrl_to_load_names, const ros::Duration& watchdog)
 {
@@ -205,12 +206,7 @@ bool ControllerManagerInterfaceBase::switchControllers(const int strictness,
     std::vector<std::string> ctrl_to_unload_names;
 
     std::vector<std::string> ctrl_next_names = next_ctrl;
-    /*
-    void extract( const std::vector< T >& va
-              , const std::vector< T >& vb
-              , std::vector< T >* a_not_in_b = nullptr
-              , std::vector< T >* b_not_in_a = nullptr
-              , std::vector< T >* a_in_b     = nullptr)*/
+
     extract(ctrl_next_names, ctrl_running_names, &to_load_and_start_names, &to_stop_unload_names, &ctrl_to_stop_and_restart_names);
     //--
     CNR_DEBUG(logger_, "HW: " + getHwName() + to_string(ctrl_next_names,                ", Next Controllers:    "));
@@ -258,14 +254,6 @@ bool ControllerManagerInterfaceBase::switchControllers(const int strictness,
       if (!unloadControllers(ctrl_to_unload_names, watchdog))
       {
         CNR_RETURN_FALSE(logger_, "Unload the controllers '" + getHwName() + "'failed. Error: " + error());
-      }
-    }
-
-    if(ctrl_next_names.size()>0)
-    {
-      if (!matchControllers(ctrl_next_names, watchdog))
-      {
-        CNR_RETURN_FALSE(logger_, "Matching the controllers '" + getHwName() + "'failed. Error: " + error());
       }
     }
   }

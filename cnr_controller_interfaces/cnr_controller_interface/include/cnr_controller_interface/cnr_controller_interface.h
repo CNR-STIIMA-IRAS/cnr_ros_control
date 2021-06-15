@@ -207,9 +207,6 @@ public:
   virtual bool enterAborting();
   virtual bool exitAborting();
 
-  bool dump_state(const std::string& status);
-  //bool dump_state();
-
 protected:
   T*            m_hw;
   ros::Duration m_dt;
@@ -218,7 +215,7 @@ protected:
   std::string                 m_ctrl_name;
   double                      m_sampling_period;
   double                      m_watchdog;
-  std::vector<std::string>    m_status_history;
+  //std::vector<std::string>    m_status_history;
 
 private:
   ros::NodeHandle     m_root_nh;

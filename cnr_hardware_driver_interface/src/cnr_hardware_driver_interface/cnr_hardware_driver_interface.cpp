@@ -542,6 +542,36 @@ void RobotHwDriverInterface::run()
       CNR_RETURN_NOTOK(m_logger, void());
     }
 
+    // if (m_cmi)
+    // {
+    //   std::vector<std::string> running_controllers = m_cmi->getControllerNames();
+    //   bool ok = true;
+    //   for(const auto & ctrl_name : running_controllers)
+    //   {
+    //     controller_interface::ControllerBase* ctrl = m_cmi->getControllerByName(ctrl_name);
+    //     if(ctrl)
+    //     {
+    //       bool _aborted = (ctrl->state_ == controller_interface::ControllerBase::ControllerState::ABORTED);
+    //       if(_aborted)
+    //       {
+    //         CNR_ERROR(m_logger, "The controller '"<< ctrl_name <<"' is not in RUNNING state! The state is "
+    //           << ( ctrl->state_ == controller_interface::ControllerBase::ControllerState::CONSTRUCTED ? "CONSTRUCTED"
+    //              : ctrl->state_ == controller_interface::ControllerBase::ControllerState::INITIALIZED ? "INITIALIZED"
+    //              : ctrl->state_ == controller_interface::ControllerBase::ControllerState::INITIALIZED ? "RUNNING"
+    //              : ctrl->state_ == controller_interface::ControllerBase::ControllerState::STOPPED     ? "STOPPED"
+    //              : ctrl->state_ == controller_interface::ControllerBase::ControllerState::WAITING     ? "WAITING"
+    //              : "ABORTED") );
+    //       }
+    //       ok &= !_aborted;
+    //     }
+    //   }
+    //   if(!ok) 
+    //   {
+    //     dumpState(cnr_hardware_interface::ERROR);
+    //     CNR_RETURN_NOTOK(m_logger, void())
+    //   };
+    // }
+
     if (m_cnr_hw && m_cnr_hw->getState() == cnr_hardware_interface::ERROR)
     {
       CNR_ERROR_THROTTLE(m_logger, 1.0, "RobotHw is in error");
@@ -642,9 +672,8 @@ bool RobotHwDriverInterface::loadAndStartControllers(const std::vector<std::stri
                                                       const size_t& strictness, const ros::Duration& watchdog)
 {
   CNR_TRACE_START(m_logger);
-
   try
-  { 
+  {
     if(!m_cmi->switchControllers(strictness, next_controllers, watchdog))
     {
       CNR_ERROR(m_logger, m_hw_name << " Error in loading and starting the controllers:" 

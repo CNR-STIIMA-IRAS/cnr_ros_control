@@ -238,14 +238,14 @@ public:
                                std::vector<controller_manager_msgs::ControllerState>&  stopped,
                                const ros::Duration&  watchdog=ros::Duration(0.0));
 
-  /**
-   * @brief matchControllers
-   * @param names
-   * @param watchdog
-   * @return
-   */
-  virtual bool matchControllers(const std::vector<std::string>& names,
-                                const ros::Duration& watchdog = ros::Duration(0.0)) final;
+  // /**
+  //  * @brief matchControllers
+  //  * @param names
+  //  * @param watchdog
+  //  * @return
+  //  */
+  // virtual bool matchControllers(const std::vector<std::string>& names,
+  //                               const ros::Duration& watchdog = ros::Duration(0.0)) final;
   // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 };
 
