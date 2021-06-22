@@ -26,7 +26,7 @@ jobs:
       CCACHE_DIR: /github/home/.ccache # Directory for ccache (and how we enable ccache in industrial_ci)
       #CODE_COVERAGE: codecov.io
       UPSTREAM_WORKSPACE: '.upstream.repos'
-      PARALLEL_BUILDS: 1
+      PARALLEL_BUILDS: 0
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -38,8 +38,6 @@ jobs:
       # Run industrial_ci
       - uses: 'ros-industrial/industrial_ci@master'
         env: ${{ matrix.env }}
-        with:
-          verbose: true
       - uses: actions/checkout@master
       - uses: codecov/codecov-action@v1
         with:
