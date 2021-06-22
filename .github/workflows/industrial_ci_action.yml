@@ -25,7 +25,7 @@ jobs:
     env:
       CCACHE_DIR: /github/home/.ccache # Directory for ccache (and how we enable ccache in industrial_ci)
       #CODE_COVERAGE: codecov.io
-      UPSTREAM_WORKSPACE: '.upstream.repos'
+      UPSTREAM_WORKSPACE: 'dependencies.rosinstall'
       PARALLEL_BUILDS: 0
     runs-on: ubuntu-latest
     steps:
