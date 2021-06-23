@@ -292,7 +292,7 @@ bool RobotHwDriverInterface::init(const std::string& hw_name, const std::map<std
   catch (std::exception& e)
   {
     dumpState(cnr_hardware_interface::ERROR);
-    CNR_ERROR(m_logger, m_hw_name + ": ExitOnInit failed. Unhandled Exception");
+    CNR_ERROR(m_logger, m_hw_name << ": ExitOnInit failed. Exception:" << e.what() );
     CNR_RETURN_FALSE(m_logger);
   }
   CNR_RETURN_TRUE(m_logger);
