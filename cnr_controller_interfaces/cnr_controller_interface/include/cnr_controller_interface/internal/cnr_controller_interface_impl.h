@@ -589,7 +589,6 @@ bool Controller<T>::dump_state()
 template<class T>
 bool Controller<T>::shutdown(const std::string& state_final)
 {
-  bool ret = false;
   CNR_TRACE_START(m_logger);
   for(auto & t : m_sub)
   {
@@ -621,8 +620,6 @@ bool Controller<T>::shutdown(const std::string& state_final)
   m_pub_start.clear();
   m_pub_last.clear();
   m_pub_time_track.clear();
-
-  //dump_state(state_final != "" ? state_final : "STOPPED" );
 
   CNR_RETURN_TRUE(m_logger);
 }

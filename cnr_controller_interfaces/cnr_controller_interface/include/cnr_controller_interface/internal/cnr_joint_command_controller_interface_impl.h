@@ -64,38 +64,38 @@ inline JointCommandController<H,T>::~JointCommandController()
 template<class H,class T>
 inline bool JointCommandController<H,T>::doInit()
 {
-  return true;
+  return cnr::control::JointController<H,T>::doInit();
 }
 
 template<class H,class T>
-inline bool JointCommandController<H,T>::doStarting(const ros::Time& /*time*/)
+inline bool JointCommandController<H,T>::doStarting(const ros::Time& time)
 {
-  return true;
+  return cnr::control::JointController<H,T>::doStarting(time);
 }
 
 template<class H,class T>
-inline bool JointCommandController<H,T>::doUpdate(const ros::Time& /*time*/, const ros::Duration& /*period*/)
+inline bool JointCommandController<H,T>::doUpdate(const ros::Time& time, const ros::Duration& period)
 {
-  return true;
+  return cnr::control::JointController<H,T>::doUpdate(time,period);
 }
 
 template<class H,class T>
-inline bool JointCommandController<H,T>::doStopping(const ros::Time& /*time*/)
+inline bool JointCommandController<H,T>::doStopping(const ros::Time& time)
 {
   this->stopUpdateTransformationsThread();
-  return true;
+  return cnr::control::JointController<H,T>::doStopping(time);
 }
 
 template<class H,class T>
-inline bool JointCommandController<H,T>::doWaiting(const ros::Time& /*time*/)
+inline bool JointCommandController<H,T>::doWaiting(const ros::Time& time)
 {
-  return true;
+  return cnr::control::JointController<H,T>::doWaiting(time);
 }
 
 template<class H,class T>
-inline bool JointCommandController<H,T>::doAborting(const ros::Time& /*time*/)
+inline bool JointCommandController<H,T>::doAborting(const ros::Time& time)
 {
-  return true;
+  return cnr::control::JointController<H,T>::doAborting(time);
 }
 
 template<class H,class T>

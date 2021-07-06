@@ -81,23 +81,23 @@ public:
   {
     return true;
   }
-  virtual bool doStarting(const ros::Time& /*time*/)
+  virtual bool doStarting(const ros::Time& time)
   {
     return true;
   }
-  virtual bool doUpdate(const ros::Time& /*time*/, const ros::Duration& /*period*/)
+  virtual bool doUpdate(const ros::Time& time, const ros::Duration& period)
   {
     return true;
   }
-  virtual bool doStopping(const ros::Time& /*time*/)
+  virtual bool doStopping(const ros::Time& time)
   {
     return true;
   }
-  virtual bool doWaiting(const ros::Time& /*time*/)
+  virtual bool doWaiting(const ros::Time& time)
   {
     return true;
   }
-  virtual bool doAborting(const ros::Time& /*time*/)
+  virtual bool doAborting(const ros::Time& time)
   {
     return true;
   }
@@ -185,7 +185,8 @@ public:
 
 //protected:
 
-  virtual bool prepareInit(T* hw, const std::string& hw_name, const std::string& ctrl_name, ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh);
+  virtual bool prepareInit(T* hw, const std::string& hw_name, const std::string& ctrl_name,
+                            ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh);
   virtual bool enterInit();
   virtual bool exitInit();
 
@@ -215,7 +216,6 @@ protected:
   std::string                 m_ctrl_name;
   double                      m_sampling_period;
   double                      m_watchdog;
-  //std::vector<std::string>    m_status_history;
 
 private:
   ros::NodeHandle     m_root_nh;
