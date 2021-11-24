@@ -205,6 +205,9 @@ bool FakeRobotHW::doInit()
   registerInterface(&m_ft_jh);
 
   m_p_jh_active = m_v_jh_active = m_e_jh_active = false;
+
+  doRead(ros::Time::now(),ros::Duration(m_sampling_period));
+
   CNR_RETURN_TRUE(m_logger);
 }
 
