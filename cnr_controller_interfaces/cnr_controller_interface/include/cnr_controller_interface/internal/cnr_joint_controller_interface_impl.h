@@ -102,6 +102,7 @@ template<class H,class T>
 bool JointController<H,T>::enterInit()
 {
   size_t l = __LINE__;
+  std::string what;
   try
   {
     m_cfrmt = Eigen::IOFormat(Eigen::StreamPrecision, 0, ", ", "\n", "[", "]");
@@ -111,7 +112,7 @@ bool JointController<H,T>::enterInit()
       CNR_RETURN_FALSE(this->m_logger);
     }
 
-    if(!this->getControllerNh().getParam("kin_update_period", m_fkin_update_period))
+    if(!rosparam_utilities::get(this->getControllerNamespace()+"/kin_update_period", m_fkin_update_period, what))
     {
       CNR_WARN(this->m_logger, "The parameter '" + this->getControllerNamespace() + "/kin_update_period' is not set. "
                                 "The chain status will not be updated.");
@@ -141,9 +142,9 @@ bool JointController<H,T>::enterInit()
     // CHAIN
     //=======================================
     std::string base_link;
-    if(!this->getControllerNh().getParam("base_link", base_link ) )
+    if(!rosparam_utilities::get(this->getControllerNamespace()+"/base_link", base_link, what ) )
     {
-      if(!this->getRootNh().getParam("base_link", base_link ) )
+      if(!rosparam_utilities::get(this->getRootNamespace()+"/base_link", base_link, what ) )
       {
         CNR_RETURN_FALSE(this->m_logger, "'Neither '" + this->getControllerNamespace() + "/base_link' " +
                     "nor '"      + this->getRootNamespace() + "/base_link' are not in rosparam server.");
@@ -151,9 +152,9 @@ bool JointController<H,T>::enterInit()
     }
 
     std::string tool_link;
-    if(!this->getControllerNh().getParam("tool_link", tool_link ) )
+    if(!rosparam_utilities::get(this->getControllerNamespace()+"/tool_link", tool_link, what ) )
     {
-      if(!this->getRootNh().getParam("tool_link", tool_link ) )
+      if(!rosparam_utilities::get(this->getRootNamespace()+"/tool_link", tool_link, what ) )
       {
         CNR_RETURN_FALSE(this->m_logger, "'Neither '" + this->getControllerNamespace() + "/tool_link' " +
                   "nor '"      + this->getRootNamespace() + "/tool_link' are not in rosparam server.");
@@ -161,9 +162,9 @@ bool JointController<H,T>::enterInit()
     }
 
     std::string robot_description_param;
-    if(!this->getControllerNh().getParam("robot_description_param", robot_description_param ) )
+    if(!rosparam_utilities::get(this->getControllerNamespace()+"/robot_description_param", robot_description_param, what) )
     {
-      if(!this->getRootNh().getParam("robot_description_param", robot_description_param ) )
+      if(!rosparam_utilities::get(this->getRootNamespace()+"/robot_description_param", robot_description_param, what) )
       {
         CNR_RETURN_FALSE(this->m_logger, "'Neither '" + this->getControllerNamespace()
                           + "/robot_description_param' " + "nor '" + this->getRootNamespace()
@@ -172,7 +173,7 @@ bool JointController<H,T>::enterInit()
     }
 
     std::string urdf_string;
-    if(!ros::param::get(robot_description_param, urdf_string))
+    if(!rosparam_utilities::get(robot_description_param, urdf_string, what))
     {
       CNR_ERROR(this->m_logger, "\nWeird error in getting the parameter '" << robot_description_param
                   << "'. It was already checked the existence.\n");
@@ -221,9 +222,9 @@ bool JointController<H,T>::enterInit()
     // KINEMATICS LIMITS
     //=======================================
     std::string robot_description_planning_param;
-    if(!this->getControllerNh().getParam("robot_description_planning_param", robot_description_planning_param ) )
+    if(!rosparam_utilities::get(this->getControllerNamespace()+"/robot_description_planning_param", robot_description_planning_param, what) )
     {
-      if(!this->getRootNh().getParam("robot_description_planning_param", robot_description_planning_param ) )
+      if(!rosparam_utilities::get(this->getRootNamespace()+"/robot_description_planning_param", robot_description_planning_param, what) )
       {
         CNR_ERROR(this->m_logger, "'Neither '" + this->getControllerNamespace()
                   + "/robot_description_planning_param' " + "nor '" + this->getRootNamespace()
@@ -231,7 +232,7 @@ bool JointController<H,T>::enterInit()
         CNR_RETURN_FALSE(this->m_logger);
       }
     }
-    if(!ros::param::has(robot_description_planning_param))
+    if(!rosparam_utilities::has(robot_description_planning_param, what))
     {
       CNR_ERROR(this->m_logger, "The parameter '" << robot_description_planning_param <<
                 " does not exist(check the value of parameter '" << robot_description_planning_param <<"'");

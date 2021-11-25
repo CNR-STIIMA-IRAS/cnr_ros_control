@@ -47,14 +47,14 @@ namespace cnr_hardware_interface
 
 void setParam(TopicRobotHW* hw, const std::string& ns)
 {
-  hw->m_robothw_nh.setParam("status/" + ns + "/feedback/name", hw->resourceNames());
-  hw->m_robothw_nh.setParam("status/" + ns + "/feedback/position", hw->m_pos);
-  hw->m_robothw_nh.setParam("status/" + ns + "/feedback/velocity", hw->m_vel);
-  hw->m_robothw_nh.setParam("status/" + ns + "/feedback/effort", hw->m_eff);
-  hw->m_robothw_nh.setParam("status/" + ns + "/command/name", hw->resourceNames());
-  hw->m_robothw_nh.setParam("status/" + ns + "/command/position", hw->m_cmd_pos);
-  hw->m_robothw_nh.setParam("status/" + ns + "/command/velocity", hw->m_cmd_vel);
-  hw->m_robothw_nh.setParam("status/" + ns + "/command/effort", hw->m_cmd_eff);
+  ros::param::set(hw->m_robothw_nh.getNamespace() +"/status/" + ns + "/feedback/name", hw->resourceNames());
+  ros::param::set(hw->m_robothw_nh.getNamespace() +"/status/" + ns + "/feedback/position", hw->m_pos);
+  ros::param::set(hw->m_robothw_nh.getNamespace() +"/status/" + ns + "/feedback/velocity", hw->m_vel);
+  ros::param::set(hw->m_robothw_nh.getNamespace() +"/status/" + ns + "/feedback/effort", hw->m_eff);
+  ros::param::set(hw->m_robothw_nh.getNamespace() +"/status/" + ns + "/command/name", hw->resourceNames());
+  ros::param::set(hw->m_robothw_nh.getNamespace() +"/status/" + ns + "/command/position", hw->m_cmd_pos);
+  ros::param::set(hw->m_robothw_nh.getNamespace() +"/status/" + ns + "/command/velocity", hw->m_cmd_vel);
+  ros::param::set(hw->m_robothw_nh.getNamespace() +"/status/" + ns + "/command/effort", hw->m_cmd_eff);
 }
 
 TopicRobotHW::TopicRobotHW()
@@ -77,7 +77,7 @@ bool TopicRobotHW::doInit()
 
   CNR_TRACE_START(m_logger);
   std::string read_js_topic;
-  if (!m_robothw_nh.getParam("feedback_joint_state_topic", read_js_topic))
+  if (!ros::param::get(m_robothw_nh.getNamespace()+"/feedback_joint_state_topic", read_js_topic))
   {
     addDiagnosticsMessage("ERROR", "feedback_joint_state_topic not defined", {{"Transition", "switching"}}, &report);
     CNR_ERROR(m_logger, report.str() );
@@ -86,7 +86,7 @@ bool TopicRobotHW::doInit()
   }
 
   std::string write_js_topic;
-  if (!m_robothw_nh.getParam("command_joint_state_topic", write_js_topic))
+  if (!ros::param::get(m_robothw_nh.getNamespace()+"/command_joint_state_topic", write_js_topic))
   {
     addDiagnosticsMessage("ERROR", "command_joint_state_topic not defined", {{"Transition", "switching"}}, &report);
     CNR_ERROR(m_logger, report.str() );
@@ -95,7 +95,7 @@ bool TopicRobotHW::doInit()
   }
 
   int tmp;
-  if (!m_robothw_nh.getParam("maximum_missing_cycles", tmp))
+  if (!ros::param::get(m_robothw_nh.getNamespace()+"/maximum_missing_cycles", tmp))
   {
     addDiagnosticsMessage("WARN", "maximum_missing_cycles not defined, set equal to 50", {{"Transition", "switching"}}, &report);
     CNR_WARN(m_logger, report.str() );
@@ -122,7 +122,7 @@ bool TopicRobotHW::doInit()
   m_js_pub = m_robothw_nh.advertise<sensor_msgs::JointState>(write_js_topic, 1);
 
   double timeout = 10;
-  if (!m_robothw_nh.getParam("feedback_joint_state_timeout", timeout))
+  if (!ros::param::get(m_robothw_nh.getNamespace()+"/feedback_joint_state_timeout", timeout))
   {
     addDiagnosticsMessage("WARN", "feedback_joint_state_timeout not defined, set equal to 10", {{"Transition", "switching"}}, &report);
     CNR_WARN(m_logger, report.str() );
@@ -239,7 +239,7 @@ bool TopicRobotHW::doRead(const ros::Time& time, const ros::Duration& /*period*/
   }
   else if (m_missing_messages > m_max_missing_messages)
   {
-    if (getState() == cnr_hardware_interface::RUNNING)
+    if (getStatus() == cnr_hardware_interface::RUNNING)
     {
       addDiagnosticsMessage("ERROR", "maximum_missing_cycles " + std::to_string(m_missing_messages) + "s ", {{"read", "missing messages"}}, &report);
       CNR_ERROR(m_logger, report.str() );

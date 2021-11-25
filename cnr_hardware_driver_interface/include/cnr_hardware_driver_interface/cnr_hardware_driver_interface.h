@@ -56,13 +56,11 @@
 namespace cnr_hardware_driver_interface
 {
 
-typedef std::map<std::string, std::string> M_string;
-
 typedef std::shared_ptr< controller_manager::ControllerManager > ControllerManagerPtr;
+typedef std::shared_ptr< pluginlib::ClassLoader< hardware_interface::RobotHW > > RobotLoaderPtr;
 
 typedef std::shared_ptr< hardware_interface::RobotHW > RobotHWPtr;
 typedef cnr_hardware_interface::RobotHW* CnrRobotHWPtr;
-typedef std::shared_ptr< pluginlib::ClassLoader< hardware_interface::RobotHW > > RobotLoaderPtr;
 
 typedef std::shared_ptr< hardware_interface::RobotHW const> RobotHWConstPtr;
 typedef cnr_hardware_interface::RobotHW* const CnrRobotHWConstPtr;
@@ -118,7 +116,7 @@ public:
    */
   const cnr_hardware_interface::StatusHw& retriveState()
   {
-    m_state = m_cnr_hw ? m_cnr_hw->getState() : m_state; 
+    m_state = m_cnr_hw ? m_cnr_hw->getStatus() : m_state; 
     return m_state;
   }
   
@@ -134,19 +132,6 @@ public:
     return m_cmi;
   }
 
-  static std::string hw_last_status_param_name(const std::string& hw_name)
-  {
-    return "/" + hw_name + "/status/last_status";
-  }
-  static std::string hw_status_param_name(const std::string& hw_name)
-  {
-    return "/" + hw_name + "/status/status";
-  }
- 
-  bool stopUnloadAllControllers(const ros::Duration& watchdog);
-
-  bool loadAndStartControllers(const std::vector<std::string>& next_controllers,
-                                const size_t& strictness, const ros::Duration& watchdog);
 protected:
 
   bool dumpState(const cnr_hardware_interface::StatusHw& status);
@@ -180,67 +165,6 @@ protected:
 
 typedef RobotHwDriverInterface::Ptr RobotHwDriverInterfacePtr;
 typedef RobotHwDriverInterface::ConstPtr RobotHwDriverInterfaceConstPtr;
-
-inline
-bool hw_get_state(const std::string& hw_name, cnr_hardware_interface::StatusHw& status, 
-                    const ros::Duration& watchdog, std::string& error)
-{
-  std::string state;
-  ros::Time st = ros::Time::now();
-  error += " GET_STATE: param: " + RobotHwDriverInterface::hw_last_status_param_name(hw_name);
-  bool ok = false;
-  do
-  {
-    if (ros::param::get(RobotHwDriverInterface::hw_last_status_param_name(hw_name), state))
-    {
-      for (const cnr_hardware_interface::StatusHw& it : cnr_hardware_interface::StatusHwIterator())
-      {
-        if (state == to_string(it))
-        {
-          status = it;
-          ok = true;
-          break;
-        }
-      }
-    }
-
-    if ((watchdog.toSec() > 0) && (ros::Time::now() - st > watchdog))
-    {
-      error += " Timeout";
-      break;
-    }
-  }
-  while (ros::ok() && !ok);
-
-  return ok;
-}
-
-inline
-bool hw_set_state(const std::string& hw_name, const cnr_hardware_interface::StatusHw& status)
-{
-  ros::param::set(RobotHwDriverInterface::hw_status_param_name(hw_name), cnr_hardware_interface::to_string(status));
-  return true;
-}
-
-inline
-bool hw_get_state(const std::vector<std::string> &hw_names,  std::vector<cnr_hardware_interface::StatusHw>& status,
-                    std::string& error, const ros::Duration& watchdog)
-{
-  status.clear();
-  for (auto const & hw_name : hw_names)
-  {
-    cnr_hardware_interface::StatusHw st;
-    if (!hw_get_state(hw_name, st, watchdog, error))
-    {
-      error = "RobotHW (" + hw_name + ") Error Status";
-      return false;
-    }
-    status.push_back(st);
-  }
-  return true;
-}
-
-
 
 }  // namepsace cnr_hardware_driver_interface
 

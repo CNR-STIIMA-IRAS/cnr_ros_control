@@ -19,7 +19,7 @@ endif()
 
 find_package(catkin REQUIRED COMPONENTS
   configuration_msgs
-  cnr_controller_interface_params
+  cnr_controller_interface_utils
   cnr_controller_manager_interface
   cnr_hardware_interface
   cnr_logger
@@ -37,7 +37,7 @@ endif()
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES cnr_hardware_driver_interface
-  CATKIN_DEPENDS configuration_msgs cnr_controller_interface_params cnr_controller_manager_interface
+  CATKIN_DEPENDS configuration_msgs cnr_controller_interface_utils cnr_controller_manager_interface
     cnr_hardware_interface cnr_logger realtime_utilities nodelet roscpp
 #  DEPENDS system_lib
 )

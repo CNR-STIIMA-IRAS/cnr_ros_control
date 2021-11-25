@@ -4,7 +4,7 @@
 #include <string>
 #include <map>
 #include <vector>
-#include <cnr_controller_interface_params/cnr_controller_interface_params.h>
+#include <cnr_controller_interface_utils/cnr_controller_interface_utils.h>
 
 namespace cnr_configuration_manager
 {

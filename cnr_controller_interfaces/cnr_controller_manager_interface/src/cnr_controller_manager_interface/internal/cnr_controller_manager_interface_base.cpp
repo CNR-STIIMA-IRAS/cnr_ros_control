@@ -43,7 +43,7 @@
 #include <exception>
 
 #include <controller_manager_msgs/ListControllers.h>
-#include <cnr_controller_interface_params/cnr_controller_interface_params.h>
+#include <cnr_controller_interface_utils/cnr_controller_interface_utils.h>
 #include <cnr_controller_manager_interface/internal/cnr_controller_manager_interface_base.h>
 
 namespace cnr_controller_manager_interface
@@ -104,33 +104,6 @@ bool ControllerManagerInterfaceBase::listControllers(std::vector< controller_man
   }
   CNR_RETURN_TRUE_THROTTLE_DEFAULT(logger_);
 }
-
-// bool ControllerManagerInterfaceBase::matchControllers(const std::vector<std::string>& ctrl_names,
-//                                                       const ros::Duration& watchdog)
-// {
-//   CNR_TRACE_START(logger_, "HW: " + getHwName() );
-//   std::vector<controller_manager_msgs::ControllerState> running;
-//   std::vector<controller_manager_msgs::ControllerState> stopped;
-
-//   if (!listControllers(running, stopped, watchdog))
-//   {
-//     error_ = "Failed in getting the controllers info: " + error_;
-//     CNR_RETURN_FALSE(logger_, "HW: " + getHwName());
-//   }
-//   std::vector<std::string> running_names = cnr::control::ctrl_get_names(running);
-//   std::vector<std::string> stopped_names = cnr::control::ctrl_get_names(stopped);
-//   running_names.insert(running_names.end(), stopped_names.begin(), stopped_names.end());
-
-//   if (ctrl_names.size() != running_names.size())
-//   {
-//     CNR_RETURN_FALSE(logger_, "HW: " + getHwName());
-//   }
-//   for (auto const l : ctrl_names)
-//   {
-//     if (std::find(running_names.begin(), running_names.end(), l) == running_names.end()) return false;
-//   }
-//   CNR_RETURN_TRUE(logger_, "HW: " + getHwName());
-// }
 
 bool ControllerManagerInterfaceBase::loadControllers(const std::vector<std::string>& ctrl_to_load_names, const ros::Duration& watchdog)
 {

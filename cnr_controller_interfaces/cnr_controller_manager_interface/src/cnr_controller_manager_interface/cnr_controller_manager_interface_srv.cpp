@@ -41,7 +41,7 @@
 #include <string>
 #include <thread>
 
-#include <cnr_controller_interface_params/cnr_controller_interface_params.h>
+#include <cnr_controller_interface_utils/cnr_controller_interface_utils.h>
 #include <cnr_controller_manager_interface/cnr_controller_manager_interface_srv.h>
 
 namespace cnr_controller_manager_interface
@@ -127,11 +127,10 @@ bool ControllerManagerInterfaceSrv::loadController(const std::string& to_load_na
 }
 
 bool ControllerManagerInterfaceSrv::switchController(const std::vector<std::string>&  to_start_names,
-                                                  const std::vector<std::string>&  to_stop_names   ,
-                                                  const int                        strictness             ,
-                                                  const ros::Duration&             watchdog               )
+                                                  const std::vector<std::string>&     to_stop_names ,
+                                                  const int                           strictness    ,
+                                                  const ros::Duration&                watchdog      )
 {
-
   CNR_TRACE_START(logger_, "HW: " + getHwName() );
 
   controller_manager_msgs::SwitchController switch_ctrl_srv;
@@ -157,15 +156,6 @@ bool ControllerManagerInterfaceSrv::switchController(const std::vector<std::stri
       switch_ctrl_srv.request.start_controllers.push_back(ctrl);
   }
 
-//  if((strictness!=1) && check(to_restart_names))
-//  {
-//    CNR_DEBUG(logger_, "HW: " + getHwName() + to_string(to_restart_names, " Controllers to Restart......: "));
-//    for (auto const & ctrl : to_restart_names)
-//    {
-//      switch_ctrl_srv.request.start_controllers.push_back(ctrl);
-//    }
-//  }
-
   if(check(to_stop_names))
   {
     CNR_DEBUG(logger_, "HW: " + getHwName() + to_string(to_stop_names, " Controllers to stop/unload..: "));
@@ -189,31 +179,6 @@ bool ControllerManagerInterfaceSrv::switchController(const std::vector<std::stri
     CNR_RETURN_FALSE(logger_, "HW: " + getHwName());
   }
 
-
-  if (watchdog.toSec() > 0)
-  {
-    // check the param, and exit only if the state is running!
-    for (const std::string ctrl_name : switch_ctrl_srv.request.start_controllers)
-    {
-      // if (!cnr::control::ctrl_check_state(getNamespace(), ctrl_name, "RUNNING", error_, watchdog))
-      // {
-      //   CNR_RETURN_FALSE(logger_, "HW: " + getHwName() + ": " + error_);
-      // }
-//      if ((status != "INITIALIZED") && (status != ))
-//      {
-//        error_ += "Failed while checking '"+ctrl_name +"' state. The state is "+status+" while RUNNING is expected";
-//        error_ +=" (transition waited for " + std::to_string( (a-n).toSec()  ) + "s, watchdog: "+ std::to_string(watchdog.toSec())+ "s)";
-//        CNR_RETURN_FALSE(logger_, "HW: " + getHwName());
-//      }
-    }
-    for (const std::string ctrl_name : switch_ctrl_srv.request.stop_controllers)
-    {
-      // if (!cnr::control::ctrl_check_state(getNamespace(), ctrl_name, "STOPPED", error_, watchdog))
-      // {
-      //   CNR_RETURN_FALSE(logger_, "HW: " + getHwName() + ": " + error_);
-      // }
-    }
-  }
   CNR_RETURN_TRUE(logger_, "HW: " + getHwName());
 }
 
@@ -238,12 +203,7 @@ bool ControllerManagerInterfaceSrv::unloadController(const std::string& ctrl_to_
 
   std::string st = (ret  ? "UNLOADED" : "ERROR_UNLOAD");
   std::vector<std::string> status_history;
-  //ros::param::get(cnr::control::ctrl_status_param_name(getHwName(), ctrl_to_unload_name),  status_history);
-
   status_history.push_back(st);
-  //ros::param::set(cnr::control::ctrl_status_param_name(getHwName(), ctrl_to_unload_name),  status_history);
-  //ros::param::set(cnr::control::ctrl_last_status_param_name(getHwName(), ctrl_to_unload_name), st) ;
-
   CNR_RETURN_BOOL(logger_, ret, "HW: " + getHwName() + ", CTRL: " + ctrl_to_unload_name);
 }
 

@@ -40,6 +40,7 @@
 
 #include <stdexcept>
 #include <mutex>
+#include <rosparam_utilities/rosparam_utilities.h>
 #include <ros/ros.h>
 #include <ros/console.h>
 #include <ros/time.h>
@@ -47,7 +48,7 @@
 #include <cnr_controller_interface/utils/utils.h>
 
 #include <cnr_controller_interface/cnr_controller_interface.h>
-#include <cnr_controller_interface_params/cnr_controller_interface_params.h>
+#include <cnr_controller_interface_utils/cnr_controller_interface_utils.h>
 
 namespace cnr
 {
@@ -139,15 +140,7 @@ bool Controller<T>::prepareInit(T* hw,
     {
       m_ctrl_name.erase(m_ctrl_name.find(m_hw_name), m_hw_name.length());
     }
-    /*else
-    {
-      std::cerr << cnr_logger::RED() << __PRETTY_FUNCTION__ << ":" << __LINE__ << ": " ;
-      std::cerr << "Controller configurations seems broken. " << std::endl;
-      std::cerr << " root ns (the namespace of the hw): " << hw_name << std::endl;
-      std::cerr << " controller ns (the namespace of the ctrl): " << ctrl_name << cnr_logger::RST()
-                << std::endl;
-      return false;
-    }*/
+    
     l = __LINE__;
     std::replace(m_hw_name.begin(), m_hw_name.end(), '/', '_');
     if(m_hw_name.size()==0)
@@ -196,19 +189,20 @@ bool Controller<T>::prepareInit(T* hw,
     m_controller_nh = controller_nh; // handle to callback and remapping
     m_hw            = hw;
 
-    if(!m_root_nh.getParam("sampling_period", m_sampling_period))
+    std::string what;
+    if(!rosparam_utilities::get(m_root_nh.getNamespace() + "/sampling_period", m_sampling_period, what))
     {
-      CNR_RETURN_FALSE(m_logger, "The parameter '" + m_root_nh.getNamespace() + "/sampling_period' is not set. Abort");
+      CNR_RETURN_FALSE(m_logger, what);
     }
 
     int maximum_missing_cycles = 10;
-    if(!m_controller_nh.getParam("watchdog", m_watchdog))
+    if(!rosparam_utilities::get(m_controller_nh.getNamespace() + "/watchdog", m_watchdog, what))
     {
-      if(!m_controller_nh.getParam("maximum_missing_cycles", maximum_missing_cycles))
+      if(!rosparam_utilities::get(m_controller_nh.getNamespace() + "/maximum_missing_cycles", maximum_missing_cycles, what))
       {
-        if(!m_root_nh.getParam("watchdog", m_watchdog))
+        if(!rosparam_utilities::get(m_controller_nh.getNamespace() + "/watchdog", m_watchdog, what))
         {
-          if(!m_root_nh.getParam("maximum_missing_cycles", maximum_missing_cycles))
+          if(!rosparam_utilities::get(m_controller_nh.getNamespace() + "/maximum_missing_cycles", maximum_missing_cycles, what))
           {
             m_watchdog = maximum_missing_cycles * m_sampling_period;
             CNR_WARN(m_logger, "Neither 'watchdog' and 'maximum_missing_cycles' are in the param server"
@@ -238,7 +232,6 @@ bool Controller<T>::prepareInit(T* hw,
     realtime_utilities::DiagnosticsInterface::addTimeTracker("exitUpdate", m_sampling_period);
   }
   catch(std::exception& e)
-
   {
     std::cerr << cnr_logger::RED() << __PRETTY_FUNCTION__ << ":" << __LINE__ << ": " ;
     std::cerr << "Exception at line: "
@@ -549,42 +542,6 @@ bool Controller<T>::exitAborting()
   }
   CNR_RETURN_BOOL(m_logger, ret);
 }
-
-/*
-template<class T>
-bool Controller<T>::dump_state(const std::string& status)
-{
-
-  if(m_status_history.size() == 0)
-  {
-    m_status_history.push_back(status);
-    m_controller_nh.setParam(cnr::control::ctrl_last_status_param_name(m_hw_name, m_ctrl_name), status);
-    m_controller_nh.setParam(cnr::control::ctrl_status_param_name(m_hw_name, m_ctrl_name), m_status_history);  }
-  else
-  {
-    if(m_status_history.back() != status)
-    {
-      m_status_history.push_back(status);
-      m_controller_nh.setParam(cnr::control::ctrl_last_status_param_name(m_hw_name, m_ctrl_name), status);
-      m_controller_nh.setParam(cnr::control::ctrl_status_param_name(m_hw_name, m_ctrl_name), m_status_history);
-    }
-  }
-
-  return true;
-}
-
-template<class T>
-bool Controller<T>::dump_state()
-{
-  std::string last_status = controller_interface::Controller<T>::isAborted()     ?  "ABORTED"
-                          : controller_interface::Controller<T>::isInitialized() ?  "INITIALIZED"
-                          : controller_interface::Controller<T>::isRunning()     ?  "RUNNING"
-                          : controller_interface::Controller<T>::isWaiting()     ?  "WAITING"
-                          : controller_interface::Controller<T>::isStopped()     ?  "STOPPED"
-                          : "CONSTRUCTED";
-  return dump_state(last_status);
-}*/
-
 
 template<class T>
 bool Controller<T>::shutdown(const std::string& state_final)

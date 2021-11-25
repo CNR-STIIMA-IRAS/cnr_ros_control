@@ -40,7 +40,7 @@
 #include <atomic>
 #include <string>
 #include <thread>
-#include <cnr_controller_interface_params/cnr_controller_interface_params.h>
+#include <cnr_controller_interface_utils/cnr_controller_interface_utils.h>
 #include <cnr_controller_manager_interface/cnr_controller_manager_proxy.h>
 
 namespace cnr_controller_manager_interface

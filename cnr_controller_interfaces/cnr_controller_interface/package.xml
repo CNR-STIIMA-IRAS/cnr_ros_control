@@ -12,9 +12,9 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <build_depend>cnr_controller_interface_params </build_depend>
-  <build_export_depend>cnr_controller_interface_params </build_export_depend>
-  <exec_depend>cnr_controller_interface_params</exec_depend>
+  <build_depend>cnr_controller_interface_utils </build_depend>
+  <build_export_depend>cnr_controller_interface_utils</build_export_depend>
+  <exec_depend>cnr_controller_interface_utils</exec_depend>
 
   <build_depend>cnr_hardware_interface</build_depend>
   <build_export_depend>cnr_hardware_interface</build_export_depend>

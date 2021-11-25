@@ -11,7 +11,6 @@ namespace cnr
 namespace control
 {
 
-
 /**
  * @struct ControllerData
  * @brief The id is the unique id that identify the controller, the 'check_state' field enables/disables the check of 
@@ -22,10 +21,6 @@ struct ControllerData
 {
   std::string id;
   bool check_state;
-  //operator const std::string & () const
-  //{
-  //  return id;
-  //}
   ControllerData& operator=(const std::string& rhs)
   {
     id = rhs;
@@ -47,23 +42,6 @@ std::vector<bool> extract_runtime_checks(const std::vector<ControllerData>& vv);
 //============ FUNCTIONS TO DEFINE THE PARAMETERS WHERE THE CTRL STATUS IS LOADED
 //! extract the list of names from the ControllerState vector
 std::vector<std::string> ctrl_get_names(const std::vector<controller_manager_msgs::ControllerState>& controllers);
-
-//! get the full param name with the list of controllers assoicated to the hw 'hw_name'
-std::string ctrl_list_param_name(const std::string& hw_name);
-
-//! get the full param name with the status of the controllers mounted on the hw 'hw_name'
-//std::string ctrl_status_param_name(const std::string& hw_name,const std::string& ctrl_name);
-
-//! get the full param name with the last available status of the controllers mounted on the hw 'hw_name'
-//std::string ctrl_last_status_param_name(const std::string& hw_name, const std::string& ctrl_name);
-
-//! get the status of the controller
-//bool ctrl_get_state(const std::string& hw_name, const std::string& ctrl_name, std::string& status, std::string& error,
-                      //const ros::Duration& watchdog = ros::Duration(0.0));
-
-//! check the status of the controller is the expected one
-//bool ctrl_check_state(const std::string& hw_name, const std::string& ctrl_name, const std::string& status,
-                        //std::string& error, const ros::Duration& watchdog = ros::Duration(0.0));
 
 //!
 template< typename T >
@@ -98,9 +76,7 @@ inline std::string to_string(const std::string& what)
   return ret;
 }
 
+}  // namespace control
+}  // namespace cnr
 
-}
-}
-
-
-#endif
+#endif  // CNR_CONTROLLER_INTERFACE_PARAMS__CNR_CONTROLLER_INTERFACE_PARAMS__H

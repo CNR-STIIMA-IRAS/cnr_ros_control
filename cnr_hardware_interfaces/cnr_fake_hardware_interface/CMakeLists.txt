@@ -11,7 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(catkin REQUIRED COMPONENTS
-  cnr_controller_interface_params
+  cnr_controller_interface_utils
   cnr_hardware_interface
   nodelet
   roscpp
@@ -27,7 +27,7 @@ endif()
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES cnr_fake_hardware_interface
-  CATKIN_DEPENDS cnr_controller_interface_params cnr_hardware_interface  nodelet roscpp
+  CATKIN_DEPENDS cnr_controller_interface_utils cnr_hardware_interface  nodelet roscpp
   DEPENDS 
 )
 

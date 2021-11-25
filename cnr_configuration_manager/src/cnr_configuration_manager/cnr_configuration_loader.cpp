@@ -37,6 +37,7 @@
 #include <algorithm>
 #include <thread>
 #include <ros/ros.h>
+#include <rosparam_utilities/rosparam_utilities.h>
 #include <cnr_logger/cnr_logger.h>
 #include <configuration_msgs/SendMessage.h>
 
@@ -63,11 +64,9 @@ bool ConfigurationLoader::getHwParam(ros::NodeHandle &nh,
                                      std::map<std::string,std::string>& remappings,
                                      std::string& error)
 {
-
   XmlRpc::XmlRpcValue hardware_interface;
-  if (!nh.getParam(hw_name, hardware_interface))
+  if (!rosparam_utilities::get(nh.getNamespace() +"/" + hw_name, hardware_interface, error))
   {
-    error = "Param '" + nh.getNamespace()+ "/" + hw_name + "' does not exist";
     return false;
   }
   if (!hardware_interface.hasMember("nodelet_type"))
@@ -238,7 +237,7 @@ bool ConfigurationLoader::unloadHw(const std::vector<std::string>& hw_to_unload_
       auto it = drivers_.find(hw);
       if(it != drivers_.end())
       {
-        if(!drivers_[hw]->stopUnloadAllControllers(watchdog))
+        if(!drivers_[hw]->getControllerManagerInterface()->stopUnloadAllControllers(watchdog))
         {
           error += "Failed in stopping and unloading the controllers";
           return false; 
@@ -253,12 +252,12 @@ bool ConfigurationLoader::unloadHw(const std::vector<std::string>& hw_to_unload_
     catch(const std::exception& e)
     {
       error += "Error in deleting the Robot Hardware Driver ...." + std::string(e.what());
-      cnr_hardware_driver_interface::hw_set_state(hw, cnr_hardware_interface::SRV_ERROR);
+      cnr_hardware_interface::hw_set_state(hw, cnr_hardware_interface::SRV_ERROR);
       return false;
     }
     
     error += "set hw nodelet state to UNLOADED";
-    cnr_hardware_driver_interface::hw_set_state(hw, cnr_hardware_interface::UNLOADED);
+    cnr_hardware_interface::hw_set_state(hw, cnr_hardware_interface::UNLOADED);
   }
   return true;
 }
@@ -309,7 +308,7 @@ bool ConfigurationLoader::loadAndStartControllers(const std::string& hw_name,
 
 
   //================================================
-  if (!drivers_[hw_name]->loadAndStartControllers(next_controllers, strictness, watchdog))
+  if (!drivers_[hw_name]->getControllerManagerInterface()->switchControllers(strictness, next_controllers, watchdog))
   {
     error = "Error in switching the controller: " 
             + drivers_[hw_name]->getControllerManagerInterface()->error();
@@ -358,7 +357,7 @@ bool ConfigurationLoader::loadAndStartControllers(const std::vector<std::string>
                               ? ros::Duration(0.0) : ros::Duration(2.0);
       }
 
-      ok = drivers_[hw_name]->loadAndStartControllers(next_controllers,strictness, watchdog);
+      ok = drivers_[hw_name]->getControllerManagerInterface()->switchControllers(strictness,next_controllers,watchdog);
     }
     catch(std::exception& e)
     {
@@ -439,7 +438,7 @@ bool ConfigurationLoader::stopAndUnloadAllControllers(const std::vector<std::str
         auto runtime_check = extract_runtime_checks(component.second);
         null_watchdog  |= std::find(runtime_check.begin(), runtime_check.end(), false) != runtime_check.end();
       }
-      ok = drivers_[hw]->stopUnloadAllControllers( null_watchdog ? ros::Duration(0.0) : ros::Duration(10.0) );
+      ok = drivers_[hw]->getControllerManagerInterface()->stopUnloadAllControllers( null_watchdog ? ros::Duration(0.0) : ros::Duration(10.0) );
     }
    catch(std::exception& e)
     {

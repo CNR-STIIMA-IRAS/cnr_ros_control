@@ -35,7 +35,7 @@
 #include <pluginlib/class_list_macros.h>
 
 
-#include <cnr_controller_interface_params/cnr_controller_interface_params.h>
+#include <cnr_controller_interface_utils/cnr_controller_interface_utils.h>
 #include <cnr_hardware_interface/internal/vector_to_string.h>
 #include <cnr_hardware_interface/cnr_robot_hw.h>
 #include <cnr_fake_hardware_interface/cnr_fake_robot_hw.h>
@@ -48,14 +48,14 @@ namespace cnr_hardware_interface
 
 void setParam(FakeRobotHW* hw, const std::string& ns)
 {
-  hw->m_robothw_nh.setParam("status/" + ns + "/feedback/name", hw->resourceNames());
-  hw->m_robothw_nh.setParam("status/" + ns + "/feedback/position", hw->m_pos);
-  hw->m_robothw_nh.setParam("status/" + ns + "/feedback/velocity", hw->m_vel);
-  hw->m_robothw_nh.setParam("status/" + ns + "/feedback/effort", hw->m_eff);
-  hw->m_robothw_nh.setParam("status/" + ns + "/command/name", hw->resourceNames());
-  hw->m_robothw_nh.setParam("status/" + ns + "/command/position", hw->m_cmd_pos);
-  hw->m_robothw_nh.setParam("status/" + ns + "/command/velocity", hw->m_cmd_vel);
-  hw->m_robothw_nh.setParam("status/" + ns + "/command/effort", hw->m_cmd_eff);
+  ros::param::set(hw->m_robothw_nh.getNamespace()  + "/status/" + ns + "/feedback/name", hw->resourceNames());
+  ros::param::set(hw->m_robothw_nh.getNamespace()  + "/status/" + ns + "/feedback/position", hw->m_pos);
+  ros::param::set(hw->m_robothw_nh.getNamespace()  + "/status/" + ns + "/feedback/velocity", hw->m_vel);
+  ros::param::set(hw->m_robothw_nh.getNamespace()  + "/status/" + ns + "/feedback/effort", hw->m_eff);
+  ros::param::set(hw->m_robothw_nh.getNamespace()  + "/status/" + ns + "/command/name", hw->resourceNames());
+  ros::param::set(hw->m_robothw_nh.getNamespace()  + "/status/" + ns + "/command/position", hw->m_cmd_pos);
+  ros::param::set(hw->m_robothw_nh.getNamespace()  + "/status/" + ns + "/command/velocity", hw->m_cmd_vel);
+  ros::param::set(hw->m_robothw_nh.getNamespace()  + "/status/" + ns + "/command/effort", hw->m_cmd_eff);
 }
 
 FakeRobotHW::FakeRobotHW()
@@ -111,32 +111,32 @@ bool FakeRobotHW::doInit()
   m_ft_sensor.resize(6);
   std::fill(m_ft_sensor.begin(), m_ft_sensor.end(), 0.0);
 
-  if (m_robothw_nh.hasParam("initial_position"))
+  if (ros::param::has(m_robothw_nh.getNamespace()  + "/initial_position"))
   {
-    m_robothw_nh.getParam("initial_position", m_pos);
+    ros::param::get(m_robothw_nh.getNamespace()  + "/initial_position", m_pos);
     std::string ss;
     for (auto const & p : m_pos) ss += std::to_string(p) + ", ";
     CNR_DEBUG(m_logger, "Initial Position: <" << ss << ">");
   }
-  else if (m_robothw_nh.hasParam("initial_position_from"))
+  else if (ros::param::has(m_robothw_nh.getNamespace()  + "/initial_position_from"))
   {
     std::string position_from;
-    m_robothw_nh.getParam("position_from", position_from);
+    ros::param::get(m_robothw_nh.getNamespace()  + "/position_from", position_from);
 
     CNR_DEBUG(m_logger, "Position From: '" << position_from << "'");
     std::string position_ns = "/" + position_from + "/status/shutdown_configuration/position";
-    if (!m_robothw_nh.hasParam(position_ns))
+    if (!ros::param::has(m_robothw_nh.getNamespace()  + "/" +  position_ns))
     {
       CNR_ERROR(m_logger, "The param '" + position_ns + "' does not exit. pos superimposed to zero");
     }
-    m_robothw_nh.getParam(position_ns, m_pos);
+    ros::param::get(m_robothw_nh.getNamespace()  + "/" +  position_ns, m_pos);
     std::string ss;
     for (auto const & p : m_pos) ss += std::to_string(p) + ", ";
     CNR_DEBUG(m_logger, "Initial Position: <" << ss << ">");
   }
 
   double timeout = 10;
-  if (!m_robothw_nh.getParam("feedback_joint_state_timeout", timeout))
+  if (!ros::param::get(m_robothw_nh.getNamespace()  + "/feedback_joint_state_timeout", timeout))
   {
     CNR_WARN(m_logger, "The param '" << m_robothw_nh.getNamespace() << "/feedback_joint_state_timeout' not defined, set equal to 10");
     timeout = 10;
@@ -168,20 +168,20 @@ bool FakeRobotHW::doInit()
   }
 
   std::string wrench_name="wrench";
-  if (!m_robothw_nh.getParam("wrench_resourse",wrench_name))
+  if (!ros::param::get(m_robothw_nh.getNamespace()  + "/wrench_resourse",wrench_name))
   {
     wrench_name="wrench";
     CNR_TRACE(m_logger,"using defalut wrench_resourse name: wrench");
   }
 
-  if (!m_robothw_nh.getParam("frame_id",m_frame_id))
+  if (!ros::param::get(m_robothw_nh.getNamespace()  + "/" + "frame_id",m_frame_id))
   {
     m_frame_id="tool0";
     CNR_TRACE(m_logger,"using defalut frame_id name: tool0");
   }
 
   std::string wrench_topic="fake_wrench";
-  if (!m_robothw_nh.getParam("wrench_topic",wrench_topic))
+  if (!ros::param::get(m_robothw_nh.getNamespace()  + "/" + "wrench_topic",wrench_topic))
   {
     wrench_topic="fake_wrench";
     CNR_TRACE(m_logger,"using defalut wrench_topic name: fake_wrench");

@@ -95,14 +95,14 @@ int main(int argc, char **argv)
   cnr_logger::TraceLogger logger(n, nh.getNamespace());
 
   bool start_gazebo;
-  if (!nh.getParam("start_gazebo", start_gazebo))
+  if (!ros::param::get(nh.getNamespace() + "start_gazebo", start_gazebo))
     start_gazebo = false;
 
   ros::WallTimer gazebo_timer;
   if (start_gazebo)
   {
     double gazebo_wait_time = 4;
-    if (!nh.getParam("gazebo_bringup_time", gazebo_wait_time))
+    if (!ros::param::get(nh.getNamespace() + "gazebo_bringup_time", gazebo_wait_time))
       gazebo_wait_time = 4;
     gazebo_timer = nh.createWallTimer(ros::WallDuration(gazebo_wait_time), gazebo_cb, true);
 
@@ -120,7 +120,7 @@ int main(int argc, char **argv)
 
   XmlRpc::XmlRpcValue param_configurations;
 
-  if (!nh.getParam("configuration_dispatches", param_configurations))
+  if (!ros::param::get(nh.getNamespace() + "configuration_dispatches", param_configurations))
   {
     CNR_WARN(logger, "Nothing to dispatch");
     return 0;

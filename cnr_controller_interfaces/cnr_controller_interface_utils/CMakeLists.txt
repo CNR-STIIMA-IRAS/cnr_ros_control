@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(cnr_controller_interface_params)
+project(cnr_controller_interface_utils)
 
 find_package(catkin REQUIRED COMPONENTS roscpp controller_manager_msgs)
 
@@ -11,7 +11,7 @@ endif()
 
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES cnr_controller_interface_params
+  LIBRARIES cnr_controller_interface_utils
   CATKIN_DEPENDS roscpp controller_manager_msgs
 )
 
@@ -21,7 +21,7 @@ catkin_package(
 include_directories(include ${catkin_INCLUDE_DIRS})
 
 ## Declare a C++ library
-add_library(${PROJECT_NAME} src/${PROJECT_NAME}/cnr_controller_interface_params.cpp)
+add_library(${PROJECT_NAME} src/${PROJECT_NAME}/cnr_controller_interface_utils.cpp)
 target_compile_options(${PROJECT_NAME} PUBLIC -Wall -faligned-new
         $<$<CONFIG:Release>:-Ofast -funroll-loops -ffast-math >)
 

@@ -105,13 +105,13 @@ bool TopicsRobotHW::doInit()
   try
   {
     std::vector<std::string> resources;
-    if (!m_robothw_nh.getParam("resources", resources))
+    if (!ros::param::get(m_robothw_nh.getNamespace()+"/resources", resources))
     {
       CNR_FATAL_RETURN(m_robothw_nh.getNamespace() + "/resources' does not exist");
     }
 
     int maximum_missing_cycles;
-    if (!m_robothw_nh.getParam("maximum_missing_cycles", maximum_missing_cycles))
+    if (!ros::param::get(m_robothw_nh.getNamespace()+"/maximum_missing_cycles", maximum_missing_cycles))
     {
       CNR_FATAL_RETURN(m_robothw_nh.getNamespace() + "/maximum_missing_cycles does not exist");
     }
@@ -142,7 +142,7 @@ bool TopicsRobotHW::doInit()
           std::shared_ptr< cnr_hardware_interface::JointResource > jr(new cnr_hardware_interface::JointResource());
           std::vector<std::string>  joint_names;
           ROS_DEBUG_STREAM(ns << " Joint Names:");
-          if (!m_robothw_nh.getParam(it->second + "/joint_names", joint_names))
+          if (!ros::param::get(ns + "/joint_names", joint_names))
           {
             CNR_FATAL_RETURN(ns + "/joint_names does not exist");
           }
@@ -162,12 +162,12 @@ bool TopicsRobotHW::doInit()
         {
           std::shared_ptr< cnr_hardware_interface::ForceTorqueResource > wr(new cnr_hardware_interface::ForceTorqueResource());
           std::string sensor_name;
-          if (!m_robothw_nh.getParam(it->second + "/sensor_name", sensor_name))
+          if (!ros::param::get(ns + "/sensor_name", sensor_name))
           {
             CNR_FATAL_RETURN(ns + "/sensor_name does not exist");
           }
           std::string frame_id;
-          if (!m_robothw_nh.getParam(it->second + "/frame_id", frame_id))
+          if (!ros::param::get(ns + "/frame_id", frame_id))
           {
             CNR_FATAL_RETURN(ns + "/frame_id does not exist");
           }
@@ -181,7 +181,7 @@ bool TopicsRobotHW::doInit()
         {
           std::shared_ptr< cnr_hardware_interface::AnalogResource > ar(new cnr_hardware_interface::AnalogResource());
           std::vector< std::string > channel_names;
-          if (!m_robothw_nh.getParam(it->second + "/channel_names", channel_names))
+          if (!ros::param::get(ns + "/channel_names", channel_names))
           {
             CNR_FATAL_RETURN(ns + "/channel_names does not exist");
           }
@@ -193,7 +193,7 @@ bool TopicsRobotHW::doInit()
         {
           std::shared_ptr< cnr_hardware_interface::PoseResource > pr(new cnr_hardware_interface::PoseResource());
           std::string frame_id;
-          if (!m_robothw_nh.getParam(it->second + "/frame_id", frame_id))
+          if (!ros::param::get(ns + "/frame_id", frame_id))
           {
             CNR_FATAL_RETURN(ns + "/frame_id does not exist");
           }
@@ -205,7 +205,7 @@ bool TopicsRobotHW::doInit()
         {
           std::shared_ptr< cnr_hardware_interface::TwistResource > pr(new cnr_hardware_interface::TwistResource());
           std::vector< std::string > frames_id;
-          if (!m_robothw_nh.getParam(it->second + "/frames_id", frames_id))
+          if (!ros::param::get(ns + "/frames_id", frames_id))
           {
             CNR_FATAL_RETURN(ns + "/frames_id does not exist");
           }
@@ -226,13 +226,13 @@ bool TopicsRobotHW::doInit()
         //********************************
         std::vector< std::string > published_topics;
 
-        if (!m_robothw_nh.getParam(it->second + "/published_topics", published_topics))
+        if (!ros::param::get(ns + "/published_topics", published_topics))
         {
           std::string published_topic = "N/A";
-          if (!m_robothw_nh.getParam(it->second + "/published_topic", published_topic))
+          if (!ros::param::get(ns + "/published_topic", published_topic))
           {
-            WARNING(it->second + "/published_topic does not exist");
-            WARNING(it->second + "/published_topics does not exist");
+            WARNING(ns + "/published_topic does not exist");
+            WARNING(ns + "/published_topics does not exist");
             published_topics.clear();
           }
           else
@@ -245,10 +245,10 @@ bool TopicsRobotHW::doInit()
         //
         //********************************
         std::vector< std::string > subscribed_topics;
-        if (!m_robothw_nh.getParam(ns + "/subscribed_topics", subscribed_topics))
+        if (!ros::param::get(ns + "/subscribed_topics", subscribed_topics))
         {
           std::string subscribed_topic = "N/A";
-          if (!m_robothw_nh.getParam(ns + "/subscribed_topic", subscribed_topic))
+          if (!ros::param::get(ns + "/subscribed_topic", subscribed_topic))
           {
             subscribed_topics.clear();
           }
@@ -260,7 +260,7 @@ bool TopicsRobotHW::doInit()
 
         if (subscribed_topics.size() == 0)
         {
-          WARNING("There is not any subsribed topic, The params '" + it->second + "/subscribed_topic(s)' do not exist");
+          WARNING("There is not any subsribed topic, The params '" + ns + "/subscribed_topic(s)' do not exist");
         }
         else
         {
@@ -274,9 +274,9 @@ bool TopicsRobotHW::doInit()
         claimed_resource->m_subscribed_topics =  subscribed_topics;
 
         double feedback_joint_state_timeout_s = 1e-3;
-        if (!m_robothw_nh.getParam(it->second + "/feedback_joint_state_timeout_s", published_topics))
+        if (!ros::param::get(ns + "/feedback_joint_state_timeout_s", published_topics))
         {
-          WARNING(it->second + +"/feedback_joint_state_timeout_s does not exist");
+          WARNING(ns+"/feedback_joint_state_timeout_s does not exist");
         }
         claimed_resource->m_feedback_joint_state_timeout_s = feedback_joint_state_timeout_s;
 
@@ -357,7 +357,7 @@ bool TopicsRobotHW::doRead(const ros::Time& time, const ros::Duration& period)
   }
   else if(m_missing_messages > m_max_missing_messages)
   {
-    if (getState() == cnr_hardware_interface::RUNNING)
+    if (getStatus() == cnr_hardware_interface::RUNNING)
     {
       std::string all_topics = "[";
       for (const std::pair<std::string, bool>& topic_received : m_topics_subscribed)

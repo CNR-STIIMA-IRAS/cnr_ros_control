@@ -41,7 +41,7 @@
 #include <string>
 #include <thread>
 #include <realtime_utilities/diagnostics_interface.h>
-#include <cnr_controller_interface_params/cnr_controller_interface_params.h>
+#include <cnr_controller_interface_utils/cnr_controller_interface_utils.h>
 #include <cnr_controller_manager_interface/cnr_controller_manager_interface.h>
 
 namespace cnr_controller_manager_interface
@@ -85,12 +85,15 @@ ControllerManagerInterface::~ControllerManagerInterface()
 bool ControllerManagerInterface::loadController(const std::string& ctrl_to_load_name, const ros::Duration& watchdog)
 {
   CNR_TRACE_START(logger_, "HW: " + getHwName() + ", CTRL: " + ctrl_to_load_name);
+  //=========== Pre-check
   if(controllers_.find(ctrl_to_load_name)!=controllers_.end())
   {
     CNR_WARN(logger_, "HW: " + getHwName() + ",  The CTRL '" + ctrl_to_load_name + "' is already loaded....");
     CNR_RETURN_TRUE(logger_, "HW: " + getHwName() + ", CTRL: " + ctrl_to_load_name);
   }
+  //=========== End Pre-check
 
+  //=========== Load
   if (!cm_->loadController(ctrl_to_load_name))
   {
     error_ = "ControllerManagerfailed while loading '" + ctrl_to_load_name + "'\n";
@@ -106,18 +109,7 @@ bool ControllerManagerInterface::loadController(const std::string& ctrl_to_load_
     }
     CNR_RETURN_FALSE(logger_, "HW: " + getHwName() + ", CTRL: " + ctrl_to_load_name);
   }
-
-  const std::string n = cnr::control::ctrl_list_param_name(getHwName());
-  std::vector<std::string> l;
-  if (ros::param::has(n))
-  {
-    ros::param::get(n, l);
-  }
-  if (std::find(l.begin(), l.end(), ctrl_to_load_name) == l.end())
-  {
-    l.push_back(ctrl_to_load_name);
-    ros::param::set(n, l);
-  }
+  //=========== End Load
 
   controllers_.emplace( ctrl_to_load_name, cm_->getControllerByName(ctrl_to_load_name) );
   
@@ -281,14 +273,6 @@ bool ControllerManagerInterface::unloadController(const std::string& ctrl_to_unl
     ret = false;
     //CNR_RETURN_FALSE(logger_, "HW: "+ getHwName()+", CTRL: " + ctrl_to_unload_name);
   }
-
-  std::string st = (ret  ? "UNLOADED" : "ERROR_UNLOAD");
-  std::vector<std::string> status_history;
-  //ros::param::get(cnr::control::ctrl_status_param_name(getHwName(), ctrl_to_unload_name),  status_history);
-
-  status_history.push_back(st);
-  //ros::param::set(cnr::control::ctrl_status_param_name(getHwName(), ctrl_to_unload_name),  status_history);
-  //ros::param::set(cnr::control::ctrl_last_status_param_name(getHwName(), ctrl_to_unload_name), st) ;
 
   if( ret )
   {

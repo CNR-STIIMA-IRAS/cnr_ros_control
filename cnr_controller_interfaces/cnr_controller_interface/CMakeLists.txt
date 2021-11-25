@@ -11,7 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(catkin REQUIRED COMPONENTS
-  realtime_utilities cnr_controller_interface_params cnr_hardware_interface controller_interface diagnostic_msgs
+  realtime_utilities cnr_controller_interface_utils cnr_hardware_interface controller_interface diagnostic_msgs
   cnr_logger urdf rosdyn_core rosdyn_chain_state subscription_notifier sensor_msgs
 )
 
@@ -27,7 +27,7 @@ endif()
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
-  CATKIN_DEPENDS urdf realtime_utilities cnr_controller_interface_params cnr_hardware_interface controller_interface
+  CATKIN_DEPENDS urdf realtime_utilities cnr_controller_interface_utils cnr_hardware_interface controller_interface
       cnr_logger rosdyn_core rosdyn_chain_state subscription_notifier sensor_msgs
 )
 

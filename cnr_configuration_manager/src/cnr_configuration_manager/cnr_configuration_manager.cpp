@@ -151,7 +151,7 @@ bool ConfigurationManager::startCallback(configuration_msgs::StartConfiguration:
       if (res.ok)
       {
         m_active_configuration_name = req.start_configuration;
-        m_nh.setParam("status/active_configuration", m_active_configuration_name);
+        ros::param::set(m_nh.getNamespace() + "/status/active_configuration", m_active_configuration_name);
       }
       else
       {
@@ -194,7 +194,7 @@ bool ConfigurationManager::stopCallback(configuration_msgs::StopConfiguration::R
     if (res.ok)
     {
       m_active_configuration_name = "";
-      m_nh.setParam("status/active_configuration", m_active_configuration_name);
+      ros::param::set(m_nh.getNamespace() + "/status/active_configuration", m_active_configuration_name);
     }
   }
   catch (std::exception& e)
@@ -275,7 +275,7 @@ bool ConfigurationManager::init()
     CNR_TRACE_START(m_logger);
     if (m_nh.hasParam("control_configurations") && getAvailableConfigurationsFromParam())
     {
-      m_nh.setParam("status/active_configuration", "none");
+      ros::param::set(m_nh.getNamespace() + "/status/active_configuration", "none");
     }
     else
     {
@@ -595,7 +595,7 @@ bool ConfigurationManager::getAvailableConfigurationsFromParam()
 
   std::map<std::string, ConfigurationStruct > configurations;
   XmlRpc::XmlRpcValue                         configuration_components;
-  if (!m_nh.getParam("control_configurations", configuration_components))
+  if (!ros::param::get(m_nh.getNamespace() + "/control_configurations", configuration_components))
   {
     std::string error = "Param '" + m_nh.getNamespace() + "/control_configurations' is not found." ;
     CNR_RETURN_FALSE(m_logger, error);

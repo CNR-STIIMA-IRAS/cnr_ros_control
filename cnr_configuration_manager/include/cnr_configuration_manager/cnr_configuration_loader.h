@@ -62,13 +62,13 @@ public:
 
   cnr_hardware_driver_interface::RobotHwDriverInterfacePtr getDriver(const std::string& hw)
   {
-    return drivers_.find(hw) != drivers_.end() ? drivers_.at(hw) :  nullptr;
+    return drivers_.find(hw) != drivers_.end() ? drivers_.at(hw) : nullptr;
   }
 
   const cnr_hardware_driver_interface::RobotHwDriverInterfacePtr& getDriver(const std::string& hw) const
   {
     static cnr_hardware_driver_interface::RobotHwDriverInterfacePtr nullret; nullret.reset();
-    return drivers_.find(hw) != drivers_.end() ? drivers_.at(hw) :  nullret;
+    return drivers_.find(hw) != drivers_.end() ? drivers_.at(hw) : nullret;
   }
 
   const ConfigurationStruct& getRunningConfiguration() const
