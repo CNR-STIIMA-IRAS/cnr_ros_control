@@ -227,9 +227,9 @@ inline bool JointCommandController<H,T>::exitUpdate()
                                this->m_sampling_period, m_max_velocity_multiplier, true, &report))
     {
       print_report = true;
+      m_target.q()  = m_last_target.q() + saturated_qd * this->m_dt.toSec();
+      m_target.qd() = saturated_qd;
     }
-    m_target.q()  = m_last_target.q() + saturated_qd * this->m_dt.toSec();
-    m_target.qd() = saturated_qd;
 
     m_last_target.copy(m_target, m_target.ONLY_JOINT);
 
