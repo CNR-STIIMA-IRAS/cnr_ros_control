@@ -12,10 +12,13 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 execute_process(COMMAND uname -r OUTPUT_VARIABLE UNAME_RESULT OUTPUT_STRIP_TRAILING_WHITESPACE)
 message(-- " Kernel version: " ${UNAME_RESULT})
 if(UNAME_RESULT MATCHES "^([^rt]*)rt")
+  message(-- "using realtime")
   set(PREEMPTIVE_RT ON CACHE BOOL "Compile library for preemptive machines")
 else()
+  message(-- "using NO realtime")
   set(PREEMPTIVE_RT OFF CACHE BOOL "Compile library for preemptive machines")
 endif()
+
 
 find_package(catkin REQUIRED COMPONENTS
   configuration_msgs

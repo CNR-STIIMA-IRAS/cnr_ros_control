@@ -276,7 +276,7 @@ bool RobotHwNodelet::enterOnInit()
   realtime_utilities::DiagnosticsInterface::addTimeTracker("read",sampling_period);
   realtime_utilities::DiagnosticsInterface::addTimeTracker("write",sampling_period);
   realtime_utilities::DiagnosticsInterface::addTimeTracker("update",sampling_period);
-  
+
   m_robot_hw_plugin_loader.reset(
     new pluginlib::ClassLoader<cnr_hardware_interface::RobotHW>("cnr_hardware_interface", "cnr_hardware_interface::RobotHW"));
 
@@ -427,15 +427,27 @@ void RobotHwNodelet::controlUpdateThread()
 {
   CNR_WARN(m_logger, "Start update thread (period: " << m_period << ")");
 
+
 #if PREEMPTIVE_RT
-  realtime_utilities::period_info  pinfo;
-  if(!realtime_utilities::rt_init_thread(RT_STACK_SIZE, sched_get_priority_max(SCHED_RR)-2, SCHED_RR, &pinfo, m_period.toNSec()) )
-  {
-    CNR_ERROR(m_logger, "Failed in setting thread rt properties. Exit. ");
-    std::raise(SIGINT);
-    return;
-  }
+#pragma message( "PREEMPTIVE_RT = " PREEMPTIVE_RT )
+  bool preemptive_rt=true;
+#else
+#pragma message( "NO REALTIME" )
+  CNR_DEBUG(m_logger,"using a non RT mode");
+  bool preemptive_rt=false;
 #endif
+
+  if (preemptive_rt)
+  {
+#pragma message( "REALTIME" )
+    realtime_utilities::period_info  pinfo;
+    CNR_INFO(m_logger,"starting in PREEMPTIVE_RT mode");
+    if(!realtime_utilities::rt_init_thread(RT_STACK_SIZE, sched_get_priority_max(SCHED_RR)-2, SCHED_RR, &pinfo, m_period.toNSec()) )
+    {
+      CNR_ERROR(m_logger, "Failed in setting thread rt properties. Exit. ");
+      preemptive_rt=false;
+    }
+  }
 
   m_update_thread_state = RUNNING;
 #if defined(USE_TIMER_REALTIME_UTILS)
@@ -507,8 +519,8 @@ void RobotHwNodelet::controlUpdateThread()
     try
     {
       timeSpanStrakcer("update")->tick();
-      // 
-      // it executes the 
+      //
+      // it executes the
       // hw->doSwitch() as needed, and the update of the control strategies
       //
       m_cmp->update(ros::Time::now(), m_period);
