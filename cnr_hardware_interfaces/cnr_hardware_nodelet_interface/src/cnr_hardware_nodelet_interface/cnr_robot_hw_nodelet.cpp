@@ -440,6 +440,8 @@ void RobotHwNodelet::controlUpdateThread()
   if (preemptive_rt)
   {
 #pragma message( "REALTIME" )
+
+#if PREEMPTIVE_RT
     realtime_utilities::period_info  pinfo;
     CNR_INFO(m_logger,"starting in PREEMPTIVE_RT mode");
     if(!realtime_utilities::rt_init_thread(RT_STACK_SIZE, sched_get_priority_max(SCHED_RR)-2, SCHED_RR, &pinfo, m_period.toNSec()) )
@@ -447,7 +449,12 @@ void RobotHwNodelet::controlUpdateThread()
       CNR_ERROR(m_logger, "Failed in setting thread rt properties. Exit. ");
       preemptive_rt=false;
     }
+#else
+    // @Manuel something need to be done here...
+#endif
   }
+
+
 
   m_update_thread_state = RUNNING;
 #if defined(USE_TIMER_REALTIME_UTILS)
