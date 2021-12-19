@@ -67,7 +67,7 @@ class JointCommandController: public cnr::control::JointController<H,T>
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  enum InputType {Q_PRIORITY, QD_PRIORITY};
+  enum InputType {Q_PRIORITY, QD_PRIORITY, NONE};
 
   JointCommandController() = default;
   virtual ~JointCommandController();
