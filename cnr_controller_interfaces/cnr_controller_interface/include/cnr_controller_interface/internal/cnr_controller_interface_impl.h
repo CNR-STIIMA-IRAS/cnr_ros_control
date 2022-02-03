@@ -328,6 +328,12 @@ void Controller<T>::update(const ros::Time& time, const ros::Duration& period)
   {
     CNR_ERROR_THROTTLE(m_logger, 10.0, "The update of the controller failed. Exception:" << e.what() );
     CNR_RETURN_NOTOK_THROTTLE(m_logger, void(), 10.0);
+    }
+  }
+  catch(const std::exception& e)
+  {
+    CNR_ERROR_THROTTLE(m_logger, 10.0, "The update of the controller failed. Exception:" << e.what() );
+    CNR_RETURN_NOTOK_THROTTLE(m_logger, void(), 10.0);
   }
   CNR_RETURN_OK_THROTTLE_DEFAULT(m_logger, void());
 }
@@ -337,7 +343,7 @@ void Controller<T>::stopping(const ros::Time& time)
 {
   CNR_TRACE_START(m_logger);
   try
-  {   
+  {
     if(enterStopping() && doStopping(time) && exitStopping())
     {
       //dump_state("STOPPED");
@@ -396,14 +402,14 @@ void Controller<T>::aborting(const ros::Time& time)
   {
     if(enterAborting() && doAborting(time)  && exitAborting())
     {
-      CNR_RETURN_OK(m_logger, void());  
+      CNR_RETURN_OK(m_logger, void());
     }
   }
   catch(const std::exception& e)
   {
     CNR_ERROR(m_logger, "The aborting of the controller failed. Exception:" << e.what() );
   }
-  
+
   //======================================
   throw std::runtime_error("Aborting failed, and the only way to raise the error is an excpetion!");
   //======================================
