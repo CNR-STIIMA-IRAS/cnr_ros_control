@@ -81,23 +81,23 @@ public:
   {
     return true;
   }
-  virtual bool doStarting(const ros::Time& /*time*/)
+  virtual bool doStarting(const ros::Time& time)
   {
     return true;
   }
-  virtual bool doUpdate(const ros::Time& /*time*/, const ros::Duration& /*period*/)
+  virtual bool doUpdate(const ros::Time& time, const ros::Duration& period)
   {
     return true;
   }
-  virtual bool doStopping(const ros::Time& /*time*/)
+  virtual bool doStopping(const ros::Time& time)
   {
     return true;
   }
-  virtual bool doWaiting(const ros::Time& /*time*/)
+  virtual bool doWaiting(const ros::Time& time)
   {
     return true;
   }
-  virtual bool doAborting(const ros::Time& /*time*/)
+  virtual bool doAborting(const ros::Time& time)
   {
     return true;
   }
@@ -157,7 +157,17 @@ public:
   bool publish(const size_t& idx, const boost::shared_ptr<M>& message);
 
   /**
-   * @brief add_subscriber
+   * @brief Allows the user to easily add a subscriber, eith the correct callback queue, 
+   *        and the timing check
+   * 
+   * The usage of the function is
+   * class A : public Controller<T>
+   * {
+   *    bool doInit()
+   *    {
+   *       this->template add_subscriber< type of the message>(topic, queue_size, callbac, watchdog)
+   *    }
+   * };
    * @param id
    * @param topic
    * @param queue_size
@@ -173,8 +183,10 @@ public:
   std::shared_ptr<ros::Subscriber> getSubscriber(const size_t& id);
   std::shared_ptr<ros::Publisher>  getPublisher(const size_t &id);
 
-protected:
+//protected:
 
+  virtual bool prepareInit(T* hw, const std::string& hw_name, const std::string& ctrl_name,
+                            ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh);
   virtual bool enterInit();
   virtual bool exitInit();
 
@@ -196,9 +208,6 @@ protected:
   virtual bool enterAborting();
   virtual bool exitAborting();
 
-  bool dump_state(const std::string& status);
-  //bool dump_state();
-
 protected:
   T*            m_hw;
   ros::Duration m_dt;
@@ -207,7 +216,6 @@ protected:
   std::string                 m_ctrl_name;
   double                      m_sampling_period;
   double                      m_watchdog;
-  std::vector<std::string>    m_status_history;
 
 private:
   ros::NodeHandle     m_root_nh;

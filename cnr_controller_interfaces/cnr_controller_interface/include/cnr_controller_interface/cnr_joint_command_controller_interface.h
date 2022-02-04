@@ -79,13 +79,13 @@ public:
   virtual bool doWaiting(const ros::Time& time) override;
   virtual bool doAborting(const ros::Time& time) override;
 
-protected:
   virtual bool enterInit() override;
   virtual bool enterStarting() override;
   virtual bool enterUpdate() override;
   virtual bool exitUpdate() override;
   virtual bool exitStopping() override;
 
+protected:
   const rosdyn::ChainState& chainCommand() const;
   rosdyn::ChainState&       chainCommand();
 

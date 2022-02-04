@@ -40,7 +40,6 @@
 #include <atomic>
 #include <string>
 #include <thread>
-#include <realtime_utilities/diagnostics_interface.h>
 #include <cnr_controller_interface_params/cnr_controller_interface_params.h>
 #include <cnr_controller_manager_interface/cnr_controller_manager_proxy.h>
 
@@ -52,11 +51,10 @@ namespace cnr_controller_manager_interface
  * @brief ControllerManagerProxy::ControllerManagerProxy
  * @param nh
  */
-ControllerManagerProxy::ControllerManagerProxy(std::shared_ptr<cnr_logger::TraceLogger>  logger,
-                                               const std::string&                        hw_name,
-                                               hardware_interface::RobotHW*              robot_hw,
-                                               const ros::NodeHandle&                    nh)
-: ControllerManager(logger,hw_name,robot_hw,nh)
+ControllerManagerProxy::ControllerManagerProxy(const cnr_logger::TraceLoggerPtr&  logger,
+                                               const std::string&           hw_name,
+                                               controller_manager::ControllerManager* cm)
+: ControllerManagerInterface(logger,hw_name,cm)
 {
   load_     = nh_.advertiseService("/" + hw_name + "/controller_manager_proxy/load_controller",
                                    &ControllerManagerProxy::loadControllerSrv, this);
@@ -64,6 +62,13 @@ ControllerManagerProxy::ControllerManagerProxy(std::shared_ptr<cnr_logger::Trace
                                    &ControllerManagerProxy::unloadControllerSrv, this);
   doswitch_ = nh_.advertiseService("/" + hw_name + "/controller_manager_proxy/switch_controller",
                                    &ControllerManagerProxy::switchControllerSrv,this);
+}
+
+ControllerManagerProxy::~ControllerManagerProxy()
+{
+  load_.shutdown();
+  unload_.shutdown();
+  doswitch_.shutdown();
 }
 
 /**
@@ -75,14 +80,14 @@ ControllerManagerProxy::ControllerManagerProxy(std::shared_ptr<cnr_logger::Trace
 bool ControllerManagerProxy::loadControllerSrv(controller_manager_msgs::LoadController::Request& req,
                                                controller_manager_msgs::LoadController::Response& res )
 {
-  CNR_TRACE_START(*logger_, "HW: "+ getHwName());
+  CNR_TRACE_START(logger_, "HW: "+ getHwName());
   std::lock_guard<std::mutex> lock(mtx_);
-  res.ok = cm_.loadController(req.name);
-  if( res.ok )
+  res.ok = this->loadController(req.name);
+  if(!res.ok)
   {
-    controllers_.emplace( req.name, cm_.getControllerByName(req.name) );
+    CNR_ERROR(logger_, "Error in loading '" + req.name+ "' (HW: " + getHwName()+")");
   }
-  CNR_RETURN_TRUE(*logger_, "HW: " + getHwName());
+  CNR_RETURN_TRUE(logger_, "HW: " + getHwName());
 }
 
 /**
@@ -94,17 +99,14 @@ bool ControllerManagerProxy::loadControllerSrv(controller_manager_msgs::LoadCont
 bool ControllerManagerProxy::unloadControllerSrv(controller_manager_msgs::UnloadController::Request& req,
                                                  controller_manager_msgs::UnloadController::Response& res )
 {
-  CNR_TRACE_START(*logger_, "HW: "+ getHwName());
+  CNR_TRACE_START(logger_, "HW: "+ getHwName());
   std::lock_guard<std::mutex> lock(mtx_);
-  res.ok = cm_.unloadController(req.name);
-  if( res.ok )
+  res.ok = this->unloadController(req.name);
+  if(!res.ok)
   {
-    if(controllers_.find(req.name) != controllers_.end())
-    {
-      controllers_.erase( controllers_.find(req.name) );
-    }
+    CNR_ERROR(logger_, "Error in unloading '" + req.name+ "' (HW: " + getHwName()+")");
   }
-  CNR_RETURN_TRUE(*logger_, "HW: " + getHwName());
+  CNR_RETURN_TRUE(logger_, "HW: " + getHwName());
 }
 
 /**
@@ -116,97 +118,25 @@ bool ControllerManagerProxy::unloadControllerSrv(controller_manager_msgs::Unload
 bool ControllerManagerProxy::switchControllerSrv(controller_manager_msgs::SwitchController::Request& req,
                                                  controller_manager_msgs::SwitchController::Response& res )
 {
-  CNR_TRACE_START(*logger_, "HW: "+ getHwName());
+  CNR_TRACE_START(logger_, "HW: "+ getHwName());
   std::lock_guard<std::mutex> lock(mtx_);
   for ( const auto ctrl : req.start_controllers )
   {
     if( controllers_.find(ctrl) == controllers_.end() )
     {
-      controller_manager_msgs::LoadController load;
-      load.request.name = ctrl;
-      if ( !loadControllerSrv(load.request,load.response))
+      res.ok = this->loadController(ctrl);
+      if(!res.ok)
       {
-        CNR_RETURN_FALSE(*logger_, "Wierd Error in loading the '" + ctrl + "'" );
-      }
-      if( !load.response.ok )
-      {
-        CNR_RETURN_FALSE(*logger_, "Failed in loading the '" + ctrl + "'" );
+        CNR_ERROR(logger_, "Switching Srv failure: error in prelimniary loading '" 
+                              + ctrl + "' (HW: " + getHwName()+")");
+        CNR_RETURN_TRUE(logger_, "HW: " + getHwName());
       }
     }
   }
-  res.ok = cm_.switchController( req.start_controllers, req.stop_controllers, req.strictness);
-  CNR_RETURN_TRUE(*logger_, "HW: " + getHwName());
+  res.ok = this->switchController( req.start_controllers, req.stop_controllers, req.strictness);
+  CNR_RETURN_TRUE(logger_, "HW: " + getHwName());
 }
 
-/**
- * @brief ControllerManagerProxy::diagnostics
- * @param stat
- */
-void ControllerManagerProxy::diagnosticsInfo(diagnostic_updater::DiagnosticStatusWrapper &stat)
-{
-  std::lock_guard<std::mutex> lock(mtx_);
-  for ( const auto & ctrl : controllers_)
-  {
-    realtime_utilities::DiagnosticsInterface* cnr_ctrl =
-                                    dynamic_cast<realtime_utilities::DiagnosticsInterface*>(ctrl.second);
-    if(cnr_ctrl)
-    {
-      cnr_ctrl->diagnosticsInfo(stat);
-    }
-  }
-}
-
-
-/**
- * @brief ControllerManagerProxy::diagnostics
- * @param stat
- */
-void ControllerManagerProxy::diagnosticsWarn(diagnostic_updater::DiagnosticStatusWrapper &stat)
-{
-  std::lock_guard<std::mutex> lock(mtx_);
-  for ( const auto & ctrl : controllers_)
-  {
-    realtime_utilities::DiagnosticsInterface* cnr_ctrl =
-                                    dynamic_cast<realtime_utilities::DiagnosticsInterface*>(ctrl.second);
-    if( cnr_ctrl )
-    {
-      cnr_ctrl->diagnosticsWarn(stat);
-    }
-  }
-}
-
-
-/**
- * @brief ControllerManagerProxy::diagnostics
- * @param stat
- */
-void ControllerManagerProxy::diagnosticsError(diagnostic_updater::DiagnosticStatusWrapper &stat)
-{
-  std::lock_guard<std::mutex> lock(mtx_);
-  for ( const auto & ctrl : controllers_)
-  {
-    realtime_utilities::DiagnosticsInterface* cnr_ctrl =
-                                    dynamic_cast<realtime_utilities::DiagnosticsInterface*>(ctrl.second);
-    if( cnr_ctrl )
-    {
-      cnr_ctrl->diagnosticsError(stat);
-    }
-  }
-}
-
-void ControllerManagerProxy::diagnosticsPerformance(diagnostic_updater::DiagnosticStatusWrapper &stat)
-{
-  std::lock_guard<std::mutex> lock(mtx_);
-  for ( const auto & ctrl : controllers_)
-  {
-    realtime_utilities::DiagnosticsInterface* cnr_ctrl =
-                                    dynamic_cast<realtime_utilities::DiagnosticsInterface*>(ctrl.second);
-    if( cnr_ctrl )
-    {
-      cnr_ctrl->diagnosticsPerformance(stat);
-    }
-  }
-}
 
 }  // namespace cnr_controller_manager_interface
 

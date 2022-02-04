@@ -41,7 +41,7 @@
 #include <cnr_fake_hardware_interface/cnr_fake_robot_hw.h>
 
 
-PLUGINLIB_EXPORT_CLASS(cnr_hardware_interface::FakeRobotHW, cnr_hardware_interface::RobotHW)
+PLUGINLIB_EXPORT_CLASS(cnr_hardware_interface::FakeRobotHW, hardware_interface::RobotHW)
 
 namespace cnr_hardware_interface
 {

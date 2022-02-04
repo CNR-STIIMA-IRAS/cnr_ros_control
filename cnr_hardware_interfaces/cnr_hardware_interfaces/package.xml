@@ -9,7 +9,6 @@
   <license>BSD</license>
 
   <exec_depend> cnr_hardware_interface </exec_depend> 
-  <exec_depend> cnr_hardware_nodelet_interface </exec_depend>
   <exec_depend> cnr_fake_hardware_interface </exec_depend>
   <exec_depend> cnr_topic_hardware_interface </exec_depend>
   <exec_depend> cnr_topics_hardware_interface </exec_depend>

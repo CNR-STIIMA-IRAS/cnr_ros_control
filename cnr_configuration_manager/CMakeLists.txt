@@ -21,12 +21,11 @@ find_package(catkin REQUIRED COMPONENTS
   control_msgs
   cnr_controller_manager_interface
   cnr_controller_interface
-  cnr_hardware_nodelet_interface
+  cnr_hardware_driver_interface
   cnr_hardware_interface
   controller_manager
   hardware_interface
   actionlib
-  nodelet
   roscpp
   configuration_msgs
   subscription_notifier
@@ -49,9 +48,9 @@ endif()
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES cnr_configuration_manager
-  CATKIN_DEPENDS  cnr_controller_manager_interface  cnr_controller_interface cnr_hardware_nodelet_interface 
+  CATKIN_DEPENDS  cnr_controller_manager_interface  cnr_controller_interface cnr_hardware_driver_interface 
                   cnr_hardware_interface cnr_logger configuration_msgs actionlib control_msgs controller_manager 
-                  hardware_interface nodelet configuration_msgs subscription_notifier pluginlib rosconsole roscpp
+                  hardware_interface configuration_msgs subscription_notifier pluginlib rosconsole roscpp
   DEPENDS Boost
 )
 

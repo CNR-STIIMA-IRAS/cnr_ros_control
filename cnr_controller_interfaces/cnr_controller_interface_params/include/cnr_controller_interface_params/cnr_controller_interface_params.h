@@ -52,18 +52,18 @@ std::vector<std::string> ctrl_get_names(const std::vector<controller_manager_msg
 std::string ctrl_list_param_name(const std::string& hw_name);
 
 //! get the full param name with the status of the controllers mounted on the hw 'hw_name'
-std::string ctrl_status_param_name(const std::string& hw_name,const std::string& ctrl_name);
+//std::string ctrl_status_param_name(const std::string& hw_name,const std::string& ctrl_name);
 
 //! get the full param name with the last available status of the controllers mounted on the hw 'hw_name'
-std::string ctrl_last_status_param_name(const std::string& hw_name, const std::string& ctrl_name);
+//std::string ctrl_last_status_param_name(const std::string& hw_name, const std::string& ctrl_name);
 
 //! get the status of the controller
-bool ctrl_get_state(const std::string& hw_name, const std::string& ctrl_name, std::string& status, std::string& error,
-                      const ros::Duration& watchdog = ros::Duration(0.0));
+//bool ctrl_get_state(const std::string& hw_name, const std::string& ctrl_name, std::string& status, std::string& error,
+                      //const ros::Duration& watchdog = ros::Duration(0.0));
 
 //! check the status of the controller is the expected one
-bool ctrl_check_state(const std::string& hw_name, const std::string& ctrl_name, const std::string& status,
-                        std::string& error, const ros::Duration& watchdog = ros::Duration(0.0));
+//bool ctrl_check_state(const std::string& hw_name, const std::string& ctrl_name, const std::string& status,
+                        //std::string& error, const ros::Duration& watchdog = ros::Duration(0.0));
 
 //!
 template< typename T >
