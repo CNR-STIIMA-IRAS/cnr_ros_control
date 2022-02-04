@@ -229,7 +229,6 @@ inline bool JointCommandController<H,T>::exitUpdate()
 
     if (m_priority != NONE)
     {
-<<<<<<< HEAD
       if(rosdyn::saturateSpeed(this->chain(), saturated_qd, m_last_target.qd(), m_last_target.q(),
                                  this->m_sampling_period, m_max_velocity_multiplier, true, &report))
       {
@@ -237,11 +236,6 @@ inline bool JointCommandController<H,T>::exitUpdate()
         m_target.q()  = m_last_target.q() + saturated_qd * this->m_dt.toSec();
         m_target.qd() = saturated_qd;
       }
-=======
-      print_report = true;
-      m_target.q()  = m_last_target.q() + saturated_qd * this->m_dt.toSec();
-      m_target.qd() = saturated_qd;
->>>>>>> 8ac4039834e8820ecc3f2ae45dd8d6e7c04865b4
     }
 
     m_last_target.copy(m_target, m_target.ONLY_JOINT);
