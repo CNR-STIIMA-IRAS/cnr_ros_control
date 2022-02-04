@@ -328,10 +328,6 @@ void Controller<T>::update(const ros::Time& time, const ros::Duration& period)
   {
     CNR_ERROR_THROTTLE(m_logger, 10.0, "The update of the controller failed. Exception:" << e.what() );
     CNR_RETURN_NOTOK_THROTTLE(m_logger, void(), 10.0);
-<<<<<<< HEAD
-=======
-  
->>>>>>> cdb7e7dfc4175d857169d16c128054e1976ad640
   }
   catch(const std::exception& e)
   {
