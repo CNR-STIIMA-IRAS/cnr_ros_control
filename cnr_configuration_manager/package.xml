@@ -17,15 +17,14 @@
   <depend>rosconsole</depend>
   <depend>roscpp</depend>
   <depend>uuid</depend>
-  <depend>nodelet</depend>
-
+  
   <depend>actionlib</depend>
   <depend>control_msgs</depend>
   <depend>configuration_msgs</depend>
   <depend>cnr_controller_manager_interface</depend>
   <depend>cnr_controller_interface</depend>
   <depend>cnr_hardware_interface</depend>
-  <depend>cnr_hardware_nodelet_interface</depend>
+  <depend>cnr_hardware_driver_interface</depend>
   <depend>controller_manager</depend>
   <depend>hardware_interface</depend>
   <depend>subscription_notifier</depend>

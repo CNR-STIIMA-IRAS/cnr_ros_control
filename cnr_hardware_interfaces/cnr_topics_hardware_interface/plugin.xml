@@ -1,15 +1,6 @@
 
 <library path="lib/libcnr_topics_hardware_interface">
-  <class name="cnr/control/TopicsRobotHwNodelet" type="cnr_hardware_nodelet_interface::TopicsRobotHwNodelet" base_class_type="nodelet::Nodelet">
-    <description>
-      cnr::control::TopicHwIfaceNodelet
-    </description>
-  </class>
-</library>
-
-
-<library path="lib/libcnr_topics_hardware_interface">
-  <class name="cnr/control/TopicsRobotHW" type="cnr_hardware_interface::TopicsRobotHW" base_class_type="cnr_hardware_interface::RobotHW">
+  <class name="cnr/control/TopicsRobotHW" type="cnr_hardware_interface::TopicsRobotHW" base_class_type="hardware_interface::RobotHW">
     <description>
       cnr::control::TopicHwIfaceNodelet
     </description>

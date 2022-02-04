@@ -55,16 +55,12 @@ if(${CMAKE_VERSION} VERSION_GREATER  "3.16.0")
     <ros/ros.h>
     <ros/console.h>
     <ros/time.h>
-    <cnr_logger/cnr_logger.h>
     <std_msgs/Int64.h>
     <sensor_msgs/JointState.h>
     <urdf_model/model.h>
     <urdf_parser/urdf_parser.h>
     <hardware_interface/joint_state_interface.h>
     <hardware_interface/joint_command_interface.h>
-    <cnr_hardware_interface/veleff_command_interface.h>
-    <cnr_hardware_interface/posveleff_command_interface.h>
-    <rosdyn_chain_state/chain_state.h>
   )
 endif()
 

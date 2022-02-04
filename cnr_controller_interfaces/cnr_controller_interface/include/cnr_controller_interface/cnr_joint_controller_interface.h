@@ -82,12 +82,12 @@ public:
   virtual bool doWaiting(const ros::Time& /*time*/) override;
   virtual bool doAborting(const ros::Time& /*time*/) override;
 
-protected:
   virtual bool enterInit() override;
   virtual bool enterStarting() override;
   virtual bool exitStarting() override;
   virtual bool enterUpdate() override;
 
+protected:
   // Accessors, to be used by the inherited classes
   const unsigned int& nAx( ) const { return m_chain.getActiveJointsNumber(); }
   const std::vector<std::string>& jointNames( ) const { return m_chain.getActiveJointsName(); }

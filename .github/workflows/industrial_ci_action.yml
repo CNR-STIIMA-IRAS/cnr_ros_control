@@ -4,16 +4,16 @@
 name: CI
 
 # This determines when this workflow is run
-on: [push, pull_request] # on all pushes and PRs
+#on: [push, pull_request] # on all pushes and PRs
 
 # or more fine-grained
-# on:
-#   # When master or melodic-devel branch is pushed to
-#   push:
-#     branches: [ master, melodic-devel ]
-#   # When there is a pull request against master
-#   pull_request:
-#     branches: [ master ]
+on:
+  # When master or melodic-devel branch is pushed to
+  push:
+    branches: [ nicola-devel ]
+  # When there is a pull request against master
+  pull_request:
+    branches: [ nicola-devel ]
 
 jobs:
   industrial_ci:
@@ -25,7 +25,8 @@ jobs:
     env:
       CCACHE_DIR: /github/home/.ccache # Directory for ccache (and how we enable ccache in industrial_ci)
       #CODE_COVERAGE: codecov.io
-      UPSTREAM_WORKSPACE: '.upstream.repos'
+      UPSTREAM_WORKSPACE: 'dependencies.rosinstall'
+      PARALLEL_BUILDS: 0
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

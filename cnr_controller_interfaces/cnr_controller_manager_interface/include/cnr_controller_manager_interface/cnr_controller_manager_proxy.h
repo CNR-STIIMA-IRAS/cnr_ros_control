@@ -49,7 +49,7 @@
 #include <cnr_controller_manager_interface/internal/utils.h>
 #include <diagnostic_updater/DiagnosticStatusWrapper.h>
 
-#include <cnr_controller_manager_interface/internal/cnr_controller_manager.h>
+#include <cnr_controller_manager_interface/cnr_controller_manager_interface.h>
 
 namespace cnr_controller_manager_interface
 {
@@ -67,23 +67,25 @@ namespace cnr_controller_manager_interface
  * controller_manager::ControllerManager. As matter of example, it offers diganostics, it dump the status of the
  * controllers on the ros parameters etc.
  */
-class ControllerManagerProxy : public cnr_controller_manager_interface::ControllerManager
+class ControllerManagerProxy : public cnr_controller_manager_interface::ControllerManagerInterface
 {
 public:
-  
-    
+  typedef std::shared_ptr<ControllerManagerProxy> Ptr;
+  typedef std::shared_ptr<ControllerManagerProxy const> ConstPtr;
+
   ControllerManagerProxy() = delete;
-  virtual ~ControllerManagerProxy() = default;
+  virtual ~ControllerManagerProxy();
   ControllerManagerProxy(const ControllerManagerProxy&) = delete;
   ControllerManagerProxy& operator=(const ControllerManagerProxy&) = delete;
   ControllerManagerProxy(ControllerManagerProxy&&) = delete;
   ControllerManagerProxy& operator=(ControllerManagerProxy&&) = delete;
     
-  ControllerManagerProxy(std::shared_ptr<cnr_logger::TraceLogger>  logger,
-                         const std::string&                        hw_name,
-                         hardware_interface::RobotHW*              robot_hw,
-                         const ros::NodeHandle&                    nh=ros::NodeHandle());
-
+  ControllerManagerProxy(const cnr_logger::TraceLoggerPtr& logger,
+                         const std::string&                hw_name,
+                         controller_manager::ControllerManager* cm);
+private:
+  /** \name ROS Service API
+   *\{*/
   bool loadControllerSrv(controller_manager_msgs::LoadController::Request& req,
                          controller_manager_msgs::LoadController::Response& res );
   bool unloadControllerSrv(controller_manager_msgs::UnloadController::Request& req,
@@ -91,22 +93,16 @@ public:
   bool switchControllerSrv(controller_manager_msgs::SwitchController::Request& req,
                            controller_manager_msgs::SwitchController::Response& res );
 
-  void diagnosticsInfo(diagnostic_updater::DiagnosticStatusWrapper &stat) ;
-  void diagnosticsWarn(diagnostic_updater::DiagnosticStatusWrapper &stat) ;
-  void diagnosticsError(diagnostic_updater::DiagnosticStatusWrapper &stat)  ;
-  void diagnosticsPerformance(diagnostic_updater::DiagnosticStatusWrapper &stat) ;
-
-
-private:
   mutable std::mutex mtx_;
   ros::ServiceServer load_;
   ros::ServiceServer unload_;
   ros::ServiceServer doswitch_;
-
-  std::map<std::string, controller_interface::ControllerBase* > controllers_;
-
-
+  /*\}*/
 };
+
+typedef ControllerManagerProxy::Ptr ControllerManagerProxyPtr;
+typedef ControllerManagerProxy::ConstPtr ControllerManagerProxyConstPtr;
+
 
 }  // namespace cnr_controller_manager_interface
 

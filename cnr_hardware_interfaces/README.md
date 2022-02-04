@@ -11,7 +11,6 @@ Specifically, the extension built on five packages:
 
 They requires the package [`cnr_hardware_interface`](https://github.com/CNR-STIIMA-IRAS/cnr_hardware_interface). 
 
-
 ## CNR Hardware Nodelet Interface [(readme)](cnr_hardware_nodelet_interface/README.md)
 
 The  `cnr_hardware_nodelet_interface` [(readme)](cnr_hardware_nodelet_interface/README.md) is the core of the **ros_control** extension

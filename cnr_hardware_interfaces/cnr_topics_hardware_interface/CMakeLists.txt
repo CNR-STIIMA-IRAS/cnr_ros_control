@@ -15,14 +15,12 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 ######
 find_package(catkin REQUIRED COMPONENTS
   control_msgs
-  cnr_hardware_nodelet_interface
   cnr_controller_interface
   controller_manager
   diagnostic_msgs
   geometry_msgs
   hardware_interface
   subscription_notifier
-  nodelet
   roscpp
   sensor_msgs
   cnr_hardware_interface
@@ -38,8 +36,8 @@ endif()
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES cnr_topics_hardware_interface
-  CATKIN_DEPENDS control_msgs cnr_hardware_nodelet_interface cnr_controller_interface controller_manager
-                  diagnostic_msgs geometry_msgs hardware_interface  subscription_notifier nodelet roscpp sensor_msgs
+  CATKIN_DEPENDS control_msgs cnr_controller_interface controller_manager
+                  diagnostic_msgs geometry_msgs hardware_interface  subscription_notifier roscpp sensor_msgs
                   cnr_hardware_interface  name_sorting
   DEPENDS 
 )
@@ -79,6 +77,7 @@ install(FILES plugin.xml
 if(CATKIN_ENABLE_TESTING)
   find_package(roscpp REQUIRED)
   find_package(rostest REQUIRED)
+  find_package(cnr_ros_control_test_description REQUIRED)
   add_rostest_gtest(${PROJECT_NAME}_test test/test.launch test/test.cpp)
   target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME} ${catkin_LIBRARIES} ${roscpp_LIBRARIES} )
 

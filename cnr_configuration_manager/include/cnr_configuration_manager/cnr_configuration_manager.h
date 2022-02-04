@@ -79,14 +79,13 @@ public:
 
   bool run();
 
-  bool isOk(bool nodelet_check);
+  bool isOk();
 
 private:
   ros::NodeHandle                             m_nh;
   std::shared_ptr<cnr_logger::TraceLogger>    m_logger;
   std::mutex                                  m_callback_mutex;
   std::string                                 m_active_configuration_name;
-  ConfigurationStruct                         m_active_configuration;
   std::map<std::string, ConfigurationStruct>  m_configurations;
 
   ConfigurationLoader                         m_conf_loader;
