@@ -30,9 +30,6 @@
     local-name: cnr_control_toolbox
     uri: https://github.com/CNR-STIIMA-IRAS/cnr_control_toolbox
 - git:
-    local-name: eigen_control_toolbox
-    uri: https://github.com/CNR-STIIMA-IRAS/eigen_control_toolbox
-- git:
     local-name: eigen_utils
     uri: https://github.com/CNR-STIIMA-IRAS/eigen_utils
 - git:
