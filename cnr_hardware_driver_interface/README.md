@@ -49,7 +49,7 @@ bool RobotHwDriverInterface::enterOnInit()
   m_hw_nh  = getPrivateNodeHandle();
 
   double sampling_period = 0.001;
-  if (!m_hw_nh.getParam("sampling_period", sampling_period))
+  if (!rosparam_utilities::get(m_hw_nh.getNamespace() +"/sampling_period", sampling_period))
   {
     CNR_WARN(m_logger, m_hw_namespace + "/sampling_period' does not exist, set equal to 0.001");
     sampling_period = 1.0e-3;
@@ -79,7 +79,7 @@ bool RobotHwDriverInterface::doOnInit()
   std::string robot_type;
   try
   {
-    if (!m_hw_nh.getParam("type", robot_type))
+    if (!rosparam_utilities::get(m_hw_nh.getNamespace() +"/type", robot_type))
     {
       CNR_FATAL(m_logger, "The param '" << m_hw_nh.getNamespace() << "/type' is missing! Abort.");
       CNR_RETURN_FALSE(m_logger);

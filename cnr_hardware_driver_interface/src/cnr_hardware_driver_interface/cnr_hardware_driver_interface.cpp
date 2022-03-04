@@ -52,6 +52,7 @@
 #include <diagnostic_msgs/DiagnosticArray.h>
 
 #include <realtime_utilities/realtime_utilities.h>
+#include <rosparam_utilities/rosparam_utilities.h>
 #include <cnr_controller_interface_params/cnr_controller_interface_params.h>
 #include <cnr_hardware_interface/cnr_robot_hw.h>
 #include <configuration_msgs/SendMessage.h>
@@ -214,7 +215,8 @@ bool RobotHwDriverInterface::init(const std::string& hw_name, const std::map<std
 
   CNR_TRACE_START(m_logger);
   double sampling_period = 0.001;
-  if (!m_hw_nh.getParam("sampling_period", sampling_period))
+  std::string what;
+  if (!rosparam_utilities::get(m_hw_nh.getNamespace() +"/sampling_period", sampling_period,what,&sampling_period))
   {
     CNR_WARN(m_logger, m_hw_namespace + "/sampling_period' does not exist, set equal to 0.001");
     sampling_period = 1.0e-3;
@@ -236,7 +238,7 @@ bool RobotHwDriverInterface::init(const std::string& hw_name, const std::map<std
   {
     //==========================================================
     // LOAD THE ROBOTHW
-    if (!m_hw_nh.getParam("type", robot_type))
+    if (!rosparam_utilities::get(m_hw_nh.getNamespace() +"/type", robot_type))
     {
       CNR_FATAL(m_logger, "The param '" << m_hw_nh.getNamespace() << "/type' is missing! Abort.");
       CNR_RETURN_FALSE(m_logger);
