@@ -16,7 +16,6 @@
 - git:
     local-name: cnr_hardware_interface
     uri:  https://github.com/CNR-STIIMA-IRAS/cnr_hardware_interface.git
-    version: nicola-devel
 - git:
     local-name: rosdyn
     uri:  https://github.com/CNR-STIIMA-IRAS/rosdyn.git
