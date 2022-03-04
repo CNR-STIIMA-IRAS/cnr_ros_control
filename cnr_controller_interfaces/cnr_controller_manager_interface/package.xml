@@ -12,12 +12,15 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>controller_manager_msgs</build_depend>
+  <build_depend>controller_interface</build_depend>
   <build_depend>controller_manager</build_depend>
   <build_depend>cnr_logger</build_depend>
   <build_depend>cnr_controller_interface_params</build_depend>
   <build_depend>realtime_utilities</build_depend>
 
+
   <build_export_depend>controller_manager_msgs</build_export_depend>
+  <build_export_depend>controller_interface</build_export_depend>
   <build_export_depend>controller_manager</build_export_depend>
   <build_export_depend>cnr_logger</build_export_depend>
   <build_export_depend>cnr_controller_interface_params</build_export_depend>
