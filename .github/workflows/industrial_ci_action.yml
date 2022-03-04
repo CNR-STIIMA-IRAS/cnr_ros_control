@@ -10,10 +10,10 @@ name: CI
 on:
   # When master or melodic-devel branch is pushed to
   push:
-    branches: [ nicola-devel ]
+    branches: [ master ]
   # When there is a pull request against master
   pull_request:
-    branches: [ nicola-devel ]
+    branches: [ master ]
 
 jobs:
   industrial_ci:
@@ -22,6 +22,7 @@ jobs:
         env:
           - {ROS_DISTRO: noetic, ROS_REPO: testing}
           - {ROS_DISTRO: noetic, ROS_REPO: main}
+
     env:
       CCACHE_DIR: /github/home/.ccache # Directory for ccache (and how we enable ccache in industrial_ci)
       #CODE_COVERAGE: codecov.io
