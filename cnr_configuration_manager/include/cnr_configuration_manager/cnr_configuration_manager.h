@@ -77,9 +77,9 @@ public:
                             configuration_msgs::UpdateConfigurations::Response& res);
 
   bool init();
-
+  //!
   bool run();
-
+  //!
   bool isOk();
 
 private:

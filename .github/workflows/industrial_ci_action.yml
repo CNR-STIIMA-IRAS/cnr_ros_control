@@ -22,12 +22,10 @@ jobs:
       matrix: # matrix is the product of entries
         ROS_DISTRO: [noetic]
         ROS_REPO: [main]
-        build_type: [Release, Debug]
-
     env:
-      CCACHE_DIR: /github/home/.ccache # Directory for ccache (and how we enable ccache in industrial_ci)
-      CODE_COVERAGE: codecov.io
+      CCACHE_DIR: "/home/runner/target_ws/.ccache"  #/github/home/.ccache # Directory for ccache (and how we enable ccache in industrial_ci)
       UPSTREAM_WORKSPACE: dependencies.rosinstall
+      ISOLATION: "shell"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2   # clone target repository
@@ -38,26 +36,13 @@ jobs:
           restore-keys: |
             ccache-${{ matrix.ROS_DISTRO }}-${{ matrix.ROS_REPO }}-
       # Run industrial_ci
-      - name: industrial_ci-debug
-        if: ${{matrix.build_type == 'Debug'}}
+      - name: industrial_ci
         uses: 'ros-industrial/industrial_ci@master'
         env: 
           ROS_DISTRO: ${{ matrix.ROS_DISTRO }}
           ROS_REPO: ${{ matrix.ROS_REPO }}
-          ADDITIONAL_DEBS: git
-          CATKIN_LINT: false
-          NOT_TEST_BUILD: true
-          PARALLEL_TESTS: false
-          CMAKE_ARGS:  '-DCMAKE_BUILD_TYPE=Debug -DUSE_ROS=ON -DENABLE_TESTING=ON -DENABLE_COVERAGE_TESTING=ON'
-          AFTER_SCRIPT: './.codecov.sh && ./.coverage.sh'
-      - name: industrial_ci-release
-        if: ${{matrix.build_type == 'Release'}}
-        uses: 'ros-industrial/industrial_ci@master'
-        env: 
-          ROS_DISTRO: ${{ matrix.ROS_DISTRO }}
-          ROS_REPO: ${{ matrix.ROS_REPO }}
-          ADDITIONAL_DEBS: git
-          CATKIN_LINT: false
-          NOT_TEST_BUILD: true
-          PARALLEL_TESTS: false
+      
+      - name: codecov.io
+        run: './.codecov.sh && ./.coverage.sh'
+
       - uses: actions/checkout@master
