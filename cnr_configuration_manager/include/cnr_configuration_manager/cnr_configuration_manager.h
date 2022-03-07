@@ -45,6 +45,7 @@
 #include <configuration_msgs/UpdateConfigurations.h>
 
 #include <cnr_logger/cnr_logger.h>
+#include <cnr_configuration_manager/signal_handler.h>
 #include <cnr_hardware_interface/internal/cnr_robot_hw_utils.h>
 #include <cnr_controller_manager_interface/cnr_controller_manager_interface.h>
 #include <cnr_configuration_manager/cnr_configuration_types.h>
