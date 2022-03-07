@@ -4,8 +4,8 @@ declare -a StringArray=("cnr_configuration_manager" "cnr_controller_interface" "
                             "cnr_hardware_driver_interface" "cnr_fake_hardware_interface" "cnr_topic_hardware_interface"\
                                 "cnr_topics_hardware_interface" )
 
-#ws=~/target_ws
-#cd "$ws"
+ws=~/target_ws
+cd "$ws"
 catkin config --cmake-args -DENABLE_COVERAGE_TESTING=ON -DCMAKE_BUILD_TYPE=Debug -DUSE_ROS=ON -DENABLE_TESTING=ON
 
 for val in ${StringArray[@]}; do
