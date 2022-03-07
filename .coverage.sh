@@ -2,7 +2,7 @@
 
 declare -a StringArray=("cnr_configuration_manager" "cnr_controller_interface" "cnr_controller_interface_params"\
                             "cnr_hardware_driver_interface" "cnr_fake_hardware_interface" "cnr_topic_hardware_interface" 
-                                "cnr_topics_hardware_interface" "cnr_ros_control_test_description")
+                                "cnr_topics_hardware_interface" )
 
 ws=~/target_ws
 cd $ws
