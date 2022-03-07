@@ -12,7 +12,7 @@ for val in ${StringArray[@]}; do
 
     echo "Generating coverage for '$val'"
 
-    catkin build "$val" -v --no-deps --catkin-make-args run_tests
+    #catkin build "$val" -v --no-deps --catkin-make-args run_tests
     catkin build "$val" -v --no-deps --catkin-make-args coverage_report
 
     echo "Uploading coverage results to codecov.io"
