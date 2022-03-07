@@ -41,7 +41,7 @@
 #include <cnr_fake_hardware_interface/cnr_fake_robot_hw.h>
 
 
-PLUGINLIB_EXPORT_CLASS(cnr_hardware_interface::FakeRobotHW, cnr_hardware_interface::RobotHW)
+PLUGINLIB_EXPORT_CLASS(cnr_hardware_interface::FakeRobotHW, hardware_interface::RobotHW)
 
 namespace cnr_hardware_interface
 {
@@ -205,6 +205,9 @@ bool FakeRobotHW::doInit()
   registerInterface(&m_ft_jh);
 
   m_p_jh_active = m_v_jh_active = m_e_jh_active = false;
+
+  doRead(ros::Time::now(),ros::Duration(m_sampling_period));
+
   CNR_RETURN_TRUE(m_logger);
 }
 

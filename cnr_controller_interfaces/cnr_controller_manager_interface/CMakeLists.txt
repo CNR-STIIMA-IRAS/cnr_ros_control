@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-find_package(catkin REQUIRED COMPONENTS controller_manager_msgs cnr_logger cnr_controller_interface_params
+find_package(catkin REQUIRED COMPONENTS controller_interface controller_manager controller_manager_msgs cnr_logger cnr_controller_interface_params
   realtime_utilities)
 
 if(CATKIN_ENABLE_TESTING AND ENABLE_COVERAGE_TESTING)
@@ -36,9 +36,9 @@ include_directories(
 
 ## Declare a C++ library
 add_library(${PROJECT_NAME}
-  src/${PROJECT_NAME}/internal/cnr_controller_manager_base.cpp
-  src/${PROJECT_NAME}/internal/cnr_controller_manager.cpp
-   src/${PROJECT_NAME}/cnr_controller_manager_interface.cpp
+  src/${PROJECT_NAME}/internal/cnr_controller_manager_interface_base.cpp
+  src/${PROJECT_NAME}/cnr_controller_manager_interface.cpp
+   src/${PROJECT_NAME}/cnr_controller_manager_interface_srv.cpp
    src/${PROJECT_NAME}/cnr_controller_manager_proxy.cpp
 )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})

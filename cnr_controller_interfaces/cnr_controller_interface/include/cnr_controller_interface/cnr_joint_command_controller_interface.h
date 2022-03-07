@@ -67,7 +67,7 @@ class JointCommandController: public cnr::control::JointController<H,T>
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  enum InputType {Q_PRIORITY, QD_PRIORITY};
+  enum InputType {Q_PRIORITY, QD_PRIORITY, NONE};
 
   JointCommandController() = default;
   virtual ~JointCommandController();
@@ -79,13 +79,13 @@ public:
   virtual bool doWaiting(const ros::Time& time) override;
   virtual bool doAborting(const ros::Time& time) override;
 
-protected:
   virtual bool enterInit() override;
   virtual bool enterStarting() override;
   virtual bool enterUpdate() override;
   virtual bool exitUpdate() override;
   virtual bool exitStopping() override;
 
+protected:
   const rosdyn::ChainState& chainCommand() const;
   rosdyn::ChainState&       chainCommand();
 

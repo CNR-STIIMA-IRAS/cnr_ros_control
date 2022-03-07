@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.1)
-project(cnr_hardware_nodelet_interface)
+project(cnr_hardware_driver_interface)
 
 if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Release)
+  set(CMAKE_BUILD_TYPE Debug)
 endif()
 
 set(CMAKE_CXX_STANDARD 17)
@@ -39,7 +39,7 @@ endif()
 
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES cnr_hardware_nodelet_interface
+  LIBRARIES cnr_hardware_driver_interface
   CATKIN_DEPENDS configuration_msgs cnr_controller_interface_params cnr_controller_manager_interface
     cnr_hardware_interface cnr_logger realtime_utilities nodelet roscpp
 #  DEPENDS system_lib
@@ -48,7 +48,7 @@ catkin_package(
 include_directories(include ${catkin_INCLUDE_DIRS} )
 
 ## Declare a C++ library
-add_library(${PROJECT_NAME} src/${PROJECT_NAME}/cnr_robot_hw_nodelet.cpp )
+add_library(${PROJECT_NAME} src/${PROJECT_NAME}/cnr_hardware_driver_interface.cpp )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} )
 target_compile_options(${PROJECT_NAME} PUBLIC -Wall -faligned-new
         $<$<CONFIG:Release>:-Ofast -funroll-loops -ffast-math >)
@@ -66,10 +66,6 @@ target_precompile_headers(${PROJECT_NAME} PUBLIC  <cstring>
                                                   <string>
                                                   <boost/date_time/posix_time/posix_time.hpp>
                                                   <ros/ros.h>
-                                                  <nodelet/nodelet.h>
-                                                  <nodelet/NodeletLoad.h>
-                                                  <nodelet/NodeletUnload.h>
-                                                  <nodelet/NodeletList.h>
                                                   <pluginlib/class_loader.h>
                                                   <pluginlib/class_list_macros.h>
                                                   <diagnostic_updater/diagnostic_updater.h>

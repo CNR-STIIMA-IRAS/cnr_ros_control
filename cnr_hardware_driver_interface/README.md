@@ -2,12 +2,12 @@
 
 The package provides two classes to ease the configuration and the life-cycle management of the `nodelet`.
 
-## RobotHwNodelet Class
+## RobotHwDriverInterface Class
 
-The class `cnr_hardware_nodelet_interface::RobotHwNodelet : public nodelet::Nodelet`  packs a `RobotHW` inside a `nodelet`. Basically, the Class implements the `onInit` function inherited from the `public nodelet::Nodelet`
+The class `cnr_hardware_driver_interface::RobotHwDriverInterface : public nodelet::Nodelet`  packs a `RobotHW` inside a `nodelet`. Basically, the Class implements the `onInit` function inherited from the `public nodelet::Nodelet`
 
 ```cpp
-void RobotHwNodelet::onInit()
+void RobotHwDriverInterface::onInit()
 {
   m_hw_namespace = getPrivateNodeHandle().getNamespace();
   m_hw_name      = extractRobotName(m_hw_namespace);
@@ -36,10 +36,10 @@ void RobotHwNodelet::onInit()
 
 The implementation is split in three sub-methods `enterOnInit()`, `doOnInit()` and `exitOnInit()`, so the user can derive and modify `doOnInit()` preserving all the functionalities provided by the class.
 
-The `RobotHwNodelet::enterOnInit()` prepares the classes, the diagnosis module, check the sampling period parameters, and create the `plugin` loader of the `RobotHw` class
+The `RobotHwDriverInterface::enterOnInit()` prepares the classes, the diagnosis module, check the sampling period parameters, and create the `plugin` loader of the `RobotHw` class
 
 ```cpp
-bool RobotHwNodelet::enterOnInit()
+bool RobotHwDriverInterface::enterOnInit()
 {
   CNR_TRACE_START(m_logger);
   m_stop_update_thread = m_stop_diagnostic_thread = false;
@@ -70,10 +70,10 @@ bool RobotHwNodelet::enterOnInit()
 }
 ```
 
-The `RobotHwNodelet::doOnInit()` method creates the `RobtHw` objects exploiting the `plugin` loader. The function can be inherited for specific implementation. The `RobotHw` needs an empty Constructor.
+The `RobotHwDriverInterface::doOnInit()` method creates the `RobtHw` objects exploiting the `plugin` loader. The function can be inherited for specific implementation. The `RobotHw` needs an empty Constructor.
 
 ```cpp
-bool RobotHwNodelet::doOnInit()
+bool RobotHwDriverInterface::doOnInit()
 {
   CNR_TRACE_START(m_logger);
   std::string robot_type;
@@ -95,10 +95,10 @@ bool RobotHwNodelet::doOnInit()
 }
 ```
 
-Finally, `RobotHwNodelet::exitOnInit()` creates two running threads: a diagnostic thread, and the control thread. Furthermore, the `ControllerManager` [(ros_control)](http://wiki.ros.org/ros_control) is created, in order to allow the dynamic loading/unloading of the controller. 
+Finally, `RobotHwDriverInterface::exitOnInit()` creates two running threads: a diagnostic thread, and the control thread. Furthermore, the `ControllerManager` [(ros_control)](http://wiki.ros.org/ros_control) is created, in order to allow the dynamic loading/unloading of the controller. 
 
 ```cpp
-bool RobotHwNodelet::exitOnInit()
+bool RobotHwDriverInterface::exitOnInit()
 {
   CNR_TRACE_START(m_logger);
   CNR_DEBUG(m_logger, "Triggering the start of the main thread");
@@ -117,7 +117,7 @@ bool RobotHwNodelet::exitOnInit()
 
   m_update_thread_state = ON_INIT;
   ros::Time start       = ros::Time::now();
-  m_update_thread       = std::thread(&cnr_hardware_nodelet_interface::RobotHwNodelet::controlUpdateThread, this);
+  m_update_thread       = std::thread(&cnr_hardware_driver_interface::RobotHwDriverInterface::controlUpdateThread, this);
   while (m_update_thread_state != RUNNING)
   {
     if (m_update_thread_state == ON_ERROR)
@@ -137,7 +137,7 @@ bool RobotHwNodelet::exitOnInit()
 
   m_diagnostics_thread_state = ON_INIT;
   start                      = ros::Time::now();
-  m_diagnostics_thread       = std::thread(&cnr_hardware_nodelet_interface::RobotHwNodelet::diagnosticsThread, this);
+  m_diagnostics_thread       = std::thread(&cnr_hardware_driver_interface::RobotHwDriverInterface::diagnosticsThread, this);
   while (m_diagnostics_thread_state != RUNNING)
   {
     if (m_diagnostics_thread_state == ON_ERROR)
@@ -157,7 +157,7 @@ bool RobotHwNodelet::exitOnInit()
 
 ## NodeletManagerInterface Class
 
-The `NodeletManagerInterface` is a wrapper to load, unload the `RobotHwNodelet`, that is, to dynamically load a different `nodelet` where a different `RobotHW` performs the operations `read()` and `write()`.
+The `NodeletManagerInterface` is a wrapper to load, unload the `RobotHwDriverInterface`, that is, to dynamically load a different `nodelet` where a different `RobotHW` performs the operations `read()` and `write()`.
 
 ```cpp
 class NodeletManagerInterface

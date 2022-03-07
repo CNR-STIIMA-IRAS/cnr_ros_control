@@ -13,25 +13,29 @@
   <!-- <author email="iras@stiima.cnr.it">Jane Doe</author> -->
 
   <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>hardware_interface</build_depend>
   <build_depend>cnr_hardware_interface</build_depend>
   <build_depend>cnr_controller_interface_params</build_depend>
   <build_depend>nodelet</build_depend>
   <build_depend>roscpp</build_depend>
+  <build_export_depend>hardware_interface</build_export_depend>
   <build_export_depend>cnr_hardware_interface</build_export_depend>
   <build_export_depend>cnr_controller_interface_params</build_export_depend>
   <build_export_depend>nodelet</build_export_depend>
   <build_export_depend>roscpp</build_export_depend>
   <exec_depend>nodelet</exec_depend>
   <exec_depend>roscpp</exec_depend>
+  <exec_depend>hardware_interface</exec_depend>
   <exec_depend>cnr_hardware_interface</exec_depend>
   <exec_depend>cnr_controller_interface_params</exec_depend>
 
   <build_depend>code_coverage</build_depend>
   <build_depend>rostest</build_depend>
 
+  <test_depend>cnr_ros_control_test_description</test_depend>
+
   <!-- The export tag contains other, unspecified, tags -->
   <export>
-    <nodelet                plugin="${prefix}/plugin.xml" />
-    <cnr_hardware_interface plugin="${prefix}/plugin.xml" />
+    <hardware_interface plugin="${prefix}/plugin.xml" />
   </export>
 </package>

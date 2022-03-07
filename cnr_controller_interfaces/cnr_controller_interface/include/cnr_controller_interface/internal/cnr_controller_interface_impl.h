@@ -73,6 +73,57 @@ template<class T>
 bool Controller<T>::init(T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh)
 {
   size_t l = __LINE__;
+  try
+  {
+    if(!this->prepareInit(hw, root_nh.getNamespace(), controller_nh.getNamespace(), root_nh, controller_nh))
+    {
+      CNR_RETURN_FALSE(m_logger);
+    }
+
+    l = __LINE__;
+    if(!enterInit())
+    {
+      CNR_RETURN_FALSE(m_logger);
+    }
+
+    l = __LINE__;
+    if(!doInit())
+    {
+      CNR_RETURN_FALSE(m_logger);
+    }
+
+    l = __LINE__;
+    if(!exitInit())
+    {
+      CNR_RETURN_FALSE(m_logger);
+    }
+  }
+  catch(std::exception& e)
+  {
+    std::cerr << cnr_logger::RED() << __PRETTY_FUNCTION__ << ":" << __LINE__ << ": " ;
+    std::cerr << "Exception at line: "
+              << std::to_string(l) << " error: " + std::string(e.what());
+    std::cerr << " root ns (the namespace of the hw): " << root_nh.getNamespace() << std::endl;
+    std::cerr << " controller ns (the namespace of the ctrl): " << controller_nh.getNamespace() << cnr_logger::RST()
+              << std::endl;
+  }
+
+  //this->controller_state_ = dump_state("INITIALIZED");
+  //if(!ret)
+  //{
+  //  CNR_ERROR(m_logger, "Failed in dumping the state");
+  //  CNR_RETURN_FALSE(m_logger);
+  //}
+  CNR_RETURN_TRUE(m_logger);
+}
+
+template<class T>
+bool Controller<T>::prepareInit(T* hw,
+                                const std::string& hw_name,
+                                const std::string& ctrl_name,
+                                ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh)
+{
+  size_t l = __LINE__;
   if(!hw)
   {
     std::cerr << cnr_logger::RED() << __PRETTY_FUNCTION__ << ":" << __LINE__ << ": " ;
@@ -82,29 +133,29 @@ bool Controller<T>::init(T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& contr
   try
   {
     l = __LINE__;
-    m_hw_name   = root_nh.getNamespace();
-    m_ctrl_name = controller_nh.getNamespace();
+    m_hw_name   = hw_name;
+    m_ctrl_name = ctrl_name;
     if(m_ctrl_name.find(m_hw_name) != std::string::npos)
     {
       m_ctrl_name.erase(m_ctrl_name.find(m_hw_name), m_hw_name.length());
     }
-    else
+    /*else
     {
       std::cerr << cnr_logger::RED() << __PRETTY_FUNCTION__ << ":" << __LINE__ << ": " ;
       std::cerr << "Controller configurations seems broken. " << std::endl;
-      std::cerr << " root ns (the namespace of the hw): " << root_nh.getNamespace() << std::endl;
-      std::cerr << " controller ns (the namespace of the ctrl): " << controller_nh.getNamespace() << cnr_logger::RST()
+      std::cerr << " root ns (the namespace of the hw): " << hw_name << std::endl;
+      std::cerr << " controller ns (the namespace of the ctrl): " << ctrl_name << cnr_logger::RST()
                 << std::endl;
       return false;
-    }
+    }*/
     l = __LINE__;
     std::replace(m_hw_name.begin(), m_hw_name.end(), '/', '_');
     if(m_hw_name.size()==0)
     {
       std::cerr << cnr_logger::RED() << __PRETTY_FUNCTION__ << ":" << __LINE__ << ": " ;
       std::cerr << "The namespaces are incorrect. " << std::endl;
-      std::cerr << " root ns (the namespace of the hw): " << root_nh.getNamespace() << std::endl;
-      std::cerr << " controller ns (the namespace of the ctrl): " << controller_nh.getNamespace() << cnr_logger::RST()
+      std::cerr << " root ns (the namespace of the hw): " << hw_name << std::endl;
+      std::cerr << " controller ns (the namespace of the ctrl): " << ctrl_name << cnr_logger::RST()
                 << std::endl;
       return false;
     }
@@ -116,8 +167,8 @@ bool Controller<T>::init(T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& contr
     {
       std::cerr << cnr_logger::RED() << __PRETTY_FUNCTION__ << ":" << __LINE__ << ": " ;
       std::cerr << "The namespace are incorrect. " << std::endl;
-      std::cerr << " root ns (the namespace of the hw): " << root_nh.getNamespace() << std::endl;
-      std::cerr << " controller ns (the namespace of the ctrl): " << controller_nh.getNamespace() << cnr_logger::RST()
+      std::cerr << " root ns (the namespace of the hw): " << hw_name << std::endl;
+      std::cerr << " controller ns (the namespace of the ctrl): " << ctrl_name << cnr_logger::RST()
                 << std::endl;
       return false;
     }
@@ -126,14 +177,14 @@ bool Controller<T>::init(T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& contr
 
     l = __LINE__;
     m_logger.reset(new cnr_logger::TraceLogger());
-    if(!m_logger->init(m_hw_name + "-" + m_ctrl_name, controller_nh.getNamespace(), false, false))
+    if(!m_logger->init(m_hw_name + "-" + m_ctrl_name, ctrl_name, false, false))
     {
-      if(!m_logger->init(m_hw_name + "-" + m_ctrl_name, root_nh.getNamespace(), false, false))
+      if(!m_logger->init(m_hw_name + "-" + m_ctrl_name, hw_name, false, false))
       {
         std::cerr << cnr_logger::RED() << __PRETTY_FUNCTION__ << ":" << __LINE__ << ": " ;
         std::cerr << "The logger cannot be configured:" << std::endl;
-        std::cerr << " root ns (the namespace of the hw): " << root_nh.getNamespace() << std::endl;
-        std::cerr << " controller ns (the namespace of the ctrl): " << controller_nh.getNamespace() << cnr_logger::RST()
+        std::cerr << " root ns (the namespace of the hw): " << hw_name << std::endl;
+        std::cerr << " controller ns (the namespace of the ctrl): " << ctrl_name << cnr_logger::RST()
                   << std::endl;
         return false;
       }
@@ -178,47 +229,23 @@ bool Controller<T>::init(T* hw, ros::NodeHandle& root_nh, ros::NodeHandle& contr
     CNR_DEBUG(m_logger, "Watchdog: " << m_watchdog);
 
     m_controller_nh.setCallbackQueue(&m_controller_nh_callback_queue);
-    m_status_history.clear();
+    //m_status_history.clear();
 
     realtime_utilities::DiagnosticsInterface::init( m_hw_name, "Ctrl", m_ctrl_name );
     realtime_utilities::DiagnosticsInterface::addTimeTracker("update", m_sampling_period);
     realtime_utilities::DiagnosticsInterface::addTimeTracker("enterUpdate", m_sampling_period);
     realtime_utilities::DiagnosticsInterface::addTimeTracker("doUpdate", m_sampling_period);
     realtime_utilities::DiagnosticsInterface::addTimeTracker("exitUpdate", m_sampling_period);
-
-    l = __LINE__;
-    if(!enterInit())
-    {
-      CNR_RETURN_FALSE(m_logger);
-    }
-
-    l = __LINE__;
-    if(!doInit())
-    {
-      CNR_RETURN_FALSE(m_logger);
-    }
-
-    l = __LINE__;
-    if(!exitInit())
-    {
-      CNR_RETURN_FALSE(m_logger);
-    }
   }
   catch(std::exception& e)
+
   {
     std::cerr << cnr_logger::RED() << __PRETTY_FUNCTION__ << ":" << __LINE__ << ": " ;
     std::cerr << "Exception at line: "
               << std::to_string(l) << " error: " + std::string(e.what());
-    std::cerr << " root ns (the namespace of the hw): " << root_nh.getNamespace() << std::endl;
-    std::cerr << " controller ns (the namespace of the ctrl): " << controller_nh.getNamespace() << cnr_logger::RST()
+    std::cerr << " root ns (the namespace of the hw): " << hw_name << std::endl;
+    std::cerr << " controller ns (the namespace of the ctrl): " << ctrl_name << cnr_logger::RST()
               << std::endl;
-  }
-
-  bool ret = dump_state("INITIALIZED");
-  if(!ret)
-  {
-    CNR_ERROR(m_logger, "Failed in dumping the state");
-    CNR_RETURN_FALSE(m_logger);
   }
   CNR_RETURN_TRUE(m_logger);
 }
@@ -231,7 +258,7 @@ void Controller<T>::starting(const ros::Time& time)
   {
     if(enterStarting() && doStarting(time) && exitStarting())
     {
-      dump_state("RUNNING");
+      //dump_state("RUNNING");
       CNR_RETURN_OK(m_logger, void(), "Starting Ok! Ready to go!");
     }
     else
@@ -239,13 +266,13 @@ void Controller<T>::starting(const ros::Time& time)
       CNR_ERROR(m_logger, "The starting of the controller failed. Abort Request to ControllerManager sent.");
       if(controller_interface::Controller<T>::abortRequest(time))
       {
-        dump_state("ABORTED");
+        //dump_state("ABORTED");
       }
       else
       {
-        dump_state("ERROR");
+        this->state_ = controller_interface::ControllerBase::ControllerState::ABORTED;
+        //dump_state("ERROR");
       }
-    
     }
   }
   catch(std::exception& e)
@@ -262,41 +289,45 @@ void Controller<T>::update(const ros::Time& time, const ros::Duration& period)
   try
   {
 
+    timeSpanStrakcer("update")->tick();
+    timeSpanStrakcer("enterUpdate")->tick();
+    bool ok = enterUpdate();
+    timeSpanStrakcer("enterUpdate")->tock();
 
-  timeSpanStrakcer("update")->tick();
-  timeSpanStrakcer("enterUpdate")->tick();
-  bool ok = enterUpdate();
-  timeSpanStrakcer("enterUpdate")->tock();
-
-  if(ok)
-  {
-    m_dt = period.toSec() > 1e-4 ? period : ros::Duration(1e-4);
-    timeSpanStrakcer("doUpdate")->tick();
-    ok = doUpdate(time, period);
-    timeSpanStrakcer("doUpdate")->tock();
     if(ok)
     {
-      timeSpanStrakcer("exitUpdate")->tick();
-      ok = exitUpdate();
-      timeSpanStrakcer("exitUpdate")->tick();
+      m_dt = period.toSec() > 1e-4 ? period : ros::Duration(1e-4);
+      timeSpanStrakcer("doUpdate")->tick();
+      ok = doUpdate(time, period);
+      timeSpanStrakcer("doUpdate")->tock();
+      if(ok)
+      {
+        timeSpanStrakcer("exitUpdate")->tick();
+        ok = exitUpdate();
+        timeSpanStrakcer("exitUpdate")->tick();
+      }
+    }
+
+    timeSpanStrakcer("update")->tock();
+
+    if(!ok)
+    {
+      CNR_ERROR(m_logger, "Error in update, stop request called to stop the controller quietly.");
+      if(controller_interface::Controller<T>::stopRequest(time))
+      {
+        //dump_state("STOPPED");
+      }
+      else
+      {
+        //dump_state("ERROR");
+      }
+      CNR_RETURN_NOTOK_THROTTLE(m_logger, void(), 10.0);
     }
   }
-
-  timeSpanStrakcer("update")->tock();
-
-  if(!ok)
+  catch(const std::exception& e)
   {
-    CNR_ERROR(m_logger, "Error in update, stop request called to stop the controller quietly.");
-    if(controller_interface::Controller<T>::stopRequest(time))
-    {
-      dump_state("STOPPED");
-    }
-    else
-    {
-      dump_state("ERROR");
-    }
+    CNR_ERROR_THROTTLE(m_logger, 10.0, "The update of the controller failed. Exception:" << e.what() );
     CNR_RETURN_NOTOK_THROTTLE(m_logger, void(), 10.0);
-    }
   }
   catch(const std::exception& e)
   {
@@ -311,21 +342,21 @@ void Controller<T>::stopping(const ros::Time& time)
 {
   CNR_TRACE_START(m_logger);
   try
-  {   
+  {
     if(enterStopping() && doStopping(time) && exitStopping())
     {
-      dump_state("STOPPED");
+      //dump_state("STOPPED");
       CNR_RETURN_OK(m_logger, void());
     }
     else
     {
       if(controller_interface::Controller<T>::abortRequest(time))
       {
-        dump_state("ABORTED");
+        //dump_state("ABORTED");
       }
       else
       {
-        dump_state("ERROR");
+        //dump_state("ERROR");
       }
       CNR_RETURN_NOTOK(m_logger, void());
     }
@@ -370,14 +401,14 @@ void Controller<T>::aborting(const ros::Time& time)
   {
     if(enterAborting() && doAborting(time)  && exitAborting())
     {
-      CNR_RETURN_OK(m_logger, void());  
+      CNR_RETURN_OK(m_logger, void());
     }
   }
   catch(const std::exception& e)
   {
     CNR_ERROR(m_logger, "The aborting of the controller failed. Exception:" << e.what() );
   }
-  
+
   //======================================
   throw std::runtime_error("Aborting failed, and the only way to raise the error is an excpetion!");
   //======================================
@@ -425,12 +456,14 @@ bool Controller<T>::enterUpdate()
   CNR_TRACE_START_THROTTLE_DEFAULT(m_logger);
   if(!callAvailable( ))
   {
-    dump_state("CALLBACK_TIMEOUT_ERROR");
+    //dump_state("CALLBACK_TIMEOUT_ERROR");
     CNR_RETURN_FALSE_THROTTLE(m_logger, 5.0, "Callback Timeout Error");
   }
 
-  std::string status = m_status_history.back();
-  if( status != "RUNNING" )
+
+  //std::string status = m_status_history.back();
+  //if( status != "RUNNING" )
+  if(this->state_ != controller_interface::ControllerBase::ControllerState::RUNNING)
   {
     CNR_RETURN_FALSE_THROTTLE(m_logger, 5.0, "The status is not 'RUNNING' as expected. Abort.");
   }
@@ -522,6 +555,7 @@ bool Controller<T>::exitAborting()
   CNR_RETURN_BOOL(m_logger, ret);
 }
 
+/*
 template<class T>
 bool Controller<T>::dump_state(const std::string& status)
 {
@@ -542,7 +576,7 @@ bool Controller<T>::dump_state(const std::string& status)
   }
 
   return true;
-}/*
+}
 
 template<class T>
 bool Controller<T>::dump_state()
@@ -560,7 +594,6 @@ bool Controller<T>::dump_state()
 template<class T>
 bool Controller<T>::shutdown(const std::string& state_final)
 {
-  bool ret = false;
   CNR_TRACE_START(m_logger);
   for(auto & t : m_sub)
   {
@@ -593,9 +626,7 @@ bool Controller<T>::shutdown(const std::string& state_final)
   m_pub_last.clear();
   m_pub_time_track.clear();
 
-  ret = dump_state(state_final != "" ? state_final : "STOPPED" );
-
-  CNR_RETURN_BOOL(m_logger, ret);
+  CNR_RETURN_TRUE(m_logger);
 }
 
 

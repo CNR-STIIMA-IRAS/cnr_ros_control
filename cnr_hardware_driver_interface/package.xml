@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>cnr_hardware_nodelet_interface</name>
+  <name>cnr_hardware_driver_interface</name>
   <version>0.0.0</version>
-  <description>The cnr_hardware_nodelet_interface package</description>
+  <description>The cnr_hardware_driver_interface package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
@@ -19,7 +19,7 @@
   <!-- Url tags are optional, but multiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/cnr_hardware_nodelet_interface</url> -->
+  <!-- <url type="website">http://wiki.ros.org/cnr_hardware_driver_interface</url> -->
 
 
   <!-- Author tags are optional, multiple are allowed, one per tag -->

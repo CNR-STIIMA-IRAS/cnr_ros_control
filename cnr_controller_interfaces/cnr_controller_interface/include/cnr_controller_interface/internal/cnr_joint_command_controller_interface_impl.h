@@ -64,38 +64,38 @@ inline JointCommandController<H,T>::~JointCommandController()
 template<class H,class T>
 inline bool JointCommandController<H,T>::doInit()
 {
-  return true;
+  return cnr::control::JointController<H,T>::doInit();
 }
 
 template<class H,class T>
-inline bool JointCommandController<H,T>::doStarting(const ros::Time& /*time*/)
+inline bool JointCommandController<H,T>::doStarting(const ros::Time& time)
 {
-  return true;
+  return cnr::control::JointController<H,T>::doStarting(time);
 }
 
 template<class H,class T>
-inline bool JointCommandController<H,T>::doUpdate(const ros::Time& /*time*/, const ros::Duration& /*period*/)
+inline bool JointCommandController<H,T>::doUpdate(const ros::Time& time, const ros::Duration& period)
 {
-  return true;
+  return cnr::control::JointController<H,T>::doUpdate(time,period);
 }
 
 template<class H,class T>
-inline bool JointCommandController<H,T>::doStopping(const ros::Time& /*time*/)
+inline bool JointCommandController<H,T>::doStopping(const ros::Time& time)
 {
   this->stopUpdateTransformationsThread();
-  return true;
+  return cnr::control::JointController<H,T>::doStopping(time);
 }
 
 template<class H,class T>
-inline bool JointCommandController<H,T>::doWaiting(const ros::Time& /*time*/)
+inline bool JointCommandController<H,T>::doWaiting(const ros::Time& time)
 {
-  return true;
+  return cnr::control::JointController<H,T>::doWaiting(time);
 }
 
 template<class H,class T>
-inline bool JointCommandController<H,T>::doAborting(const ros::Time& /*time*/)
+inline bool JointCommandController<H,T>::doAborting(const ros::Time& time)
 {
-  return true;
+  return cnr::control::JointController<H,T>::doAborting(time);
 }
 
 template<class H,class T>
@@ -226,14 +226,17 @@ inline bool JointCommandController<H,T>::exitUpdate()
 
     // ============================== ==============================
     auto saturated_qd = nominal_qd;
-    if(rosdyn::saturateSpeed(this->chain(), saturated_qd, m_last_target.qd(), m_last_target.q(),
-                               this->m_sampling_period, m_max_velocity_multiplier, true, &report))
-    {
-      print_report = true;
-    }
-    m_target.q()  = m_last_target.q() + saturated_qd * this->m_dt.toSec();
-    m_target.qd() = saturated_qd;
 
+    if (m_priority != NONE)
+    {
+      if(rosdyn::saturateSpeed(this->chain(), saturated_qd, m_last_target.qd(), m_last_target.q(),
+                                 this->m_sampling_period, m_max_velocity_multiplier, true, &report))
+      {
+        print_report = true;
+        m_target.qd() = saturated_qd;
+      }
+      m_target.q()  = m_last_target.q() + saturated_qd * this->m_dt.toSec() +0.5*m_target.qdd()*std::pow(this->m_dt.toSec(),2.0);
+    }
     m_last_target.copy(m_target, m_target.ONLY_JOINT);
 
     if(m_target_pub)
