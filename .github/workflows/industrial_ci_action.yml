@@ -20,7 +20,7 @@ jobs:
   industrial_ci:
     strategy:
       matrix: # matrix is the product of entries
-        ROS_DISTRO: [melodic, noetic]
+        ROS_DISTRO: [noetic]
         ROS_REPO: [main]
         build_type: [Release, Debug]
 
