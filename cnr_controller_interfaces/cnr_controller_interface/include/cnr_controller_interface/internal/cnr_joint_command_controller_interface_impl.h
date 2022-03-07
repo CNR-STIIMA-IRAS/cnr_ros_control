@@ -118,7 +118,7 @@ inline bool JointCommandController<H,T>::enterInit()
   this->template add_subscriber<std_msgs::Int64>("/safe_ovr_2", 1,
                  boost::bind(&JointCommandController<H,T>::safeOverrideCallback_2, this, _1), false);
 
-  m_max_velocity_multiplier = 10
+  m_max_velocity_multiplier = 10;
   std::string what;
   rosparam_utilities::get(this->getControllerNamespace() + "/max_velocity_multiplier", m_max_velocity_multiplier, what, &m_max_velocity_multiplier);
   
@@ -127,7 +127,7 @@ inline bool JointCommandController<H,T>::enterInit()
   m_safe_override_2 = 1;
 
   bool pub_log_target = false;
-  rosparam_utilities::get(this->getControllerNamespace() + "/pub_log_target", pub_log_target, what, pub_log_target);
+  rosparam_utilities::get(this->getControllerNamespace() + "/pub_log_target", pub_log_target, what, &pub_log_target);
   if(pub_log_target)
   {
     m_target_pub.reset(

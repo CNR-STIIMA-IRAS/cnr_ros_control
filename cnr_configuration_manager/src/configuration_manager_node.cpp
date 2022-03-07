@@ -44,19 +44,6 @@
 #include <nodelet/NodeletUnload.h>
 
 #include <cnr_logger/cnr_logger.h>
-
-#include <controller_manager_msgs/ControllerState.h>
-
-#include <configuration_msgs/ConfigurationComponent.h>
-#include <configuration_msgs/StartConfiguration.h>
-#include <configuration_msgs/StopConfiguration.h>
-#include <configuration_msgs/ListConfigurations.h>
-#include <configuration_msgs/UpdateConfigurations.h>
-
-#include <cnr_controller_interface/cnr_controller_interface.h>
-#include <cnr_configuration_manager/signal_handler.h>
-#include <cnr_configuration_manager/internal/cnr_configuration_manager_utils.h>
-#include <cnr_configuration_manager/internal/cnr_configuration_manager_xmlrpc.h>
 #include <cnr_configuration_manager/cnr_configuration_manager.h>
 
 using cnr_logger::TraceLogger;

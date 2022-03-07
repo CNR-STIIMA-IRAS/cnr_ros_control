@@ -12,7 +12,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(catkin REQUIRED COMPONENTS
   realtime_utilities cnr_controller_interface_params cnr_hardware_interface controller_interface diagnostic_msgs
-  cnr_logger urdf rosdyn_core rosdyn_chain_state subscription_notifier sensor_msgs
+  cnr_logger urdf rosdyn_core rosdyn_chain_state subscription_notifier sensor_msgs kinematics_filters
 )
 
 find_package (Eigen3 3.3 REQUIRED NO_MODULE)

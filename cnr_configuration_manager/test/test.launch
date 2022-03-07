@@ -27,7 +27,7 @@
 
 
 <test test-name="cnr_configuration_manager_test" pkg="cnr_configuration_manager" type="cnr_configuration_manager_test">
-  <!--rosparam command="load" file="$(find my_fancy_package)/test/$(arg case).yaml" /-->
+
 </test>
 
 
