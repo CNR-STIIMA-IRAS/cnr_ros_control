@@ -39,6 +39,8 @@
 
 #include <sstream>
 #include <ros/ros.h>
+
+#include <rosparam_utilities/rosparam_utilities.h>
 #include <cnr_logger/cnr_logger.h>
 #include <rosdyn_chain_state/chain_state.h>
 #include <cnr_controller_interface/internal/cnr_handles.h>
@@ -47,6 +49,8 @@
 #include <rosdyn_chain_state/chain_state.h>
 #include <urdf_model/model.h>
 #include <urdf_parser/urdf_parser.h>
+
+namespace ru = rosparam_utilities;
 
 namespace cnr
 {
@@ -101,6 +105,7 @@ bool JointController<H,T>::doAborting(const ros::Time& time)
 template<class H,class T>
 bool JointController<H,T>::enterInit()
 {
+  std::string what;
   size_t l = __LINE__;
   try
   {
@@ -111,11 +116,11 @@ bool JointController<H,T>::enterInit()
       CNR_RETURN_FALSE(this->m_logger);
     }
 
-    if(!this->getControllerNh().getParam("kin_update_period", m_fkin_update_period))
+    m_fkin_update_period = -1;
+    if(!ru::get(this->getControllerNamespace() + "/kin_update_period", m_fkin_update_period, what, &m_fkin_update_period))
     {
-      CNR_WARN(this->m_logger, "The parameter '" + this->getControllerNamespace() + "/kin_update_period' is not set. "
-                                "The chain status will not be updated.");
-      m_fkin_update_period = -1;
+      CNR_WARN(this->m_logger, what);
+      CNR_WARN(this->m_logger, "The chain status will not be updated.");;
     }
 
     //=======================================
@@ -141,9 +146,9 @@ bool JointController<H,T>::enterInit()
     // CHAIN
     //=======================================
     std::string base_link;
-    if(!this->getControllerNh().getParam("base_link", base_link ) )
+    if(!ru::get(this->getControllerNamespace() + "/base_link", base_link, what ) )
     {
-      if(!this->getRootNh().getParam("base_link", base_link ) )
+      if(!ru::get(this->getRootNamespace() + "/base_link", base_link ) )
       {
         CNR_RETURN_FALSE(this->m_logger, "'Neither '" + this->getControllerNamespace() + "/base_link' " +
                     "nor '"      + this->getRootNamespace() + "/base_link' are not in rosparam server.");
@@ -151,9 +156,9 @@ bool JointController<H,T>::enterInit()
     }
 
     std::string tool_link;
-    if(!this->getControllerNh().getParam("tool_link", tool_link ) )
+    if(!ru::get(this->getControllerNamespace() + "/tool_link", tool_link, what ) )
     {
-      if(!this->getRootNh().getParam("tool_link", tool_link ) )
+      if(!ru::get(this->getRootNamespace() + "/tool_link", tool_link, what ) )
       {
         CNR_RETURN_FALSE(this->m_logger, "'Neither '" + this->getControllerNamespace() + "/tool_link' " +
                   "nor '"      + this->getRootNamespace() + "/tool_link' are not in rosparam server.");
@@ -161,9 +166,9 @@ bool JointController<H,T>::enterInit()
     }
 
     std::string robot_description_param;
-    if(!this->getControllerNh().getParam("robot_description_param", robot_description_param ) )
+    if(!ru::get(this->getControllerNamespace() + "/robot_description_param", robot_description_param, what ) )
     {
-      if(!this->getRootNh().getParam("robot_description_param", robot_description_param ) )
+      if(!ru::get(this->getRootNamespace() + "/robot_description_param", robot_description_param, what ) )
       {
         CNR_RETURN_FALSE(this->m_logger, "'Neither '" + this->getControllerNamespace()
                           + "/robot_description_param' " + "nor '" + this->getRootNamespace()
@@ -221,9 +226,9 @@ bool JointController<H,T>::enterInit()
     // KINEMATICS LIMITS
     //=======================================
     std::string robot_description_planning_param;
-    if(!this->getControllerNh().getParam("robot_description_planning_param", robot_description_planning_param ) )
+    if(!ru::get(this->getControllerNamespace() + "/robot_description_planning_param", robot_description_planning_param, what ) )
     {
-      if(!this->getRootNh().getParam("robot_description_planning_param", robot_description_planning_param ) )
+      if(!ru::get(this->getRootNamespace() + "/robot_description_planning_param", robot_description_planning_param, what ) )
       {
         CNR_ERROR(this->m_logger, "'Neither '" + this->getControllerNamespace()
                   + "/robot_description_planning_param' " + "nor '" + this->getRootNamespace()

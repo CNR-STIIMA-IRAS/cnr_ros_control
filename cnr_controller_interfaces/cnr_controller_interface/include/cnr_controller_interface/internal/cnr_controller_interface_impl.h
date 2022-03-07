@@ -44,8 +44,8 @@
 #include <ros/console.h>
 #include <ros/time.h>
 
+#include <rosparam_utilities/rosparam_utilities.h>
 #include <cnr_controller_interface/utils/utils.h>
-
 #include <cnr_controller_interface/cnr_controller_interface.h>
 #include <cnr_controller_interface_params/cnr_controller_interface_params.h>
 
@@ -196,19 +196,20 @@ bool Controller<T>::prepareInit(T* hw,
     m_controller_nh = controller_nh; // handle to callback and remapping
     m_hw            = hw;
 
-    if(!m_root_nh.getParam("sampling_period", m_sampling_period))
+    std::string what;
+    if(!rosparam_utilities::get(m_root_nh.getNamespace()+"/sampling_period", m_sampling_period, what))
     {
-      CNR_RETURN_FALSE(m_logger, "The parameter '" + m_root_nh.getNamespace() + "/sampling_period' is not set. Abort");
+      CNR_RETURN_FALSE(m_logger, what);
     }
 
     int maximum_missing_cycles = 10;
-    if(!m_controller_nh.getParam("watchdog", m_watchdog))
+    if(!rosparam_utilities::get(m_controller_nh.getNamespace()+"/watchdog", m_watchdog, what))
     {
-      if(!m_controller_nh.getParam("maximum_missing_cycles", maximum_missing_cycles))
+      if(!rosparam_utilities::get(m_controller_nh.getNamespace()+"/maximum_missing_cycles", maximum_missing_cycles, what))
       {
-        if(!m_root_nh.getParam("watchdog", m_watchdog))
+        if(!rosparam_utilities::get(m_root_nh.getNamespace()+"/watchdog", m_watchdog, what))
         {
-          if(!m_root_nh.getParam("maximum_missing_cycles", maximum_missing_cycles))
+          if(!rosparam_utilities::get(m_root_nh.getNamespace()+"/maximum_missing_cycles", maximum_missing_cycles, what))
           {
             m_watchdog = maximum_missing_cycles * m_sampling_period;
             CNR_WARN(m_logger, "Neither 'watchdog' and 'maximum_missing_cycles' are in the param server"

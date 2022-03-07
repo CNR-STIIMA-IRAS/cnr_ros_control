@@ -84,7 +84,7 @@ if(CATKIN_ENABLE_TESTING)
   if(ENABLE_COVERAGE_TESTING)
     set(COVERAGE_EXCLUDES "*/${PROJECT_NAME}/test*")
     add_code_coverage(
-      NAME ${PROJECT_NAME}_coverage_report
+      NAME coverage_report
       DEPENDENCIES ${PROJECT_NAME}_test
     )
   endif()
