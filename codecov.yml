@@ -1,4 +1,14 @@
+ignore:
+  - "build"
+  - "devel"
+  - "test"
+  - "src/test"
+
+fixes:
+  - "src/test/::"
+
 codecov:
+  token: 6aa96938-0365-4a35-8cf4-c6bae5e4a2bd
   require_ci_to_pass: yes
 
 coverage:
