@@ -6,7 +6,7 @@ declare -a StringArray=("cnr_configuration_manager" "cnr_controller_interface" "
 
 ws=~/target_ws
 
-cp codecov.yaml "$ws"/
+cp codecov.yml "$ws"/
 
 cd "$ws"
 
