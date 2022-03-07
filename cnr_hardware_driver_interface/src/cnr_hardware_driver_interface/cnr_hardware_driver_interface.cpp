@@ -238,9 +238,10 @@ bool RobotHwDriverInterface::init(const std::string& hw_name, const std::map<std
   {
     //==========================================================
     // LOAD THE ROBOTHW
-    if (!rosparam_utilities::get(m_hw_nh.getNamespace() +"/type", robot_type))
+    std::string what;
+    if (!rosparam_utilities::get(m_hw_nh.getNamespace() +"/type", robot_type, what))
     {
-      CNR_FATAL(m_logger, "The param '" << m_hw_nh.getNamespace() << "/type' is missing! Abort.");
+      CNR_FATAL(m_logger, what );
       CNR_RETURN_FALSE(m_logger);
     }
 

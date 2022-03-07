@@ -12,6 +12,7 @@
   <!-- <author email="jane.doe@example.com">Jane Doe</author> -->
   <buildtool_depend>catkin</buildtool_depend>
   <exec_depend>cnr_controller_interface</exec_depend>
+  <exec_depend>cnr_controller_interface_params</exec_depend>
   <exec_depend>cnr_controller_manager_interface</exec_depend>
   
 
