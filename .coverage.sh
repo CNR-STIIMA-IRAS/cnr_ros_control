@@ -5,7 +5,11 @@ declare -a StringArray=("cnr_configuration_manager" "cnr_controller_interface" "
                                 "cnr_topics_hardware_interface" )
 
 ws=~/target_ws
+
+cp codecov.yaml "$ws"/
+
 cd "$ws"
+
 catkin config --cmake-args -DENABLE_COVERAGE_TESTING=ON -DCMAKE_BUILD_TYPE=Debug -DUSE_ROS=ON -DENABLE_TESTING=ON
 
 for val in ${StringArray[@]}; do
