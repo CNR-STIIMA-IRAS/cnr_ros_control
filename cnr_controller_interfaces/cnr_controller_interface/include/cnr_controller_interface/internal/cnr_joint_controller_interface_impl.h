@@ -148,7 +148,7 @@ bool JointController<H,T>::enterInit()
     std::string base_link;
     if(!ru::get(this->getControllerNamespace() + "/base_link", base_link, what ) )
     {
-      if(!ru::get(this->getRootNamespace() + "/base_link", base_link ) )
+      if(!ru::get(this->getRootNamespace() + "/base_link", base_link, what ) )
       {
         CNR_RETURN_FALSE(this->m_logger, "'Neither '" + this->getControllerNamespace() + "/base_link' " +
                     "nor '"      + this->getRootNamespace() + "/base_link' are not in rosparam server.");
