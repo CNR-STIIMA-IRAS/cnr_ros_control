@@ -27,6 +27,7 @@ jobs:
     env:
       CCACHE_DIR: /github/home/.ccache # Directory for ccache (and how we enable ccache in industrial_ci)
       CODE_COVERAGE: codecov.io
+      UPSTREAM_WORKSPACE: cnr_ros_control.rosinstall
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2   # clone target repository
