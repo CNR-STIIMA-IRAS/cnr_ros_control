@@ -15,9 +15,7 @@ for val in ${StringArray[@]}; do
     echo "Generating coverage for '$val'"
 
     #catkin build "$val" -v --no-deps --catkin-make-args run_tests
-    catkin build "$val" --no-deps --catkin-make-args coverage_report --cmake-args -DENABLE_COVERAGE_TESTING=ON -DCMAKE_BUILD_TYPE=Debug -DENABLE_TESTING=ON
-
-    echo "Uploading coverage results to codecov.io"
+    catkin build "$val" --no-deps --catkin-make-args coverage_report --cmake-args -DENABLE_COVERAGE_TESTING=ON -DCMAKE_BUILD_TYPE=Debug -DCATKIN_ENABLE_TESTING=ON
 
     # Remove duplicated information
     rm "$ws/build/$val/coverage_report.info.cleaned"
@@ -25,5 +23,4 @@ for val in ${StringArray[@]}; do
 
     # Actually upload coverage information
     #bash <(curl -s https://codecov.io/bash) -s "$ws/build/$val/"
-
 done
