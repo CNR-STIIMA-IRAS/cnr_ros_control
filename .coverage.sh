@@ -10,14 +10,12 @@ cp /home/runner/work/cnr_ros_control/cnr_ros_control/codecov.yml "$ws"/
 
 cd "$ws"
 
-catkin config --cmake-args -DENABLE_COVERAGE_TESTING=ON -DCMAKE_BUILD_TYPE=Debug -DUSE_ROS=ON -DENABLE_TESTING=ON
-
 for val in ${StringArray[@]}; do
 
     echo "Generating coverage for '$val'"
 
     #catkin build "$val" -v --no-deps --catkin-make-args run_tests
-    catkin build "$val" -v --no-deps --catkin-make-args coverage_report
+    catkin build "$val" --no-deps --catkin-make-args coverage_report --cmake-args -DENABLE_COVERAGE_TESTING=ON -DCMAKE_BUILD_TYPE=Debug -DENABLE_TESTING=ON
 
     echo "Uploading coverage results to codecov.io"
 

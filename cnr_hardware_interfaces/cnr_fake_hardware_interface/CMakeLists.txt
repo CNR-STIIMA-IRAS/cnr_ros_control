@@ -74,7 +74,7 @@ if(CATKIN_ENABLE_TESTING)
   target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME} ${catkin_LIBRARIES} ${roscpp_LIBRARIES} )
 
   if(ENABLE_COVERAGE_TESTING)
-    set(COVERAGE_EXCLUDES "*/${PROJECT_NAME}/test*")
+    set(COVERAGE_EXCLUDES "*/test*")
     add_code_coverage(
       NAME coverage_report
       DEPENDENCIES ${PROJECT_NAME}_test

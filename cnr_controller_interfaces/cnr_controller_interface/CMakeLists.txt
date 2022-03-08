@@ -6,7 +6,7 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -102,7 +102,7 @@ if(CATKIN_ENABLE_TESTING)
   target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME} ${catkin_LIBRARIES} ${roscpp_LIBRARIES} ${cnr_fake_hardware_interface_LIBRARIES})
 
   if(ENABLE_COVERAGE_TESTING)
-    set(COVERAGE_EXCLUDES "*/${PROJECT_NAME}/test*")
+    set(COVERAGE_EXCLUDES "*/test*")
     add_code_coverage(
       NAME coverage_report
       DEPENDENCIES ${PROJECT_NAME}_test
