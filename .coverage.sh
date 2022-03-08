@@ -24,6 +24,6 @@ for val in ${StringArray[@]}; do
     rm "$ws/build/$val/coverage_report.info.removed"
 
     # Actually upload coverage information
-    bash <(curl -s https://codecov.io/bash) -s "$ws/build/$val/"
+    #bash <(curl -s https://codecov.io/bash) -s "$ws/build/$val/"
 
 done
