@@ -17,7 +17,8 @@ for val in ${StringArray[@]}; do
     catkin build "$val" -v --no-deps --catkin-make-args run_tests
     catkin build "$val" --no-deps --catkin-make-args coverage_report --cmake-args -DENABLE_COVERAGE_TESTING=ON -DCMAKE_BUILD_TYPE=Debug -DCATKIN_ENABLE_TESTING=ON
 
-    # Remove duplicated information
-    rm "$ws/build/$val/coverage_report.info.cleaned"
-    rm "$ws/build/$val/coverage_report.info.removed"
 done
+
+# Remove duplicated information
+find "$ws" -name \*.info.cleaned -exec rm {} \;
+find "$ws" -name \*.info.removed -exec rm {} \;
