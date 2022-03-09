@@ -194,9 +194,10 @@ inline bool JointCommandController<H,T>::exitUpdate()
   bool print_report = false;
   double throttle_time = 1.0;
   CNR_TRACE_START_THROTTLE_DEFAULT(this->m_logger);
-
+  size_t ll = __LINE__;
   try
   {
+    ll = __LINE__;
     report << "==========\n";
     report << "Priority           : " << std::to_string(m_priority) << "\n";
     report << "upper limit        : " << TP(this->chain().getQMax()) << "\n";
@@ -204,6 +205,7 @@ inline bool JointCommandController<H,T>::exitUpdate()
     report << "Speed Limit        : " << TP(this->chain().getDQMax()) << "\n";
     report << "Acceleration Limit : " << TP(this->chain().getDDQMax()) << "\n";
     report << "----------\n";
+    ll = __LINE__;
     // ============================== ==============================
     auto nominal_qd = m_target.q();
     if(m_priority == Q_PRIORITY)
@@ -228,32 +230,44 @@ inline bool JointCommandController<H,T>::exitUpdate()
     report << "Nominal command qd(input)  : " << TP(nominal_qd) << "\n";
     report << "----------\n";
     // ============================== ==============================
-
+    ll = __LINE__;
 
     // ============================== ==============================
     auto saturated_qd = nominal_qd;
 
+    ll = __LINE__;
     if (m_priority != NONE)
     {
+      ll = __LINE__;
       if(rosdyn::saturateSpeed(this->chain(), saturated_qd, m_last_target.qd(), m_last_target.q(),
                                  this->m_sampling_period, m_max_velocity_multiplier, true, &report))
       {
         print_report = true;
         m_target.qd() = saturated_qd;
       }
+      ll = __LINE__;
       m_target.q()  = m_last_target.q() + saturated_qd * this->m_dt.toSec() +0.5*m_target.qdd()*std::pow(this->m_dt.toSec(),2.0);
     }
+    ll = __LINE__;
     m_last_target.copy(m_target, m_target.ONLY_JOINT);
 
+  ll = __LINE__;
     if(m_target_pub)
     {
       m_target_pub->publish();
     }
+    ll = __LINE__;
     // ==============================
+  }
+  catch(std::exception& e)
+  {
+    CNR_WARN(this->m_logger,"Exception (last executed line: " << ll << "):\n" << e.what());
+    m_target.q()  = m_last_target.q();
+    eigen_utils::setZero(m_target.qd());
   }
   catch(...)
   {
-    CNR_WARN(this->m_logger,"something wrong in JointTargetFilter::update");
+    CNR_WARN(this->m_logger,"Unhadled (last executed line: " << ll << ")");
     m_target.q()  = m_last_target.q();
     eigen_utils::setZero(m_target.qd());
   }

@@ -183,9 +183,9 @@ bool Controller<T>::prepareInit(T* hw,
     l = __LINE__;
     m_logger.reset(new cnr_logger::TraceLogger());
     std::string what;
-    if(!m_logger->init_logger(m_hw_name + "-" + m_ctrl_name, ctrl_name, false, false, &what))
+    if(!m_logger->init(m_hw_name + "-" + m_ctrl_name, ctrl_name, false, false, &what))
     {
-      if(!m_logger->init_logger(m_hw_name + "-" + m_ctrl_name, hw_name, false, false, &what))
+      if(!m_logger->init(m_hw_name + "-" + m_ctrl_name, hw_name, false, false, &what))
       {
         std::cerr << cnr_logger::RED() << __PRETTY_FUNCTION__ << ":" << __LINE__ << ": " ;
         std::cerr << "The logger cannot be configured:" << std::endl;

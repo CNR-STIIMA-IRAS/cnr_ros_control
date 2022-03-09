@@ -211,7 +211,7 @@ bool RobotHwDriverInterface::init(const std::string& hw_name, const std::map<std
   
   m_logger.reset(new cnr_logger::TraceLogger());
   std::string what;
-  if( !m_logger->init_logger("NL_" + m_hw_name, m_hw_namespace, false, true, &what))
+  if( !m_logger->init("NL_" + m_hw_name, m_hw_namespace, false, true, &what))
   {
     std::cerr << __PRETTY_FUNCTION__ << ":" << __LINE__ <<": error in creating the logger" << std::endl;
     std::cerr << what << std::endl;
