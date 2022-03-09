@@ -146,7 +146,8 @@ public:
   bool stopUnloadAllControllers(const ros::Duration& watchdog);
 
   bool loadAndStartControllers(const std::vector<std::string>& next_controllers,
-                                const size_t& strictness, const ros::Duration& watchdog);
+                                const size_t& strictness, const ros::Duration& watchdog, 
+                                  const std::string& configuration_name);
 protected:
 
   bool dumpState(const cnr_hardware_interface::StatusHw& status);

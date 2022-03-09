@@ -109,7 +109,7 @@ public:
   /** @brief Load of the RobotHW (if needed) and load and Start of the controllers for such RobotHW
    */ 
   bool loadAndStartControllers(const std::string& hw_name, const ConfigurationStruct& next_configuration,
-                                const size_t& strictness, std::string& error);
+                                const size_t& strictness, const std::string& configuration_name, std::string& error);
 
   /** @brief Parallel Load of a set of RobotHW (if needed) and load and Start of the controllers for such RobotHW
    * 
@@ -117,7 +117,7 @@ public:
    */ 
   bool loadAndStartControllers(const std::vector<std::string>& hw_next_names,
                                 const ConfigurationStruct& next_configuration, const size_t& strictness,
-                                  std::string& error);
+                                  const std::string& configuration_name, std::string& error);
 
   /** @brief stop and unloads the controller, and unload the RobotHW
    */

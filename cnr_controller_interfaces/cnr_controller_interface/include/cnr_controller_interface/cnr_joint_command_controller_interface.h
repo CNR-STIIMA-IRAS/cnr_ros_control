@@ -117,7 +117,10 @@ protected:
 
 private:
   InputType          m_priority;
+  mutable std::mutex m_target_mtx;
   rosdyn::ChainState m_target;
+  rosdyn::ChainState m_target_threaded;
+  
   rosdyn::ChainState m_last_target;
   rosdyn::ChainStatePublisherPtr m_target_pub;
   

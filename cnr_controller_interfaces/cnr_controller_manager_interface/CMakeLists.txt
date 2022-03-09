@@ -9,7 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(catkin REQUIRED COMPONENTS controller_interface controller_manager controller_manager_msgs cnr_logger cnr_controller_interface_params
-  realtime_utilities)
+  realtime_utilities configuration_msgs)
 
 if(CATKIN_ENABLE_TESTING AND ENABLE_COVERAGE_TESTING)
   find_package(code_coverage REQUIRED)

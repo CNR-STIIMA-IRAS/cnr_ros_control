@@ -107,9 +107,14 @@ inline bool JointCommandController<H,T>::enterInit()
     CNR_RETURN_FALSE(this->m_logger);
   }
 
+  
   m_priority = QD_PRIORITY;
-  m_target.init(this->chainNonConst());
-  m_last_target.init(this->chainNonConst());
+  {
+    std::lock_guard<std::mutex> lock(this->m_target_mtx);
+    m_target.init(this->chainNonConst());
+    m_last_target.init(this->chainNonConst());
+    m_target_threaded.init(this->chainNonConst());
+  }
 
   this->template add_subscriber<std_msgs::Int64>("/speed_ovr" , 1,
                      boost::bind(&JointCommandController<H,T>::overrideCallback, this, _1), false);
@@ -154,7 +159,10 @@ inline bool JointCommandController<H,T>::enterStarting()
   m_target.setZero(this->chainNonConst());
   m_target.q() = this->getPosition();
 
-  this->m_handler.update(m_target, this->chain());
+  {
+    std::lock_guard<std::mutex> lock(this->m_target_mtx);
+    this->m_handler.update(m_target);
+  }
 
   CNR_DEBUG(this->m_logger, "Target at Start: Position: " << m_target.q().transpose() );
   CNR_DEBUG(this->m_logger, "Target at Start: Velocity: " << m_target.qd().transpose() );
@@ -254,7 +262,10 @@ inline bool JointCommandController<H,T>::exitUpdate()
   report<< "qd trg: " << TP(m_target.qd()) << "\n";
   report<< "ef trg: " << TP(m_target.effort()) << "\n";
 
-  this->m_handler.update(m_target, this->chain());
+  {
+    std::lock_guard<std::mutex> lock(this->m_target_mtx);
+    this->m_handler.update(m_target);
+  }
 
   //for(size_t iAx=0; iAx<this->jointNames().size(); iAx++)
   //{
@@ -282,8 +293,12 @@ inline bool JointCommandController<H,T>::exitStopping()
     m_target.q(iAx) = this->getPosition(iAx);
   }
   eigen_utils::setZero(m_target.qd());
-  this->m_handler.update(m_target, this->chain());
 
+  {
+    std::lock_guard<std::mutex> lock(this->m_target_mtx);
+    this->m_handler.update(m_target);
+  }
+  
   if(!JointController<H,T>::exitStopping())
   {
     CNR_RETURN_FALSE(this->m_logger);
@@ -344,7 +359,7 @@ inline const rosdyn::ChainState& JointCommandController<H,T>::chainCommand() con
   if(this->getKinUpdatePeriod()<=0)
     throw std::runtime_error("The 'kin_update_period' has not been set, and therefore the fkin is not computed!");
 
-  std::lock_guard<std::mutex> lock(this->mtx_);
+  std::lock_guard<std::mutex> lock(this->m_target_mtx);
   return m_target;
 }
 
@@ -353,7 +368,7 @@ inline rosdyn::ChainState& JointCommandController<H,T>::chainCommand()
 {
   if(this->getKinUpdatePeriod()<=0)
     throw std::runtime_error("The 'kin_update_period' has not been set, and therefore the fkin is not computed!");
-  std::lock_guard<std::mutex> lock(this->mtx_);
+  std::lock_guard<std::mutex> lock(this->m_target_mtx);
   return m_target;
 }
 
@@ -473,37 +488,26 @@ template<class H,class T>
 inline void JointCommandController<H,T>::updateTransformationsThread(int ffwd_kin_type, double hz)
 {
   CNR_TRACE_START(this->logger());
-  rosdyn::ChainState rstate;
-  rosdyn::ChainState target;
-
-  {
-    std::lock_guard<std::mutex> lock(this->mtx_);
-    if(!rstate.init(this->chainNonConst()))
-    {
-       CNR_FATAL(this->m_logger, "Chain failure!");
-       CNR_RETURN_NOTOK(this->m_logger, void());
-    }
-    if(!target.init(this->chainNonConst()))
-    {
-       CNR_FATAL(this->m_logger, "Chain failure!");
-       CNR_RETURN_NOTOK(this->m_logger, void());
-    }
-  }
-
   ros::Rate rt(hz);
   while(!this->stop_update_transformations_)
   {
     {
-      //std::lock_guard<std::mutex> lock(this->mtx_);
-      rstate.copy(this->chainState(), this->chainState().ONLY_JOINT);
-      target.copy(this->m_target, this->m_target.ONLY_JOINT);
+      std::lock_guard<std::mutex> lock(this->m_rstate_mtx);
+      this->m_rstate_threaded.copy(this->chainState(), rosdyn::ChainState::ONLY_JOINT);
     }
-    rstate.updateTransformations(this->chainNonConst(), ffwd_kin_type);
-    target.updateTransformations(this->chainNonConst(), ffwd_kin_type);
     {
-      //std::lock_guard<std::mutex> lock(this->mtx_);
-      this->chainState().copy(rstate, rstate.ONLY_CART);
-      this->m_target.copy(target, target.ONLY_CART);
+      std::lock_guard<std::mutex> lock(this->m_target_mtx);
+      m_target_threaded.copy(this->m_target, rosdyn::ChainState::ONLY_JOINT);
+    }
+    this->m_rstate_threaded.updateTransformations(this->chainNonConst(), ffwd_kin_type);
+    m_target_threaded.updateTransformations(this->chainNonConst(), ffwd_kin_type);
+    {
+      std::lock_guard<std::mutex> lock(this->m_rstate_mtx);
+      this->chainState().copy(this->m_rstate_threaded, rosdyn::ChainState::ONLY_CART);
+    }
+    {
+      std::lock_guard<std::mutex> lock(this->m_target_mtx);
+      this->m_target.copy(m_target_threaded, rosdyn::ChainState::ONLY_CART);
     }
     if(!this->update_transformations_runnig_)
     {
@@ -514,6 +518,7 @@ inline void JointCommandController<H,T>::updateTransformationsThread(int ffwd_ki
     }
     rt.sleep();
   }
+
   CNR_RETURN_OK(this->m_logger, void());
 }
 

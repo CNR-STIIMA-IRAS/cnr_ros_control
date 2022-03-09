@@ -65,16 +65,16 @@ public:
   ~ConfigurationManager() noexcept(false);
 
   bool startCallback(configuration_msgs::StartConfiguration::Request& req,
-                     configuration_msgs::StartConfiguration::Response& res);
+                      configuration_msgs::StartConfiguration::Response& res);
 
   bool stopCallback(configuration_msgs::StopConfiguration::Request& req,
-                    configuration_msgs::StopConfiguration::Response& res);
+                      configuration_msgs::StopConfiguration::Response& res);
 
   bool listConfigurations(configuration_msgs::ListConfigurations::Request& req,
-                          configuration_msgs::ListConfigurations::Response& res);
+                            configuration_msgs::ListConfigurations::Response& res);
 
   bool updateConfigurations(configuration_msgs::UpdateConfigurations::Request& req,
-                            configuration_msgs::UpdateConfigurations::Response& res);
+                              configuration_msgs::UpdateConfigurations::Response& res);
 
   bool init();
   //!
@@ -98,7 +98,8 @@ private:
   SignalHandler                               m_signal_handler;
 
   bool checkRobotHwState(const std::string& hw, const cnr_hardware_interface::StatusHw& expected);
-  bool callback(const ConfigurationStruct& next_configuration, const int &strictness, const ros::Duration& watchdog);
+  bool callback(const ConfigurationStruct& next_configuration, const int& strictness,
+                  const std::string& configuration_name, const ros::Duration& watchdog);
   bool getAvailableConfigurationsFromParam();
 };
 

@@ -42,6 +42,8 @@ struct HandlerBase
     indexes_ = get_index_map(names,chain);
     initialized_ = true;
   }
+
+  virtual void init(const rosdyn::Chain& chain) = 0; 
 };
 
 
@@ -50,6 +52,7 @@ struct Handler : public HandlerBase
 {
   std::map<std::string, Handle> handles_;
 
+  void init(const rosdyn::Chain& chain) { HandlerBase::init(handles_, chain); }
   void flush(rosdyn::ChainState& /*ks*/, const rosdyn::Chain& /*chain*/)  {}
   void update(const rosdyn::ChainState& /*ks*/, const rosdyn::Chain& /*chain*/) {}
 };
@@ -64,9 +67,12 @@ struct Handler<hardware_interface::JointStateHandle, hardware_interface::JointSt
 {
   std::map<std::string, hardware_interface::JointStateHandle> handles_;
 
-  void flush(rosdyn::ChainState& ks, const rosdyn::Chain& chain)
+  void init(const rosdyn::Chain& chain) { HandlerBase::init(handles_, chain); }
+  void flush(rosdyn::ChainState& ks)
   {
-    if(!initialized_) init(handles_, chain);
+    if(!initialized_) 
+      throw std::runtime_error("Handler must be initialized!");
+
     for(auto const & ax : indexes_)
     {
       ks.q(ax.second) = handles_.at(ax.first).getPosition();
@@ -90,9 +96,12 @@ struct Handler<hardware_interface::VelEffJointHandle, hardware_interface::VelEff
 {
   std::map<std::string, hardware_interface::VelEffJointHandle> handles_;
 
-  void flush(rosdyn::ChainState& ks, const rosdyn::Chain& chain)
+  void init(const rosdyn::Chain& chain) { HandlerBase::init(handles_, chain); }
+  void flush(rosdyn::ChainState& ks)
   {
-    if(!initialized_) init(handles_, chain);
+    if(!initialized_) 
+      throw std::runtime_error("Handler must be initialized!");
+
     for(auto const ax : indexes_)
     {
       ks.q(ax.second) = handles_.at(ax.first).getPosition();
@@ -102,9 +111,11 @@ struct Handler<hardware_interface::VelEffJointHandle, hardware_interface::VelEff
     }
   }
 
-  void update(const rosdyn::ChainState& ks, const rosdyn::Chain& chain)
+  void update(const rosdyn::ChainState& ks)
   {
-    if(!initialized_) init(handles_, chain);
+    if(!initialized_) 
+      throw std::runtime_error("Handler must be initialized!");
+
     for(auto const & ax : indexes_)
     {
       handles_.at(ax.first).setCommandVelocity(ks.qd(ax.second));
@@ -121,9 +132,12 @@ struct Handler<hardware_interface::PosVelEffJointHandle, hardware_interface::Pos
 {
   std::map<std::string, hardware_interface::PosVelEffJointHandle> handles_;
 
-  void flush(rosdyn::ChainState& ks, const rosdyn::Chain& chain)
+  void init(const rosdyn::Chain& chain) { HandlerBase::init(handles_, chain); }
+  void flush(rosdyn::ChainState& ks)
   {
-    if(!initialized_) init(handles_, chain);
+    if(!initialized_) 
+      throw std::runtime_error("Handler must be initialized!");
+
     for(auto const & ax : indexes_)
     {
       ks.q(ax.second) = handles_.at(ax.first).getPosition();
@@ -134,9 +148,11 @@ struct Handler<hardware_interface::PosVelEffJointHandle, hardware_interface::Pos
   }
 
 
-  void update(const rosdyn::ChainState& ks, const rosdyn::Chain& chain)
+  void update(const rosdyn::ChainState& ks)
   {
-    if(!initialized_) init(handles_, chain);
+    if(!initialized_) 
+      throw std::runtime_error("Handler must be initialized!");
+
     for(auto const & ax : indexes_)
     {
       size_t index = ax.second;
@@ -155,9 +171,12 @@ struct Handler<hardware_interface::JointHandle, hardware_interface::JointCommand
 {
   std::map<std::string, hardware_interface::JointHandle> handles_;
 
-  void flush(rosdyn::ChainState& ks, const rosdyn::Chain& chain)
+  void init(const rosdyn::Chain& chain) { HandlerBase::init(handles_, chain); }
+  void flush(rosdyn::ChainState& ks)
   {
-    if(!initialized_) init(handles_, chain);
+    if(!initialized_) 
+      throw std::runtime_error("Handler must be initialized!");
+
     for(auto const & ax : indexes_)
     {
       ks.q(ax.second) = handles_.at(ax.first).getPosition();
@@ -167,9 +186,11 @@ struct Handler<hardware_interface::JointHandle, hardware_interface::JointCommand
     }
   }
 
-  void update(const rosdyn::ChainState& ks, const rosdyn::Chain& chain)
+  void update(const rosdyn::ChainState& ks)
   {
-    if(!initialized_) init(handles_, chain);
+    if(!initialized_) 
+      throw std::runtime_error("Handler must be initialized!");
+
     for(auto const & ax : indexes_)
     {
       handles_.at(ax.first).setCommand(ks.q(ax.second));
@@ -185,9 +206,12 @@ struct Handler<hardware_interface::JointHandle, hardware_interface::EffortJointI
 {
   std::map<std::string, hardware_interface::JointHandle> handles_;
 
-  void flush(rosdyn::ChainState& ks, const rosdyn::Chain& chain)
+  void init(const rosdyn::Chain& chain) { HandlerBase::init(handles_, chain); }
+  void flush(rosdyn::ChainState& ks)
   {
-    if(!initialized_) init(handles_, chain);
+    if(!initialized_) 
+      throw std::runtime_error("Handler must be initialized!");
+
     for(auto const & ax : indexes_)
     {
       ks.q(ax.second) = handles_.at(ax.first).getPosition();
@@ -197,10 +221,11 @@ struct Handler<hardware_interface::JointHandle, hardware_interface::EffortJointI
     }
   }
 
-
-  void update(const rosdyn::ChainState& ks, const rosdyn::Chain& chain)
+  void update(const rosdyn::ChainState& ks)
   {
-    if(!initialized_) init(handles_, chain);
+    if(!initialized_) 
+      throw std::runtime_error("Handler must be initialized!");
+
     for(auto const & ax : indexes_)
     {
       handles_.at(ax.first).setCommand(ks.effort(ax.second));
@@ -216,10 +241,12 @@ struct Handler<hardware_interface::JointHandle, hardware_interface::VelocityJoin
 {
   std::map<std::string, hardware_interface::JointHandle> handles_;
 
-
-  void flush(rosdyn::ChainState& ks, const rosdyn::Chain& chain)
+  void init(const rosdyn::Chain& chain) { HandlerBase::init(handles_, chain); }
+  void flush(rosdyn::ChainState& ks)
   {
-    if(!initialized_) init(handles_, chain);
+    if(!initialized_) 
+      throw std::runtime_error("Handler must be initialized!");
+
     for(auto const & ax : indexes_)
     {
       ks.q(ax.second) = handles_.at(ax.first).getPosition();
@@ -230,9 +257,10 @@ struct Handler<hardware_interface::JointHandle, hardware_interface::VelocityJoin
   }
 
 
-  void update(const rosdyn::ChainState& ks, const rosdyn::Chain& chain)
+  void update(const rosdyn::ChainState& ks)
   {
-    if(!initialized_) init(handles_, chain);
+    if(!initialized_) 
+      throw std::runtime_error("Handler must be initialized!");
     for(auto const & ax : indexes_)
     {
       handles_.at(ax.first).setCommand(ks.qd(ax.second));
@@ -248,9 +276,12 @@ struct Handler<hardware_interface::JointHandle, hardware_interface::PositionJoin
 {
   std::map<std::string, hardware_interface::JointHandle> handles_;
 
-  void flush(rosdyn::ChainState& ks, const rosdyn::Chain& chain)
+  void init(const rosdyn::Chain& chain) { HandlerBase::init(handles_, chain); }
+  void flush(rosdyn::ChainState& ks)
   {
-    if(!initialized_) init(handles_, chain);
+    if(!initialized_) 
+      throw std::runtime_error("Handler must be initialized!");
+
     for(auto const & ax : indexes_)
     {
       ks.q(ax.second) = handles_.at(ax.first).getPosition();
@@ -260,9 +291,11 @@ struct Handler<hardware_interface::JointHandle, hardware_interface::PositionJoin
     }
   }
 
-  void update(const rosdyn::ChainState& ks, const rosdyn::Chain& chain)
+  void update(const rosdyn::ChainState& ks)
   {
-    if(!initialized_) init(handles_, chain);
+    if(!initialized_) 
+      throw std::runtime_error("Handler must be initialized!");
+      
     for(auto const & ax : indexes_)
     {
       handles_.at(ax.first).setCommand(ks.q(ax.second));

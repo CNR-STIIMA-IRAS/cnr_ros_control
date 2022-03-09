@@ -59,7 +59,12 @@ template<class T>
 Controller<T>::~Controller()
 {
   CNR_TRACE_START(m_logger);
-  shutdown("UNLOADED");
+  //shutdown("UNLOADED");
+  bool ret = shutdown("UNLOADED");
+  if(ret)
+  {
+    m_controller_nh_callback_queue.disable();
+  }
   CNR_TRACE(m_logger, "[ DONE]");
 }
 
@@ -177,15 +182,17 @@ bool Controller<T>::prepareInit(T* hw,
 
     l = __LINE__;
     m_logger.reset(new cnr_logger::TraceLogger());
-    if(!m_logger->init(m_hw_name + "-" + m_ctrl_name, ctrl_name, false, false))
+    std::string what;
+    if(!m_logger->init_logger(m_hw_name + "-" + m_ctrl_name, ctrl_name, false, false, &what))
     {
-      if(!m_logger->init(m_hw_name + "-" + m_ctrl_name, hw_name, false, false))
+      if(!m_logger->init_logger(m_hw_name + "-" + m_ctrl_name, hw_name, false, false, &what))
       {
         std::cerr << cnr_logger::RED() << __PRETTY_FUNCTION__ << ":" << __LINE__ << ": " ;
         std::cerr << "The logger cannot be configured:" << std::endl;
         std::cerr << " root ns (the namespace of the hw): " << hw_name << std::endl;
         std::cerr << " controller ns (the namespace of the ctrl): " << ctrl_name << cnr_logger::RST()
                   << std::endl;
+        std::cerr << "what: " << what << std::endl;
         return false;
       }
     }
@@ -196,7 +203,6 @@ bool Controller<T>::prepareInit(T* hw,
     m_controller_nh = controller_nh; // handle to callback and remapping
     m_hw            = hw;
 
-    std::string what;
     if(!rosparam_utilities::get(m_root_nh.getNamespace()+"/sampling_period", m_sampling_period, what))
     {
       CNR_RETURN_FALSE(m_logger, what);
@@ -515,12 +521,12 @@ template<class T>
 bool Controller<T>::exitStopping()
 {
   CNR_TRACE_START(m_logger);
-  bool ret = shutdown("STOPPED");
-  if(ret)
-  {
-    m_controller_nh_callback_queue.disable();
-  }
-  CNR_RETURN_BOOL(m_logger, ret);
+  // bool ret = shutdown("STOPPED");
+  // if(ret)
+  // {
+  //   m_controller_nh_callback_queue.disable();
+  // }
+  CNR_RETURN_BOOL(m_logger, true);
 }
 
 template<class T>

@@ -89,8 +89,8 @@ public:
 
 protected:
   // Accessors, to be used by the inherited classes
-  const unsigned int& nAx( ) const { return m_chain.getActiveJointsNumber(); }
-  const std::vector<std::string>& jointNames( ) const { return m_chain.getActiveJointsName(); }
+  const unsigned int& nAx( ) const;
+  const std::vector<std::string>& jointNames( ) const;
 
   Handler<H,T>                   m_handler;
   urdf::ModelInterfaceSharedPtr  m_urdf_model;
@@ -123,15 +123,21 @@ protected:
   std::thread         update_transformations_;
   bool                stop_update_transformations_;
   bool                update_transformations_runnig_;
-  mutable std::mutex  mtx_;
+  mutable std::mutex m_rstate_mtx;
+  rosdyn::ChainState m_rstate_threaded;
 
   double getKinUpdatePeriod() const { return m_fkin_update_period; }
   void setKinUpdatePeriod(const double& fkin_update_period) { m_fkin_update_period = fkin_update_period; }
 
 private:
   rosdyn::LinkPtr    m_root_link;  //link primitivo da cui parte la catena cinematica(world ad esempio)
-  rosdyn::Chain      m_chain;
+
+  mutable std::mutex m_chain_mtx;
+  rosdyn::Chain      m_chain; 
+  rosdyn::Chain      m_chain_threaded; 
+
   rosdyn::ChainState m_rstate;
+  
   Eigen::IOFormat    m_cfrmt;
   double             m_fkin_update_period;
 };
