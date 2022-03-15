@@ -483,8 +483,8 @@ bool Controller<T>::exitUpdate()
   CNR_TRACE_START_THROTTLE_DEFAULT(m_logger);
   if(m_sub.size() > 0)
   {
-    ros::WallTime now = ros::WallTime::now();
-    ros::WallTime last_message_time = ros::WallTime::now();
+    ros::Time now = ros::Time::now();
+    ros::Time last_message_time = ros::Time::now();
     for(size_t idx=0; idx<m_sub.size(); idx++)
     {
       if(m_sub_time.at(idx) == nullptr)
@@ -496,7 +496,7 @@ bool Controller<T>::exitUpdate()
         if(m_sub_time_track.at(idx))
         {
           m_sub_time.at(idx)->get(last_message_time);
-          ros::WallDuration time_span = (now - last_message_time);
+          ros::Duration time_span = (now - last_message_time);
           if(time_span.toSec() > m_watchdog)
           {
             CNR_ERROR_THROTTLE(m_logger, 5.0, "Watchdog on subscribed topic '" + m_sub.at(idx)->getTopic()+ "' " +

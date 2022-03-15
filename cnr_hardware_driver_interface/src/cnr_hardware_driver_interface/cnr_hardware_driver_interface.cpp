@@ -331,7 +331,7 @@ void RobotHwDriverInterface::diagnosticsThread()
   updater.add(id + "Error"   , m_cmi.get(), &cnr_controller_manager_interface::ControllerManagerInterface::diagnosticsError);
   updater.add(id + "Timers"  , m_cmi.get(), &cnr_controller_manager_interface::ControllerManagerInterface::diagnosticsPerformance);
 
-  ros::WallDuration wd(updater.getPeriod());
+  ros::Duration wd(updater.getPeriod());
   m_diagnostics_thread_running = true;
   while (ros::ok() && !m_stop_diagnostic_thread)
   {
@@ -465,7 +465,7 @@ void RobotHwDriverInterface::run()
   struct periodic_info info;
   make_periodic( (m_period.toNSec() / 1000 ), &info);
 #elif defined(USE_WALLRATE)
-  ros::WallRate wr( m_period );
+  ros::Rate wr( m_period );
 #endif
 
   m_stop_run = false;
