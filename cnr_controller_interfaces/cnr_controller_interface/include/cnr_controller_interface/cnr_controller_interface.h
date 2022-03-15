@@ -229,7 +229,7 @@ private:
 
   std::vector<std::shared_ptr<void>>            m_sub_notifier;
   std::vector<std::shared_ptr<ros::Subscriber>> m_sub;
-  std::vector<ros_helper::WallTimeMTPtr>        m_sub_time;
+  std::vector<ros_helper::TimeMTPtr>            m_sub_time;
   std::vector<bool>                             m_sub_time_track;
 
   bool callAvailable( );
