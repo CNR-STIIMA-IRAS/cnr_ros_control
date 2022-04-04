@@ -9,12 +9,12 @@ name: 'ROS INDUSTRIAL CI'
 # or more fine-grained
 on:
   push:
-    branches: [ master marco-devel ]
+    branches: [ marco-devel ]
     paths-ignore:
     - 'docs/**'  # When there is a pull request against master
     - 'README.md'
   pull_request:
-    branches: [ master marco-devel ]
+    branches: [ marco-devel ]
 
 jobs:
   industrial_ci:
