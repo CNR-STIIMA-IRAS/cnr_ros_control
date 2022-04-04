@@ -19,6 +19,7 @@
 - git:
     local-name: rosdyn
     uri:  https://github.com/CNR-STIIMA-IRAS/rosdyn.git
+    version: nicola-devel
 - git:
     local-name: rosdyn_utilities
     uri:  https://github.com/CNR-STIIMA-IRAS/rosdyn_utilities.git
