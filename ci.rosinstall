@@ -38,3 +38,12 @@
 - git:
     local-name: motion/moveit/moveit_planning_helper
     uri: https://github.com/CNR-STIIMA-IRAS/moveit_planning_helper
+- git:
+    local-name: test_depend/code_coverage
+    uri: https://github.com/mikeferguson/code_coverage.git
+    version: master
+- git:
+    local-name: test_dependencies/universal_robot
+    uri: https://github.com/fmauch/universal_robot.git
+    version: calibration_devel    
+
