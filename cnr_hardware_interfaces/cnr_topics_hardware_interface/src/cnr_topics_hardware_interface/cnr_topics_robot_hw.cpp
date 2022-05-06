@@ -51,7 +51,7 @@ PLUGINLIB_EXPORT_CLASS(cnr_hardware_interface::TopicsRobotHW, hardware_interface
 
 
 #define WARNING( MSG )\
-      CNR_DEBUG(m_logger, "[ "+ m_robothw_nh.getNamespace() + " ] RobotHW Nodelet: " + std::string( MSG ) );
+      CNR_DEBUG(m_logger, "[ "+ m_robothw_nh.getNamespace() + " ] RobotHW: " + std::string( MSG ) );
 
 static size_t line = __LINE__;
 #define __LL__ line = __LINE__;
@@ -360,7 +360,7 @@ bool TopicsRobotHW::doRead(const ros::Time& time, const ros::Duration& period)
     if (getState() == cnr_hardware_interface::RUNNING)
     {
       std::string all_topics = "[";
-      for (const std::pair<std::string, bool>& topic_received : m_topics_subscribed)
+      for (auto const & topic_received : m_topics_subscribed)
       {
         if(!topic_received.second)
           all_topics += topic_received.first + " ";
@@ -439,8 +439,11 @@ bool TopicsRobotHW::doPrepareSwitch(const std::list< hardware_interface::Control
 }
 
 
-
-bool TopicsRobotHW::doCheckForConflict(const std::list< hardware_interface::ControllerInfo >& info)
+/**
+ * 
+ * 
+ */
+bool TopicsRobotHW::doCheckForConflict(const std::list< hardware_interface::ControllerInfo >& info) const
 #define CHECK_RESOURCE( RES, res_var )\
 if( m_resources.count( RES ) )\
 {\
@@ -448,10 +451,7 @@ if( m_resources.count( RES ) )\
   if( res_var->checkForConflict(info) )\
   {\
     std::stringstream report;\
-    addDiagnosticsMessage("ERROR",\
-                          "The resource '" + std::string( #RES ) + "' is in conflict with another controller",\
-                          {{"Transition","switching"}},\
-                          &report );\
+    report << "[" << this->hardwareId() << "] The resource '" + std::string( #RES ) + "' is in conflict with another controller";\
     CNR_ERROR_COND(m_logger, report.str().size(), report.str() );\
   }\
 }

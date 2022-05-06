@@ -102,7 +102,7 @@ struct Handler<hardware_interface::VelEffJointHandle, hardware_interface::VelEff
     if(!initialized_) 
       throw std::runtime_error("Handler must be initialized!");
 
-    for(auto const ax : indexes_)
+    for(auto const & ax : indexes_)
     {
       ks.q(ax.second) = handles_.at(ax.first).getPosition();
       ks.qd(ax.second) = handles_.at(ax.first).getVelocity();

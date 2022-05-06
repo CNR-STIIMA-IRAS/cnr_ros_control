@@ -262,9 +262,11 @@ void AnalogClaimedResource::callback(const std_msgs::Float64MultiArray::ConstPtr
     return;
   }
 
-  if (!name_sorting::permutationName(m_resource_names_map.at(topic), names, values, "ANALOG CLAIMED RESOURCE - TOPICS HW INTERFACE"))
+  std::stringstream report;
+  if (!name_sorting::permutationName(m_resource_names_map.at(topic), names, values, &report))
   {
     m_topics_received[topic] = false;
+    ROS_WARN_THROTTLE(0.1, "[%s] Error", report.str().c_str());
     ROS_WARN_THROTTLE(0.1, "[%s] feedback joint states names are wrong!", m_namespace.c_str());
     return;
   }

@@ -99,14 +99,14 @@ struct ClaimedResource
                 , ros::NodeHandle&                          robothw_nh
                 , std::map< std::string, bool> &            topics_received);
 
-  ~ClaimedResource();
+  virtual ~ClaimedResource();
 
   virtual void init();
   virtual void setParam(const std::string& ns);
   virtual void write(const ros::Time& time, const ros::Duration& period);
   virtual void callback(const typename MSG::ConstPtr& msg, const std::string& topic);
   virtual void shutdown();
-  bool checkForConflict(const std::list< hardware_interface::ControllerInfo >& info);
+  bool checkForConflict(const std::list< hardware_interface::ControllerInfo >& info) const;
 
   const std::string                                    m_namespace;
   std::map< std::string, bool>&                        m_topics_received;

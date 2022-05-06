@@ -195,7 +195,7 @@ bool ControllerManagerInterface::switchController(const std::vector<std::string>
   while(ros::ok())
   {
     error_ = "";
-    for (const std::string ctrl_name : start_controllers)
+    for (const std::string& ctrl_name : start_controllers)
     {
       if(!cm_->getControllerByName(ctrl_name))
       {
@@ -209,7 +209,7 @@ bool ControllerManagerInterface::switchController(const std::vector<std::string>
                +"' while 'RUNNING' was expected";
       }
     }
-    for (const std::string ctrl_name : stop_controllers)
+    for (const std::string& ctrl_name : stop_controllers)
     {
       if(!cm_->getControllerByName(ctrl_name))
       {

@@ -314,7 +314,7 @@ bool FakeRobotHW::doPrepareSwitch(const std::list< hardware_interface::Controlle
 
 }
 
-bool FakeRobotHW::doCheckForConflict(const std::list< hardware_interface::ControllerInfo >& info)
+bool FakeRobotHW::doCheckForConflict(const std::list< hardware_interface::ControllerInfo >& info) const
 {
   std::stringstream report;
   CNR_TRACE_START(m_logger);
@@ -340,7 +340,6 @@ bool FakeRobotHW::doCheckForConflict(const std::list< hardware_interface::Contro
           {
             if (global_joint_used.at(iJ)) // if already used by another
             {
-              addDiagnosticsMessage("ERROR", "Joint " + name + " is already used by another controller", {{"Transition", "switching"}}, &report);
               CNR_ERROR(m_logger, report.str());
               CNR_RETURN_TRUE(m_logger, "Joint " + name + " is already used by another controller");
             }

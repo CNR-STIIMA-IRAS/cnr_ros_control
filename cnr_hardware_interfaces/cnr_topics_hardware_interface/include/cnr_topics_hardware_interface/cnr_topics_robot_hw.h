@@ -54,14 +54,14 @@ public:
     if (!m_shutted_down)
       shutdown();
   }
-  virtual bool doShutdown();
-  virtual bool doRead(const ros::Time& time, const ros::Duration& period);
-  virtual bool doWrite(const ros::Time& time, const ros::Duration& period);
+  virtual bool doShutdown() override;
+  virtual bool doRead(const ros::Time& time, const ros::Duration& period) override;
+  virtual bool doWrite(const ros::Time& time, const ros::Duration& period) override;
 
-  virtual bool doInit() ;
-  virtual bool doCheckForConflict(const std::list<hardware_interface::ControllerInfo>& info);
+  virtual bool doInit() override;
+  virtual bool doCheckForConflict(const std::list<hardware_interface::ControllerInfo>& info) const override;
   virtual bool doPrepareSwitch(const std::list<hardware_interface::ControllerInfo>& start_list, 
-                               const std::list<hardware_interface::ControllerInfo>& stop_list);
+                               const std::list<hardware_interface::ControllerInfo>& stop_list) override;
 
 
 protected:
@@ -94,14 +94,14 @@ protected:
   bool allSubscriberConnected() const
   {
     bool all_topics_received = true;
-    for (const std::pair<std::string, bool>& topic_received : m_topics_subscribed) all_topics_received &= topic_received.second;
+    for (auto const & topic_received : m_topics_subscribed) all_topics_received &= topic_received.second;
     return all_topics_received;
   }
 
   bool topicsReceived() const
   {
     bool all_topics_received = true;
-    for (const std::pair<std::string, bool>& topic_received : m_topics_subscribed) all_topics_received &= topic_received.second;
+    for (auto const & topic_received : m_topics_subscribed) all_topics_received &= topic_received.second;
     return all_topics_received;
   }
   void resetTopicsReceived()

@@ -309,7 +309,7 @@ bool ConfigurationManager::run()
     CNR_WARN(m_logger, "********************* RUN ****************************");
     while (ros::ok())
     {
-      bool full_check = (((cnt++) % decimator) == 0);
+      //bool full_check = (((cnt++) % decimator) == 0);
       if (!isOk())
       {
         CNR_WARN_THROTTLE(m_logger, 2, "\n\nRaised an Error by one of the Hw! Stop Configuration start!\n\n");

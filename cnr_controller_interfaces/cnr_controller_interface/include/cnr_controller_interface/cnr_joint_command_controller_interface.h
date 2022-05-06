@@ -134,7 +134,7 @@ private:
   void safeOverrideCallback_1(const std_msgs::Int64ConstPtr& msg);
   void safeOverrideCallback_2(const std_msgs::Int64ConstPtr& msg);
 
-  virtual void updateTransformationsThread(int ffwd_kin_type, double hz);
+  virtual void updateTransformationsThread(int ffwd_kin_type, double hz) override;
 };
 
 }  // namespace control

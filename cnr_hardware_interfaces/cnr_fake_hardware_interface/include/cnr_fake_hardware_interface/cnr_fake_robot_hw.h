@@ -57,12 +57,12 @@ public:
   FakeRobotHW();
   ~FakeRobotHW();
 
-  virtual bool doInit();
-  virtual bool doWrite(const ros::Time& time, const ros::Duration& period);
+  virtual bool doInit() override;
+  virtual bool doWrite(const ros::Time& time, const ros::Duration& period) override;
 
   virtual bool doPrepareSwitch(const std::list< hardware_interface::ControllerInfo >& start, 
-                               const std::list< hardware_interface::ControllerInfo >& stop);
-  virtual bool doCheckForConflict(const std::list<hardware_interface::ControllerInfo>& info);
+                               const std::list< hardware_interface::ControllerInfo >& stop) override;
+  virtual bool doCheckForConflict(const std::list<hardware_interface::ControllerInfo>& info) const override;
 
 protected:
   sensor_msgs::JointState* m_msg;

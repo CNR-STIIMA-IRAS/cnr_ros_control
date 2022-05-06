@@ -132,7 +132,7 @@ void ClaimedResource<MSG>::shutdown()
   }
 
 template < typename MSG >
-bool ClaimedResource<MSG>::checkForConflict(const std::list< hardware_interface::ControllerInfo >& info)
+bool ClaimedResource<MSG>::checkForConflict(const std::list< hardware_interface::ControllerInfo >& info) const
 {
   std::vector<bool> global_joint_used(m_resource_names.size());
   std::fill(global_joint_used.begin(), global_joint_used.end(), false);

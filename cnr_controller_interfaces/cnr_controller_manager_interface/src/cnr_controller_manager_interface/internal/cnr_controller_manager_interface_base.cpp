@@ -44,7 +44,7 @@
 
 #include <controller_manager_msgs/ListControllers.h>
 
-#include <configuration_msgs/StartConfigurationRequest.h>>
+#include <configuration_msgs/StartConfigurationRequest.h>
 #include <cnr_controller_interface_params/cnr_controller_interface_params.h>
 #include <cnr_controller_manager_interface/internal/cnr_controller_manager_interface_base.h>
 
