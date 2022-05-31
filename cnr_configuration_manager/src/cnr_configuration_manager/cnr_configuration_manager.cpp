@@ -525,7 +525,7 @@ bool ConfigurationManager::callback(const ConfigurationStruct& next_configuratio
   };
 
   std::vector<std::future<bool>> oks; 
-  realtime_utilities::tasks checkers;
+  realtime_utilities::tasks<bool> checkers;
   for(size_t i=0; i< hw_to_load_names.size();i++)
   {
     auto f = std::bind(check, hw_to_load_names.at(i));

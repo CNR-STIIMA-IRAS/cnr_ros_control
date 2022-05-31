@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(cnr_controller_interface_params)
 
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/cnrConfigMacros.cmake)
+
+cnr_set_flags()
+
 find_package(catkin REQUIRED COMPONENTS roscpp controller_manager_msgs)
 
 if(CATKIN_ENABLE_TESTING AND ENABLE_COVERAGE_TESTING)
@@ -22,8 +26,8 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 
 ## Declare a C++ library
 add_library(${PROJECT_NAME} src/${PROJECT_NAME}/cnr_controller_interface_params.cpp)
-target_compile_options(${PROJECT_NAME} PUBLIC -Wall -faligned-new
-        $<$<CONFIG:Release>:-Ofast -funroll-loops -ffast-math >)
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
+cnr_target_compile_options(${PROJECT_NAME})
 
 if(${CMAKE_VERSION} VERSION_GREATER  "3.16.0")
   target_precompile_headers(${PROJECT_NAME} PUBLIC <vector> <string>
@@ -58,6 +62,7 @@ if(CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
   add_rostest_gtest(${PROJECT_NAME}_test test/test.launch test/test.cpp)
   target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME} ${catkin_LIBRARIES} ${roscpp_LIBRARIES} )
+  cnr_target_compile_options(${PROJECT_NAME}_test)
 
   if(ENABLE_COVERAGE_TESTING)
     set(COVERAGE_EXCLUDES "*/test*")

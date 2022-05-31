@@ -2,15 +2,10 @@ cmake_minimum_required(VERSION 3.1)
 
 project(cnr_topic_hardware_interface)
 
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Release)
-endif()
 
-message(STATUS "Building type: ${CMAKE_BUILD_TYPE}")
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/cnrConfigMacros.cmake)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+cnr_set_flags()
 
 find_package(catkin REQUIRED COMPONENTS
   control_msgs
@@ -47,8 +42,7 @@ include_directories(
 add_library           (${PROJECT_NAME} src/${PROJECT_NAME}/cnr_topic_robot_hw.cpp )
 add_dependencies      (${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries (${PROJECT_NAME} ${catkin_LIBRARIES} )
-target_compile_options(${PROJECT_NAME} PUBLIC -Wall -faligned-new
-        $<$<CONFIG:Release>:-Ofast -funroll-loops -ffast-math >)
+cnr_target_compile_options(${PROJECT_NAME})
 
 #############
 ## Install ##
@@ -83,6 +77,7 @@ if(CATKIN_ENABLE_TESTING)
   find_package(cnr_ros_control_test_description REQUIRED)
   add_rostest_gtest(${PROJECT_NAME}_test test/test.launch test/test.cpp)
   target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME} ${catkin_LIBRARIES} ${roscpp_LIBRARIES} )
+  cnr_target_compile_options(${PROJECT_NAME}_test)
 
   if(ENABLE_COVERAGE_TESTING)
     set(COVERAGE_EXCLUDES "*/test*")

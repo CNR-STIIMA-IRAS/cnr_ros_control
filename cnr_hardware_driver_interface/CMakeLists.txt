@@ -1,16 +1,13 @@
 cmake_minimum_required(VERSION 3.1)
 project(cnr_hardware_driver_interface)
 
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Debug)
-endif()
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/cnrConfigMacros.cmake)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+cnr_set_flags()
+
 
 execute_process(COMMAND uname -r OUTPUT_VARIABLE UNAME_RESULT OUTPUT_STRIP_TRAILING_WHITESPACE)
-message(-- " Kernel version: " ${UNAME_RESULT})
+message(STATUS " Kernel version: " ${UNAME_RESULT})
 if(UNAME_RESULT MATCHES "^([^rt]*)rt")
   set(PREEMPTIVE_RT ON CACHE BOOL "Compile library for preemptive machines")
 else()
@@ -47,8 +44,8 @@ include_directories(include ${catkin_INCLUDE_DIRS} )
 ## Declare a C++ library
 add_library(${PROJECT_NAME} src/${PROJECT_NAME}/cnr_hardware_driver_interface.cpp )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} )
-target_compile_options(${PROJECT_NAME} PUBLIC -Wall -faligned-new
-        $<$<CONFIG:Release>:-Ofast -funroll-loops -ffast-math >)
+cnr_target_compile_options(${PROJECT_NAME})
+
 if(PREEMPTIVE_RT)
   target_compile_definitions(${PROJECT_NAME} PUBLIC -DPREEMPTIVE_RT=1)
 else()
@@ -100,6 +97,7 @@ if(CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
   add_rostest_gtest(${PROJECT_NAME}_test test/test.launch test/test.cpp)
   target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME} ${catkin_LIBRARIES} ${roscpp_LIBRARIES} )
+  cnr_target_compile_options(${PROJECT_NAME}_test)
 
   if(ENABLE_COVERAGE_TESTING)
     set(COVERAGE_EXCLUDES "*/test*")

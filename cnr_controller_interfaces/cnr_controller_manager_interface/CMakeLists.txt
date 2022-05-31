@@ -1,12 +1,10 @@
 cmake_minimum_required(VERSION 3.1)
 project(cnr_controller_manager_interface)
 
-if(NOT CMAKE_BUILD_TYPE )
-  set(CMAKE_BUILD_TYPE Release)
-endif()
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/cnrConfigMacros.cmake)
+
+cnr_set_flags()
+
 
 find_package(catkin REQUIRED COMPONENTS controller_interface controller_manager controller_manager_msgs cnr_logger cnr_controller_interface_params
   realtime_utilities)
@@ -42,8 +40,7 @@ add_library(${PROJECT_NAME}
    src/${PROJECT_NAME}/cnr_controller_manager_proxy.cpp
 )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
-target_compile_options(${PROJECT_NAME} PUBLIC -Wall -faligned-new
-        $<$<CONFIG:Release>:-Ofast -funroll-loops -ffast-math >)
+cnr_target_compile_options(${PROJECT_NAME})
 
 
 #############
@@ -69,6 +66,7 @@ if(CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
   add_rostest_gtest(${PROJECT_NAME}_test test/test.launch test/test.cpp)
   target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME} ${catkin_LIBRARIES} ${roscpp_LIBRARIES} )
+  cnr_target_compile_options(${PROJECT_NAME}_test)
 
   if(ENABLE_COVERAGE_TESTING)
     set(COVERAGE_EXCLUDES "*/test*")

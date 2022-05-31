@@ -42,6 +42,7 @@
 #include <cnr_controller_interface/cnr_controller_interface.h>
 #include <cnr_controller_interface/cnr_joint_controller_interface.h>
 #include <cnr_controller_interface/cnr_joint_command_controller_interface.h>
+#include <cnr_controller_interface/cnr_multi_chain_controller_interface.h>
 
 std::shared_ptr<ros::NodeHandle> root_nh;
 std::shared_ptr<ros::NodeHandle> robot_nh;
@@ -52,7 +53,9 @@ std::shared_ptr<cnr::control::Controller<hardware_interface::JointStateInterface
 
 using JointController = cnr::control::JointController<hardware_interface::JointStateHandle,hardware_interface::JointStateInterface>;
 using JointCommandController = cnr::control::JointCommandController<hardware_interface::PosVelEffJointHandle,hardware_interface::PosVelEffJointInterface>;
+using MultiChainController = cnr::control::MultiChainController<hardware_interface::JointStateHandle,hardware_interface::JointStateInterface>;
 
+std::shared_ptr<MultiChainController >   jc_ctrl_cc;
 std::shared_ptr<JointController >        jc_ctrl_x;
 std::shared_ptr<JointController >        jc_ctrl_6;
 std::shared_ptr<JointCommandController > jc_ctrl_cmd_x;
@@ -128,6 +131,7 @@ TEST(TestSuite, Desctructor)
 // Run all the tests that were declared with TEST()
 int main(int argc, char **argv)
 {
+  std::cerr << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << std::endl;
   testing::InitGoogleTest(&argc, argv);
   ros::init(argc, argv, "cnr_logger_tester");
   root_nh  .reset(new ros::NodeHandle("/"));
@@ -135,5 +139,6 @@ int main(int argc, char **argv)
   ctrl_nh  .reset(new ros::NodeHandle("/ur10_hw/fake_controller"));
   robot_hw.reset(new cnr_hardware_interface::FakeRobotHW());
   robot_hw->init(*root_nh, *robot_nh);
+  std::cerr << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << std::endl;
   return RUN_ALL_TESTS();
 }
