@@ -34,9 +34,6 @@
  */
 
 
-#include <pinocchio/fwd.hpp>
-
-
 #include <iostream>
 
 #include <ros/node_handle.h>
