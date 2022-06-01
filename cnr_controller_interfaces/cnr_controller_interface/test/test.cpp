@@ -36,7 +36,7 @@
 
 #include <iostream>
 
-#include <ros/node_handle.h>
+#include <ros/ros.h>
 #include <cnr_logger/cnr_logger.h>
 
 #include <gtest/gtest.h>
