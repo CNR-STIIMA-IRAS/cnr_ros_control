@@ -33,15 +33,23 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
+
+#include <pinocchio/fwd.hpp>
+
+
 #include <iostream>
-#include <ros/ros.h>
+
+#include <ros/node_handle.h>
 #include <cnr_logger/cnr_logger.h>
+
 #include <gtest/gtest.h>
 #include <pluginlib/class_loader.h>
 #include <cnr_fake_hardware_interface/cnr_fake_robot_hw.h>
 #include <cnr_controller_interface/cnr_controller_interface.h>
 #include <cnr_controller_interface/cnr_joint_controller_interface.h>
 #include <cnr_controller_interface/cnr_joint_command_controller_interface.h>
+
+#include <cnr_controller_interface/cnr_multi_chain_controller_interface.h>
 
 std::shared_ptr<ros::NodeHandle> root_nh;
 std::shared_ptr<ros::NodeHandle> robot_nh;
