@@ -17,7 +17,6 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package (Eigen3 3.3 REQUIRED NO_MODULE)
 find_package (Boost COMPONENTS system REQUIRED)
-find_package (pinocchio REQUIRED)
 
 if(CATKIN_ENABLE_TESTING AND ENABLE_COVERAGE_TESTING)
   find_package(code_coverage REQUIRED)
@@ -37,35 +36,13 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
-  ${pinocchio_INCLUDE_DIRS}
 )
 
 add_library(${PROJECT_NAME} src/cnr_controller_interface/cnr_controller_interface.cpp
                             src/cnr_controller_interface/internal/cnr_handles.cpp )
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_SYSTEM_LIBRARY} ${pinocchio_LIBRARIES} Eigen3::Eigen)
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_SYSTEM_LIBRARY} Eigen3::Eigen)
 target_compile_options(${PROJECT_NAME} PUBLIC -Wall -faligned-new
         $<$<CONFIG:Release>:-Ofast -funroll-loops -ffast-math >)
-
-
-# if(${CMAKE_VERSION} VERSION_GREATER  "3.16.0")
-# 	target_precompile_headers(${PROJECT_NAME} PUBLIC
-#     <map>
-#     <stdexcept>
-#     <mutex>
-#     <thread>
-#     <Eigen/Core>
-#     <ros/ros.h>
-#     <ros/console.h>
-#     <ros/time.h>
-#     <std_msgs/Int64.h>
-#     <sensor_msgs/JointState.h>
-#     <urdf_model/model.h>
-#     <urdf_parser/urdf_parser.h>
-#     <hardware_interface/joint_state_interface.h>
-#     <hardware_interface/joint_command_interface.h>
-#   )
-# endif()
-
 
 #############
 ## Install ##
