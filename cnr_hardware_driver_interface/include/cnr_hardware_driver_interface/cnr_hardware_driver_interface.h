@@ -1,3 +1,4 @@
+
 /*
  *  Software License Agreement (New BSD License)
  *
@@ -77,7 +78,7 @@ public:
   RobotHwDriverInterface() = default;
   virtual ~RobotHwDriverInterface();
 
-  bool init(const std::string& hw_name, 
+  bool init(const std::string& hw_name,
               const std::map<std::string, std::string>& remappings);
 
   /** @brief Control Loop implementing a infinite loop [HW read()-> CM update() -> HW write()]
@@ -93,17 +94,17 @@ public:
    * @param[out] true/false if ok or some errors arisen.
    */
   bool start(const ros::Duration& watchdog = ros::Duration(1.0) );
-  
+
   /** @brief Stop the control loop implemented in 'run()' if running in a separate thread
-   * 
+   *
    * @param[in] watchdog
    * @param[out] true/false if ok or some errors arisen.
    */
   bool stop(const ros::Duration& watchdog = ros::Duration(1.0) );
 
   /** @brief get the state of the the Driver
-   * 
-   * The state of the driver is the same state of the RobotHW if the 
+   *
+   * The state of the driver is the same state of the RobotHW if the
    * loaded class is inherited from cnr_hardware_interface::RobotHW
    */
   const cnr_hardware_interface::StatusHw& getState() const
@@ -112,19 +113,19 @@ public:
   }
 
   /** @brief get the state of the the RobotHW
-   * 
-   * The state of the RobotHW is the state of the driver if the 
+   *
+   * The state of the RobotHW is the state of the driver if the
    * loaded class is inherited from cnr_hardware_interface::RobotHW
    */
   const cnr_hardware_interface::StatusHw& retriveState()
   {
-    m_state = m_cnr_hw ? m_cnr_hw->getState() : m_state; 
+    m_state = m_cnr_hw ? m_cnr_hw->getState() : m_state;
     return m_state;
   }
-  
+
   RobotHWConstPtr getRobotHw() const { return m_hw; }
   CnrRobotHWConstPtr getCnrRobotHw() const  { return m_cnr_hw; }
-  
+
   ControllerManagerPtr getControllerManager()
   {
     return m_cm;
@@ -142,11 +143,12 @@ public:
   {
     return "/" + hw_name + "/status/status";
   }
- 
+
   bool stopUnloadAllControllers(const ros::Duration& watchdog);
 
   bool loadAndStartControllers(const std::vector<std::string>& next_controllers,
-                                const size_t& strictness, const ros::Duration& watchdog);
+                                const size_t& strictness, const ros::Duration& watchdog,
+                                  const std::string& configuration_name);
 protected:
 
   bool dumpState(const cnr_hardware_interface::StatusHw& status);
@@ -164,7 +166,7 @@ protected:
   RobotLoaderPtr          m_robot_hw_loader;
   ControllerManagerPtr    m_cm;
   cnr_controller_manager_interface::ControllerManagerInterfacePtr m_cmi;
-  
+
   mutable std::mutex                m_mtx;
   cnr_hardware_interface::StatusHw  m_state;
   std::vector<std::string>          m_state_history;
