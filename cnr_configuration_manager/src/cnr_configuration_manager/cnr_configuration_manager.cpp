@@ -147,7 +147,7 @@ bool ConfigurationManager::startCallback(configuration_msgs::StartConfiguration:
     }
     else
     {
-      res.ok = callback(m_configurations.at(req.start_configuration), req.strictness,  ros::Duration(10.0));
+      res.ok = callback(m_configurations.at(req.start_configuration), req.strictness, req.start_configuration, ros::Duration(10.0));
       if (res.ok)
       {
         m_active_configuration_name = req.start_configuration;
@@ -190,7 +190,7 @@ bool ConfigurationManager::stopCallback(configuration_msgs::StopConfiguration::R
   {
     const std::lock_guard<std::mutex> lock(m_callback_mutex);
     ConfigurationStruct empty;
-    res.ok = callback(empty, req.strictness, ros::Duration(10.0));
+    res.ok = callback(empty, req.strictness, m_active_configuration_name, ros::Duration(10.0));
     if (res.ok)
     {
       m_active_configuration_name = "";
@@ -309,7 +309,7 @@ bool ConfigurationManager::run()
     CNR_WARN(m_logger, "********************* RUN ****************************");
     while (ros::ok())
     {
-      bool full_check = (((cnt++) % decimator) == 0);
+      //bool full_check = (((cnt++) % decimator) == 0);
       if (!isOk())
       {
         CNR_WARN_THROTTLE(m_logger, 2, "\n\nRaised an Error by one of the Hw! Stop Configuration start!\n\n");
@@ -423,6 +423,7 @@ bool ConfigurationManager::checkRobotHwState(const std::string& hw, const cnr_ha
  */
 bool ConfigurationManager::callback(const ConfigurationStruct& next_configuration,
                                     const int&                 strictness,
+                                    const std::string&         configuration_name,
                                     const ros::Duration&       watchdog)
 {
   CNR_TRACE_START(m_logger);
@@ -443,6 +444,7 @@ bool ConfigurationManager::callback(const ConfigurationStruct& next_configuratio
   }
 
   extract<std::string>(hw_next_names, hw_active_names, &hw_to_load_names, &hw_to_unload_names, nullptr);
+  CNR_DEBUG(m_logger, "STRICTNESS                 : " << std::to_string(strictness));
   CNR_DEBUG(m_logger, "HW NAMES - ACTIVE (CLASS)  : " << to_string(hw_active_names));
   CNR_DEBUG(m_logger, "HW NAMES - ACTIVE (NODELET): " << to_string(hw_names_from_nodelet));
   CNR_DEBUG(m_logger, "HW NAMES - NEXT            : " << to_string(hw_next_names));
@@ -525,7 +527,7 @@ bool ConfigurationManager::callback(const ConfigurationStruct& next_configuratio
   };
 
   std::vector<std::future<bool>> oks; 
-  realtime_utilities::tasks<bool> checkers;
+  realtime_utilities::tasks checkers;
   for(size_t i=0; i< hw_to_load_names.size();i++)
   {
     auto f = std::bind(check, hw_to_load_names.at(i));
@@ -547,7 +549,7 @@ bool ConfigurationManager::callback(const ConfigurationStruct& next_configuratio
   CNR_INFO(m_logger, cnr_logger::BM() << ">>>>>>>>>>>> Load and Start Controllers (hw: "
                     << cnr::control::to_string(hw_next_names) << ")"  << cnr_logger::RST());
 
-  if(!m_conf_loader.loadAndStartControllers(hw_next_names, next_configuration, strictness, error))
+  if(!m_conf_loader.loadAndStartControllers(hw_next_names, next_configuration, strictness, configuration_name, error))
   {
     CNR_ERROR(m_logger, "Failed while oading the controllers: " << error);
     CNR_RETURN_FALSE(m_logger, "Configuring HW Failed");
