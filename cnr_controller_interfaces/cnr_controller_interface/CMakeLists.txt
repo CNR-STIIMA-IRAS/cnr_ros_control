@@ -2,13 +2,9 @@ cmake_minimum_required(VERSION 3.1)
 
 project(cnr_controller_interface)
 
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Release)
-endif()
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/cnrConfigMacros.cmake)
 
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+cnr_set_flags()
 
 find_package(catkin REQUIRED COMPONENTS
   realtime_utilities cnr_controller_interface_params cnr_hardware_interface controller_interface diagnostic_msgs
@@ -41,8 +37,27 @@ include_directories(
 add_library(${PROJECT_NAME} src/cnr_controller_interface/cnr_controller_interface.cpp
                             src/cnr_controller_interface/internal/cnr_handles.cpp )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_SYSTEM_LIBRARY} Eigen3::Eigen)
-target_compile_options(${PROJECT_NAME} PUBLIC -Wall -faligned-new
-        $<$<CONFIG:Release>:-Ofast -funroll-loops -ffast-math >)
+cnr_target_compile_options(${PROJECT_NAME})
+
+if(${CMAKE_VERSION} VERSION_GREATER  "3.16.0")
+	target_precompile_headers(${PROJECT_NAME} PUBLIC
+    <map>
+    <stdexcept>
+    <mutex>
+    <thread>
+    <Eigen/Core>
+    <ros/ros.h>
+    <ros/console.h>
+    <ros/time.h>
+    <std_msgs/Int64.h>
+    <sensor_msgs/JointState.h>
+    <urdf_model/model.h>
+    <urdf_parser/urdf_parser.h>
+    <hardware_interface/joint_state_interface.h>
+    <hardware_interface/joint_command_interface.h>
+  )
+endif()
+
 
 #############
 ## Install ##
@@ -79,6 +94,7 @@ if(CATKIN_ENABLE_TESTING)
     ${EIGEN3_INCLUDE_DIRS}
     ${cnr_fake_hardware_interface_INCLUDE_DIRS})
   target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME} ${catkin_LIBRARIES} ${roscpp_LIBRARIES} ${cnr_fake_hardware_interface_LIBRARIES})
+  cnr_target_compile_options(${PROJECT_NAME}_test)
 
   if(ENABLE_COVERAGE_TESTING)
     set(COVERAGE_EXCLUDES "*/test*")
@@ -89,3 +105,12 @@ if(CATKIN_ENABLE_TESTING)
   endif()
 endif()
 
+install(DIRECTORY test/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
+  PATTERN ".svn" EXCLUDE)
+
+install(TARGETS ${PROJECT_NAME}_test
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
