@@ -29,8 +29,9 @@ typedef const std::shared_ptr<HandleIndexes const> HandleIndexesConstPtr;
 
 HandleIndexes get_index_map(const std::vector<std::string>& names, const rosdyn::Chain& ks);
 
-struct HandlerBase
+class HandlerBase
 {
+protected:
   bool initialized_ = false;
   HandleIndexes indexes_;
 
@@ -43,6 +44,7 @@ struct HandlerBase
     initialized_ = true;
   }
 
+public:
   virtual void init(const rosdyn::Chain& chain) = 0; 
 };
 
@@ -53,8 +55,8 @@ struct Handler : public HandlerBase
   std::map<std::string, Handle> handles_;
 
   void init(const rosdyn::Chain& chain) { HandlerBase::init(handles_, chain); }
-  void flush(rosdyn::ChainState& /*ks*/, const rosdyn::Chain& /*chain*/)  {}
-  void update(const rosdyn::ChainState& /*ks*/, const rosdyn::Chain& /*chain*/) {}
+  void flush(rosdyn::ChainState& /*ks*/)  {}
+  void update(const rosdyn::ChainState& /*ks*/) {}
 };
 
 
@@ -82,7 +84,7 @@ struct Handler<hardware_interface::JointStateHandle, hardware_interface::JointSt
     }
   }
 
-  void update(const rosdyn::ChainState& /*ks*/, const rosdyn::Chain& /*chain*/)
+  void update(const rosdyn::ChainState& /*ks*/)
   {
   }
 };
