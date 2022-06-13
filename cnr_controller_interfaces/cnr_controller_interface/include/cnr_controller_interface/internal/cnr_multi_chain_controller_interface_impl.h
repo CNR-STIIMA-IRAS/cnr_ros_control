@@ -349,13 +349,13 @@ l = __LINE__;
             throw std::runtime_error("The HW is malformed!");
           }
           if(handlers_.find(id)!=handlers_.end()
-          && handlers_.at(id).handles_.find(jn) != handlers_.at(id).handles_.end() )
+          && handlers_.at(id).handles_.find(jn)!=handlers_.at(id).handles_.end())
           {
             CNR_ERROR(this->m_logger, " Error: multiple handlers with same id");
             CNR_RETURN_FALSE(this->m_logger); 
           }
-          handlers_[id].handles_[jn] =
-                Controller<T>::m_hw->getHandle(jn);
+          handlers_[id].handles_[jn] = Controller<T>::m_hw->getHandle(jn);
+          handlers_[id].init(m_chain.at(id));
         }
         catch(std::exception& e)
         {
@@ -370,6 +370,7 @@ l = __LINE__;
             "Controller '" + Controller<T>::getControllerNamespace() + "' failed in init. " + std::string("")
             + "The controlled joint named '"+jn+"' is not managed by hardware_interface");
         }
+
         CNR_DEBUG(this->m_logger,
           "Controller '" + Controller<T>::getControllerNamespace() + std::string("'")
           + "The controlled joint named '"+jn+"' is managed by hardware_interface");

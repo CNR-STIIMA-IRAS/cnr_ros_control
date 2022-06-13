@@ -261,32 +261,35 @@ template<class T>
 void Controller<T>::starting(const ros::Time& time)
 {
   CNR_TRACE_START(m_logger);
+  bool started = false;
+  bool aborted = false;
   try
   {
-    if(enterStarting() && doStarting(time) && exitStarting())
-    {
-      //dump_state("RUNNING");
-      CNR_RETURN_OK(m_logger, void(), "Starting Ok! Ready to go!");
-    }
-    else
-    {
-      CNR_ERROR(m_logger, "The starting of the controller failed. Abort Request to ControllerManager sent.");
-      if(controller_interface::Controller<T>::abortRequest(time))
-      {
-        //dump_state("ABORTED");
-      }
-      else
-      {
-        this->state_ = controller_interface::ControllerBase::ControllerState::ABORTED;
-        //dump_state("ERROR");
-      }
-    }
+    started = enterStarting() && doStarting(time) && exitStarting();
   }
   catch(std::exception& e)
   {
-    CNR_ERROR(m_logger, "The starting of the controller failed. Exception:" << e.what() );
+    CNR_ERROR(m_logger, "The starting of the controller failed. Exception: " << e.what() );
+    started = false;
   }
-  CNR_RETURN_NOTOK(m_logger, void());
+
+  if(!started)
+  {
+    try
+    {
+      CNR_ERROR(m_logger, "The starting of the controller failed. Abort Request to ControllerManager sent.");
+      aborted = controller_interface::Controller<T>::abortRequest(time);
+    }
+    catch(std::exception& e)
+    {
+      CNR_ERROR(m_logger, "The starting of the controller failed. Exception: " << e.what() );
+    }
+    if(!aborted)
+    {
+      throw std::runtime_error("The starting of the controller failed, as the abort!?!?!");
+    }
+  }
+  CNR_RETURN_VOID(m_logger, (started ? true : false));
 }
 
 template<class T>

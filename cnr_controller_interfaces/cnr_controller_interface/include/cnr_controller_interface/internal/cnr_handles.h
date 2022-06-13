@@ -73,7 +73,7 @@ struct Handler<hardware_interface::JointStateHandle, hardware_interface::JointSt
   void flush(rosdyn::ChainState& ks)
   {
     if(!initialized_) 
-      throw std::runtime_error("Handler must be initialized!");
+      throw std::runtime_error(("Handler must be initialized! [line:" + std::to_string(__LINE__) +"]").c_str() );
 
     for(auto const & ax : indexes_)
     {
@@ -102,7 +102,7 @@ struct Handler<hardware_interface::VelEffJointHandle, hardware_interface::VelEff
   void flush(rosdyn::ChainState& ks)
   {
     if(!initialized_) 
-      throw std::runtime_error("Handler must be initialized!");
+      throw std::runtime_error(("Handler must be initialized! [line:" + std::to_string(__LINE__) +"]").c_str() );
 
     for(auto const & ax : indexes_)
     {
@@ -116,7 +116,7 @@ struct Handler<hardware_interface::VelEffJointHandle, hardware_interface::VelEff
   void update(const rosdyn::ChainState& ks)
   {
     if(!initialized_) 
-      throw std::runtime_error("Handler must be initialized!");
+      throw std::runtime_error(("Handler must be initialized! [line:" + std::to_string(__LINE__) +"]").c_str() );
 
     for(auto const & ax : indexes_)
     {
@@ -138,7 +138,7 @@ struct Handler<hardware_interface::PosVelEffJointHandle, hardware_interface::Pos
   void flush(rosdyn::ChainState& ks)
   {
     if(!initialized_) 
-      throw std::runtime_error("Handler must be initialized!");
+      throw std::runtime_error(("Handler must be initialized! [line:" + std::to_string(__LINE__) +"]").c_str() );
 
     for(auto const & ax : indexes_)
     {
@@ -153,7 +153,7 @@ struct Handler<hardware_interface::PosVelEffJointHandle, hardware_interface::Pos
   void update(const rosdyn::ChainState& ks)
   {
     if(!initialized_) 
-      throw std::runtime_error("Handler must be initialized!");
+      throw std::runtime_error(("Handler must be initialized! [line:" + std::to_string(__LINE__) +"]").c_str() );
 
     for(auto const & ax : indexes_)
     {
@@ -177,7 +177,7 @@ struct Handler<hardware_interface::JointHandle, hardware_interface::JointCommand
   void flush(rosdyn::ChainState& ks)
   {
     if(!initialized_) 
-      throw std::runtime_error("Handler must be initialized!");
+      throw std::runtime_error(("Handler must be initialized! [line:" + std::to_string(__LINE__) +"]").c_str() );
 
     for(auto const & ax : indexes_)
     {
@@ -191,7 +191,7 @@ struct Handler<hardware_interface::JointHandle, hardware_interface::JointCommand
   void update(const rosdyn::ChainState& ks)
   {
     if(!initialized_) 
-      throw std::runtime_error("Handler must be initialized!");
+      throw std::runtime_error(("Handler must be initialized! [line:" + std::to_string(__LINE__) +"]").c_str() );
 
     for(auto const & ax : indexes_)
     {
@@ -212,7 +212,7 @@ struct Handler<hardware_interface::JointHandle, hardware_interface::EffortJointI
   void flush(rosdyn::ChainState& ks)
   {
     if(!initialized_) 
-      throw std::runtime_error("Handler must be initialized!");
+      throw std::runtime_error(("Handler must be initialized! [line:" + std::to_string(__LINE__) +"]").c_str() );
 
     for(auto const & ax : indexes_)
     {
@@ -226,7 +226,7 @@ struct Handler<hardware_interface::JointHandle, hardware_interface::EffortJointI
   void update(const rosdyn::ChainState& ks)
   {
     if(!initialized_) 
-      throw std::runtime_error("Handler must be initialized!");
+      throw std::runtime_error(("Handler must be initialized! [line:" + std::to_string(__LINE__) +"]").c_str() );
 
     for(auto const & ax : indexes_)
     {
@@ -247,7 +247,7 @@ struct Handler<hardware_interface::JointHandle, hardware_interface::VelocityJoin
   void flush(rosdyn::ChainState& ks)
   {
     if(!initialized_) 
-      throw std::runtime_error("Handler must be initialized!");
+      throw std::runtime_error(("Handler must be initialized! [line:" + std::to_string(__LINE__) +"]").c_str() );
 
     for(auto const & ax : indexes_)
     {
@@ -262,7 +262,7 @@ struct Handler<hardware_interface::JointHandle, hardware_interface::VelocityJoin
   void update(const rosdyn::ChainState& ks)
   {
     if(!initialized_) 
-      throw std::runtime_error("Handler must be initialized!");
+      throw std::runtime_error(("Handler must be initialized! [line:" + std::to_string(__LINE__) +"]").c_str() );
     for(auto const & ax : indexes_)
     {
       handles_.at(ax.first).setCommand(ks.qd(ax.second));
@@ -282,7 +282,7 @@ struct Handler<hardware_interface::JointHandle, hardware_interface::PositionJoin
   void flush(rosdyn::ChainState& ks)
   {
     if(!initialized_) 
-      throw std::runtime_error("Handler must be initialized!");
+      throw std::runtime_error(("Handler must be initialized! [line:" + std::to_string(__LINE__) +"]").c_str() );
 
     for(auto const & ax : indexes_)
     {
@@ -296,7 +296,7 @@ struct Handler<hardware_interface::JointHandle, hardware_interface::PositionJoin
   void update(const rosdyn::ChainState& ks)
   {
     if(!initialized_) 
-      throw std::runtime_error("Handler must be initialized!");
+      throw std::runtime_error(("Handler must be initialized! [line:" + std::to_string(__LINE__) +"]").c_str() );
       
     for(auto const & ax : indexes_)
     {
