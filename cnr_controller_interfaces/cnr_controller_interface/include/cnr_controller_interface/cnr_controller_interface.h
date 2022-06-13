@@ -53,7 +53,17 @@ namespace cnr
 {
 namespace control
 {
+template<typename T>
+void unused(T const & v) 
+{ 
+  static_cast<void>(v);
+}
 
+template<typename T, typename... Args>
+void unused(T first, Args... args) {
+  unused(first);
+  return unused(args...);
+}
 
 template<class T>
 class Controller: public controller_interface::Controller<T>,
@@ -83,22 +93,27 @@ public:
   }
   virtual bool doStarting(const ros::Time& time)
   {
+    unused(time);
     return true;
   }
   virtual bool doUpdate(const ros::Time& time, const ros::Duration& period)
   {
+    unused(time,period);
     return true;
   }
   virtual bool doStopping(const ros::Time& time)
   {
+    unused(time);
     return true;
   }
   virtual bool doWaiting(const ros::Time& time)
   {
+    unused(time);
     return true;
   }
   virtual bool doAborting(const ros::Time& time)
   {
+    unused(time);
     return true;
   }
   std::string getRootNamespace()

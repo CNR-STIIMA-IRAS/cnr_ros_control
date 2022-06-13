@@ -601,6 +601,8 @@ bool Controller<T>::dump_state()
 template<class T>
 bool Controller<T>::shutdown(const std::string& state_final)
 {
+  unused(state_final);
+  
   CNR_TRACE_START(m_logger);
   for(auto & t : m_sub)
   {

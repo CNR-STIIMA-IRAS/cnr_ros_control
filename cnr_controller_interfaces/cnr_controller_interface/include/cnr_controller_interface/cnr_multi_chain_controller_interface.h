@@ -32,8 +32,6 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
-#pragma once
-
 #ifndef CNR_CONTROLLER_INTERFACE__MULTI_CHAIN_CONTROLLER_INTERFACE_H
 #define CNR_CONTROLLER_INTERFACE__MULTI_CHAIN_CONTROLLER_INTERFACE_H
 
@@ -76,11 +74,11 @@ public:
   virtual ~MultiChainController();
 
   virtual bool doInit() override;
-  virtual bool doStarting(const ros::Time& /*time*/) override;
-  virtual bool doUpdate(const ros::Time& /*time*/, const ros::Duration& /*period*/) override;
-  virtual bool doStopping(const ros::Time& /*time*/) override;
-  virtual bool doWaiting(const ros::Time& /*time*/) override;
-  virtual bool doAborting(const ros::Time& /*time*/) override;
+  virtual bool doStarting(const ros::Time& time) override;
+  virtual bool doUpdate(const ros::Time& time, const ros::Duration& period) override;
+  virtual bool doStopping(const ros::Time& time) override;
+  virtual bool doWaiting(const ros::Time& time) override;
+  virtual bool doAborting(const ros::Time& time) override;
 
   virtual bool enterInit() override;
   virtual bool enterStarting() override;
@@ -89,10 +87,13 @@ public:
 
 protected:
   // Accessors, to be used by the inherited classes
-  const unsigned int& nAx(const std::string& id) const { return m_chain.at(id).getActiveJointsNumber(); }
-  const std::vector<std::string>& jointNames(const std::string& id) const { return m_chain.at(id).getActiveJointsName(); }
+  const unsigned int& nAx(const std::string& id) const;
+  unsigned int totalNAx() const;
+  const std::vector<std::string>& chainNames( ) const;
+  const std::vector<std::string>& jointNames(const std::string& id) const;
+  std::vector<std::string> allJointNames() const;
 
-  std::map<std::string, Handler<H,T> > m_handlers;
+  std::map<std::string, Handler<H,T> > handlers_;
   urdf::ModelInterfaceSharedPtr        m_urdf_model;
 
   const rosdyn::Chain& chain(const std::string& id) const;
@@ -123,15 +124,23 @@ protected:
   std::thread         update_transformations_;
   bool                stop_update_transformations_;
   bool                update_transformations_runnig_;
-  mutable std::mutex  mtx_;
+  mutable std::mutex  rstate_mtx_;
+  std::map<std::string, rosdyn::ChainState> rstate_threaded_;
 
-  double getKinUpdatePeriod() const { return m_fkin_update_period; }
-  void setKinUpdatePeriod(const double& fkin_update_period) { m_fkin_update_period = fkin_update_period; }
+
+  double getKinUpdatePeriod() const;
+  void setKinUpdatePeriod(const double& fkin_update_period);
 
 private:
   rosdyn::LinkPtr    m_root_link;  //link primitivo da cui parte la catena cinematica(world ad esempio)
+
+  mutable std::mutex m_chain_mtx;
+  std::vector<std::string> m_chain_ids;
   std::map<std::string, rosdyn::Chain> m_chain;
+  std::map<std::string, rosdyn::Chain> m_chain_threaded; 
+
   std::map<std::string, rosdyn::ChainState> m_rstate;
+
   Eigen::IOFormat    m_cfrmt;
   double             m_fkin_update_period;
 };

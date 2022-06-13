@@ -94,6 +94,12 @@ TEST(TestSuite, GenericControllerConstructor)
   EXPECT_TRUE(ctrl->init(robot_hw->get<hardware_interface::JointStateInterface>(), *robot_nh, *ctrl_nh));
 }
 
+TEST(TestSuite, MultiChainControllerXConstructor)
+{
+  EXPECT_NO_FATAL_FAILURE(jc_ctrl_cc.reset(new MultiChainController()));
+  EXPECT_TRUE(jc_ctrl_cc->init(robot_hw->get<hardware_interface::JointStateInterface>(), *robot_nh, *ctrl_nh));
+}
+
 TEST(TestSuite, JointControllerXConstructor)
 {
   EXPECT_NO_FATAL_FAILURE(jc_ctrl_x.reset(new JointController()));

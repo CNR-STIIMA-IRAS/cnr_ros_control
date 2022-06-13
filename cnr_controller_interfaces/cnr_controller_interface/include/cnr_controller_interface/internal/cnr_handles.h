@@ -13,7 +13,7 @@ namespace cnr
 namespace control
 {
 
-inline const rosdyn::ChainState* const getPtr(const rosdyn::ChainState& in)
+inline const rosdyn::ChainState* getPtr(const rosdyn::ChainState& in)
 {
   return &in;
 }
