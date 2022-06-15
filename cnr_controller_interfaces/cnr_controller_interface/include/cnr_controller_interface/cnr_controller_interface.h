@@ -226,7 +226,7 @@ public:
 protected:
   T*            m_hw;
   ros::Duration m_dt;
-  cnr_logger::TraceLoggerPtr  m_logger;
+  mutable cnr_logger::TraceLoggerPtr  m_logger;
   std::string                 m_hw_name;
   std::string                 m_ctrl_name;
   double                      m_sampling_period;

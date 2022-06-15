@@ -32,8 +32,6 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
-#pragma once // workaround clang-tidy in qtcreator
-
 #ifndef CNR_CONTOLLER_INTERFACE__CNR_JOINT_COMMAND_CONTROLLER_INTERFACE_IMPL_H
 #define CNR_CONTOLLER_INTERFACE__CNR_JOINT_COMMAND_CONTROLLER_INTERFACE_IMPL_H
 
@@ -110,6 +108,7 @@ inline bool JointCommandController<H,T>::enterInit()
   
   m_priority = QD_PRIORITY;
   {
+    CNR_DEBUG(this->logger(), "lock target mtx");
     std::lock_guard<std::mutex> lock(this->m_target_mtx);
     m_target.init(this->chainNonConst());
     m_last_target.init(this->chainNonConst());
@@ -160,6 +159,7 @@ inline bool JointCommandController<H,T>::enterStarting()
   m_target.q() = this->getPosition();
 
   {
+    CNR_DEBUG(this->logger(), "lock target mtx");
     std::lock_guard<std::mutex> lock(this->m_target_mtx);
     this->m_handler.update(m_target);
   }
@@ -277,6 +277,7 @@ inline bool JointCommandController<H,T>::exitUpdate()
   report<< "ef trg: " << TP(m_target.effort()) << "\n";
 
   {
+    CNR_DEBUG(this->logger(), "lock target mtx");
     std::lock_guard<std::mutex> lock(this->m_target_mtx);
     this->m_handler.update(m_target);
   }
@@ -309,6 +310,7 @@ inline bool JointCommandController<H,T>::exitStopping()
   eigen_utils::setZero(m_target.qd());
 
   {
+    CNR_DEBUG(this->logger(), "lock target mtx");
     std::lock_guard<std::mutex> lock(this->m_target_mtx);
     this->m_handler.update(m_target);
   }
@@ -372,8 +374,6 @@ inline const rosdyn::ChainState& JointCommandController<H,T>::chainCommand() con
 {
   if(this->getKinUpdatePeriod()<=0)
     throw std::runtime_error("The 'kin_update_period' has not been set, and therefore the fkin is not computed!");
-
-  std::lock_guard<std::mutex> lock(this->m_target_mtx);
   return m_target;
 }
 
@@ -382,119 +382,102 @@ inline rosdyn::ChainState& JointCommandController<H,T>::chainCommand()
 {
   if(this->getKinUpdatePeriod()<=0)
     throw std::runtime_error("The 'kin_update_period' has not been set, and therefore the fkin is not computed!");
-  std::lock_guard<std::mutex> lock(this->m_target_mtx);
   return m_target;
 }
 
 template<class H,class T>
 inline const rosdyn::VectorXd& JointCommandController<H,T>::getCommandPosition( ) const
 {
-  std::lock_guard<std::mutex> lock(m_mtx);
   return m_target.q();
 }
 
 template<class H,class T>
 inline const rosdyn::VectorXd& JointCommandController<H,T>::getCommandVelocity( ) const
 {
-  std::lock_guard<std::mutex> lock(m_mtx);
   return m_target.qd();
 }
 
 template<class H,class T>
 inline const rosdyn::VectorXd& JointCommandController<H,T>::getCommandAcceleration( ) const
 {
-  std::lock_guard<std::mutex> lock(m_mtx);
   return m_target.qdd();
 }
 
 template<class H,class T>
 inline const rosdyn::VectorXd& JointCommandController<H,T>::getCommandEffort( ) const
 {
-  std::lock_guard<std::mutex> lock(m_mtx);
   return m_target.effort();
 }
 
 template<class H,class T>
 inline double JointCommandController<H,T>::getCommandPosition(size_t idx) const
 {
-  std::lock_guard<std::mutex> lock(m_mtx);
   return m_target.q(idx);
 }
 
 template<class H,class T>
 inline double JointCommandController<H,T>::getCommandVelocity(size_t idx) const
 {
-  std::lock_guard<std::mutex> lock(m_mtx);
   return m_target.qd(idx);
 }
 
 template<class H,class T>
 inline double JointCommandController<H,T>::getCommandAcceleration(size_t idx) const
 {
-  std::lock_guard<std::mutex> lock(m_mtx);
   return m_target.qdd(idx);
 }
 
 template<class H,class T>
 inline double JointCommandController<H,T>::getCommandEffort(size_t idx) const
 {
-  std::lock_guard<std::mutex> lock(m_mtx);
   return m_target.effort(idx);
 }
 
 template<class H,class T>
 inline void JointCommandController<H,T>::setCommandPosition(const rosdyn::VectorXd& in)
 {
-  std::lock_guard<std::mutex> lock(m_mtx);
   m_target.q() = in;
 }
 
 template<class H,class T>
 inline void JointCommandController<H,T>::setCommandVelocity(const rosdyn::VectorXd& in)
 {
-  std::lock_guard<std::mutex> lock(m_mtx);
   m_target.qd()     = in;
 }
 
 template<class H,class T>
 inline void JointCommandController<H,T>::setCommandAcceleration(const rosdyn::VectorXd& in)
 {
-  std::lock_guard<std::mutex> lock(m_mtx);
   m_target.qdd()    = in;
 }
 
 template<class H,class T>
 inline void JointCommandController<H,T>::setCommandEffort(const rosdyn::VectorXd& in)
 {
-  std::lock_guard<std::mutex> lock(m_mtx);
   m_target.effort() = in;
 }
 
 template<class H,class T>
 inline void JointCommandController<H,T>::setCommandPosition(const double& in, size_t idx)
 {
-  std::lock_guard<std::mutex> lock(m_mtx);
   m_target.q(idx) = in;
 }
 
 template<class H,class T>
 inline void JointCommandController<H,T>::setCommandVelocity(const double& in, size_t idx)
 {
-  std::lock_guard<std::mutex> lock(m_mtx);
   m_target.qd(idx) = in;
 }
 
 template<class H,class T>
 inline void JointCommandController<H,T>::setCommandAcceleration(const double& in, size_t idx)
 {
-  std::lock_guard<std::mutex> lock(m_mtx);
   m_target.qdd(idx) = in;
 }
 
 template<class H,class T>
 inline void JointCommandController<H,T>::setCommandEffort(const double& in, size_t idx)
 {
-  std::lock_guard<std::mutex> lock(m_mtx);
   m_target.effort(idx) = in;
 }
 
@@ -506,20 +489,24 @@ inline void JointCommandController<H,T>::updateTransformationsThread(int ffwd_ki
   while(!this->stop_update_transformations_)
   {
     {
+      CNR_DEBUG(this->logger(), "lock rstate mtx");
       std::lock_guard<std::mutex> lock(this->m_rstate_mtx);
       this->m_rstate_threaded.copy(this->chainState(), rosdyn::ChainState::ONLY_JOINT);
     }
     {
+      CNR_DEBUG(this->logger(), "lock m_target_mtx");
       std::lock_guard<std::mutex> lock(this->m_target_mtx);
       m_target_threaded.copy(this->m_target, rosdyn::ChainState::ONLY_JOINT);
     }
     this->m_rstate_threaded.updateTransformations(this->chainNonConst(), ffwd_kin_type);
     m_target_threaded.updateTransformations(this->chainNonConst(), ffwd_kin_type);
     {
+      CNR_DEBUG(this->logger(), "lock rstate mtx");
       std::lock_guard<std::mutex> lock(this->m_rstate_mtx);
       this->chainState().copy(this->m_rstate_threaded, rosdyn::ChainState::ONLY_CART);
     }
     {
+      CNR_DEBUG(this->logger(), "lock m_target_mtx");
       std::lock_guard<std::mutex> lock(this->m_target_mtx);
       this->m_target.copy(m_target_threaded, rosdyn::ChainState::ONLY_CART);
     }

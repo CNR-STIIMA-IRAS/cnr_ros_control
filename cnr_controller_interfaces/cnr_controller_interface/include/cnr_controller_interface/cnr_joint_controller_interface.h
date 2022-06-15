@@ -123,8 +123,8 @@ protected:
   std::thread         update_transformations_;
   bool                stop_update_transformations_;
   bool                update_transformations_runnig_;
-  mutable std::mutex m_rstate_mtx;
-  rosdyn::ChainState m_rstate_threaded;
+  mutable std::mutex  m_rstate_mtx;
+  rosdyn::ChainState  m_rstate_threaded;
 
   double getKinUpdatePeriod() const { return m_fkin_update_period; }
   void setKinUpdatePeriod(const double& fkin_update_period) { m_fkin_update_period = fkin_update_period; }
