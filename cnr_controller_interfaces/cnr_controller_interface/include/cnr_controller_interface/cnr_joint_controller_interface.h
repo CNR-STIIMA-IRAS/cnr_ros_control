@@ -98,9 +98,6 @@ protected:
   const rosdyn::Chain& chain() const;
   rosdyn::Chain& chainNonConst();
 
-  const rosdyn::Chain& chainThreaded() const;
-  rosdyn::Chain& chainThreadedNonConst();
-
   const rosdyn::ChainState& chainState() const;
   rosdyn::ChainState&       chainState();
 
