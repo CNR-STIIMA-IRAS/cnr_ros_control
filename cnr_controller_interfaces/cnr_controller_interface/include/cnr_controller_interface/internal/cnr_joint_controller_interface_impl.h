@@ -504,6 +504,7 @@ inline rosdyn::Chain& JointController<H,T>::chainNonConst()
   return m_chain;
 }
 
+
 template<class H,class T>
 inline const rosdyn::ChainState& JointController<H,T>::chainState() const
 {
@@ -610,7 +611,16 @@ inline const rosdyn::Matrix6Xd& JointController<H,T>::getJacobian( ) const
   return m_rstate.toolJacobian();
 }
 
-
+template<class H,class T>
+inline double JointController<H,T>::getKinUpdatePeriod() const
+{
+  return m_fkin_update_period;
+}
+template<class H,class T>
+inline void JointController<H,T>::setKinUpdatePeriod(const double& fkin_update_period)
+{
+  m_fkin_update_period = fkin_update_period; 
+}
 
 }  // cnr_controller_interface
 }  // namespace cnr

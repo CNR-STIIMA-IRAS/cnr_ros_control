@@ -511,8 +511,8 @@ inline void JointCommandController<H,T>::updateTransformationsThread(int ffwd_ki
       std::lock_guard<std::mutex> lock(this->m_target_mtx);
       m_target_threaded.copy(this->m_target, rosdyn::ChainState::ONLY_JOINT);
     }
-    this->m_rstate_threaded.updateTransformations(this->chainNonConst(), ffwd_kin_type);
-    m_target_threaded.updateTransformations(this->chainNonConst(), ffwd_kin_type);
+    this->m_rstate_threaded.updateTransformations(this->m_chain_threaded, ffwd_kin_type);
+    m_target_threaded.updateTransformations(this->m_chain_threaded, ffwd_kin_type);
     
     this->chainState().copy(this->m_rstate_threaded, rosdyn::ChainState::ONLY_CART);
     
@@ -520,7 +520,7 @@ inline void JointCommandController<H,T>::updateTransformationsThread(int ffwd_ki
       std::lock_guard<std::mutex> lock(this->m_target_mtx);
       this->m_target.copy(m_target_threaded, rosdyn::ChainState::ONLY_CART);
     }
-    
+
     if(!this->update_transformations_runnig_)
     {
       CNR_INFO(this->logger(), "First state & target update ;)"

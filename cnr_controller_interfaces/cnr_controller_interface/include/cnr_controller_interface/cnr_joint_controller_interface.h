@@ -98,6 +98,9 @@ protected:
   const rosdyn::Chain& chain() const;
   rosdyn::Chain& chainNonConst();
 
+  const rosdyn::Chain& chainThreaded() const;
+  rosdyn::Chain& chainThreadedNonConst();
+
   const rosdyn::ChainState& chainState() const;
   rosdyn::ChainState&       chainState();
 
@@ -116,25 +119,32 @@ protected:
   const Eigen::Vector6d&   getTwistd( ) const;
   const rosdyn::Matrix6Xd& getJacobian( ) const;
 
+  double getKinUpdatePeriod() const;
+  void setKinUpdatePeriod(const double& fkin_update_period);
+
+protected:
   bool startUpdateTransformationsThread(int ffwd_kin_type, double hz = 10.0);
   void stopUpdateTransformationsThread();
   virtual void updateTransformationsThread(int ffwd_kin_type, double hz);
 
-  std::thread         update_transformations_;
-  bool                stop_update_transformations_;
   bool                update_transformations_runnig_;
+  bool                stop_update_transformations_;
+  
   mutable std::mutex  m_rstate_mtx;
   rosdyn::ChainState  m_rstate_threaded;
-
-  double getKinUpdatePeriod() const { return m_fkin_update_period; }
-  void setKinUpdatePeriod(const double& fkin_update_period) { m_fkin_update_period = fkin_update_period; }
+  rosdyn::Chain       m_chain_threaded; 
+ 
 
 private:
+  
+
+  std::thread         update_transformations_;
+  
+
   rosdyn::LinkPtr    m_root_link;  //link primitivo da cui parte la catena cinematica(world ad esempio)
 
   mutable std::mutex m_chain_mtx;
   rosdyn::Chain      m_chain; 
-  rosdyn::Chain      m_chain_threaded; 
 
   rosdyn::ChainState m_rstate;
   
