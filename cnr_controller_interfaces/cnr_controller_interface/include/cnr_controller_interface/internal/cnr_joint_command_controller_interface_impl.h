@@ -523,7 +523,7 @@ inline void JointCommandController<H,T>::updateTransformationsThread(int ffwd_ki
 
     if(!this->update_transformations_runnig_)
     {
-      CNR_INFO(this->logger(), "First state & target update ;)"
+      CNR_DEBUG(this->logger(), "First state & target update ;)"
                   << "\nstate:\n" << std::to_string(this->chainState())
                     << "\ntarget:\n" << std::to_string(this->m_target));
       this->update_transformations_runnig_ = true;
