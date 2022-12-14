@@ -331,7 +331,7 @@ void RobotHwDriverInterface::diagnosticsThread()
   updater.add(id + "Error"   , m_cmi.get(), &cnr_controller_manager_interface::ControllerManagerInterface::diagnosticsError);
   updater.add(id + "Timers"  , m_cmi.get(), &cnr_controller_manager_interface::ControllerManagerInterface::diagnosticsPerformance);
 
-  ros::Duration wd(updater.getPeriod());
+  ros::WallDuration wd(updater.getPeriod());
   m_diagnostics_thread_running = true;
   while (ros::ok() && !m_stop_diagnostic_thread)
   {

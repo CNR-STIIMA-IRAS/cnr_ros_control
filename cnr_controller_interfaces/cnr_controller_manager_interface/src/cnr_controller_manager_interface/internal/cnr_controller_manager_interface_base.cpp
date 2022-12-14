@@ -208,7 +208,7 @@ bool ControllerManagerInterfaceBase::switchControllers(const int strictness,
     CNR_DEBUG(logger_, "HW: " + getHwName() + to_string(stopped,       ", Stopped Controllers: "));
     CNR_DEBUG(logger_, "HW: " + getHwName() + to_string(loaded,        ", Loaded Controllers:  "));
     //============================================================================================
-    
+
 
     //============================================================================================
     std::vector<std::string> to_load_and_start;

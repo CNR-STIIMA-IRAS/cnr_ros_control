@@ -5,6 +5,9 @@ project(cnr_configuration_manager)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/cnrConfigMacros.cmake)
 
 cnr_set_flags()
+# Debug only, collects stats on how callbacks are doled out to worker threads
+#add_definitions(-DNODELET_QUEUE_DEBUG)
+
 
 find_package(catkin REQUIRED COMPONENTS
   cmake_modules

@@ -44,7 +44,7 @@
 #include <cnr_logger/cnr_logger.h>
 
 
-void gazebo_cb(const ros::TimerEvent& ev)
+void gazebo_cb(const ros::WallTimerEvent& ev)
 {
   ros::NodeHandle nh;
   std_srvs::Empty srv;
@@ -68,7 +68,7 @@ public:
     CNR_INFO(m_logger, "Constructor: default configuration " << conf_srv.request.start_configuration);
 
   }
-  void dispatch(const ros::TimerEvent& e)
+  void dispatch(const ros::WallTimerEvent& e)
   {
     CNR_INFO(m_logger, "Timer Callback: starting configuration " << conf_srv.request.start_configuration);
     m_start_config.call(conf_srv);
@@ -98,13 +98,13 @@ int main(int argc, char **argv)
   if (!nh.getParam("start_gazebo", start_gazebo))
     start_gazebo = false;
 
-  ros::Timer gazebo_timer;
+  ros::WallTimer gazebo_timer;
   if (start_gazebo)
   {
     double gazebo_wait_time = 4;
     if (!nh.getParam("gazebo_bringup_time", gazebo_wait_time))
       gazebo_wait_time = 4;
-    //gazebo_timer = nh.createWallTimer(ros::Duration(gazebo_wait_time), gazebo_cb, true);
+    gazebo_timer = nh.createWallTimer(ros::WallDuration(gazebo_wait_time), gazebo_cb, true);
 
     CNR_INFO(logger, "Waiting " << gazebo_wait_time << "seconds before unpausing gazebo (timer started: " << gazebo_timer.hasStarted() << ") ");
 
@@ -139,11 +139,11 @@ int main(int argc, char **argv)
 
 
   std::vector<std::shared_ptr<Dispatch>> dispatches;
-  std::vector<ros::Timer> dispatch_timers;
+  std::vector<ros::WallTimer> dispatch_timers;
   for (const std::pair<std::string, double>&p : configurations)
   {
     dispatches.push_back(std::make_shared<Dispatch>(p.first, start_config, logger));
-    dispatch_timers.push_back(nh.createTimer(ros::Duration(p.second),
+    dispatch_timers.push_back(nh.createWallTimer(ros::WallDuration(p.second),
                               &Dispatch::dispatch,
                               (dispatches.back()).get(),
                               true)) ;

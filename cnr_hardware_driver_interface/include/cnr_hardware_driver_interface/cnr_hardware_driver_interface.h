@@ -1,4 +1,3 @@
-
 /*
  *  Software License Agreement (New BSD License)
  *
