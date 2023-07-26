@@ -40,7 +40,7 @@
 #include <std_msgs/Int64.h>
 #include <ros/ros.h>
 #include <cnr_logger/cnr_logger.h>
-#include <rdyn_core/kinematics_saturation.h>
+#include <rosdyn_core/kinematics_saturation.h>
 #include <rosdyn_chain_state/chain_state.h>
 #include <cnr_controller_interface/internal/cnr_handles.h>
 #include <cnr_controller_interface/cnr_joint_command_controller_interface.h>
@@ -239,7 +239,7 @@ inline bool JointCommandController<H,T>::exitUpdate()
     if (m_priority != NONE)
     {
       ll = __LINE__;
-      if(rdyn::saturateSpeed(this->chain(), saturated_qd, m_last_target.qd(), m_last_target.q(),
+      if(rosdyn::saturateSpeed(this->chain(), saturated_qd, m_last_target.qd(), m_last_target.q(),
                                  this->m_sampling_period, m_max_velocity_multiplier, true, &report))
       {
         print_report = true;
