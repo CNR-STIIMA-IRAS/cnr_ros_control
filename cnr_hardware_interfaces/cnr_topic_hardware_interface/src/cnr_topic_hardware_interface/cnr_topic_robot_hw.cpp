@@ -113,6 +113,7 @@ bool TopicRobotHW::doInit()
 
   m_topic_received = false;
   m_first_topic_received = false;
+  m_missing_messages = 0;
 
   m_js_sub = m_robothw_nh.subscribe<sensor_msgs::JointState>(read_js_topic,
                                                              1,

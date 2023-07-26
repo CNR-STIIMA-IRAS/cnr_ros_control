@@ -116,11 +116,24 @@ protected:
   mutable std::mutex m_mtx;
 
 private:
+
+  // alias
+  using jc = cnr::control::JointController<H,T>;
+  
+  // change scope, to avoid that they are used from inherited classes
+  using jc::stop_update_transformations_;
+  using jc::update_transformations_runnig_;
+  using jc::m_rstate_mtx;
+  using jc::m_rstate_threaded;
+  using jc::m_chain_threaded; 
+
   InputType          m_priority;
+  mutable std::mutex m_target_mtx;
   rosdyn::ChainState m_target;
+  rosdyn::ChainState m_target_threaded;
+  
   rosdyn::ChainState m_last_target;
   rosdyn::ChainStatePublisherPtr m_target_pub;
-  
 
   double m_override;
   void overrideCallback(const std_msgs::Int64ConstPtr& msg);
@@ -131,7 +144,7 @@ private:
   void safeOverrideCallback_1(const std_msgs::Int64ConstPtr& msg);
   void safeOverrideCallback_2(const std_msgs::Int64ConstPtr& msg);
 
-  virtual void updateTransformationsThread(int ffwd_kin_type, double hz);
+  virtual void updateTransformationsThread(int ffwd_kin_type, double hz) override;
 };
 
 }  // namespace control

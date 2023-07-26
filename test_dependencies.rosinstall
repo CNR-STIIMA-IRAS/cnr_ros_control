@@ -1,4 +1,8 @@
 - git:
-    local-name: code_coverage
+    local-name: test_depend/code_coverage
     uri: https://github.com/mikeferguson/code_coverage.git
     version: master
+- git:
+    local-name: test_depend/universal_robot
+    uri: https://github.com/fmauch/universal_robot.git
+    version: calibration_devel    

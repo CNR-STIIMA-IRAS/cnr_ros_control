@@ -1,0 +1,48 @@
+- git:
+    local-name: cnr_logger
+    uri: https://github.com/CNR-STIIMA-IRAS/cnr_logger
+- git:
+    local-name: realtime_utilities
+    uri:  https://github.com/CNR-STIIMA-IRAS/realtime_utilities
+- git:
+    local-name: name_sorting
+    uri:  https://github.com/CNR-STIIMA-IRAS/name_sorting
+- git:
+    local-name: subscription_notifier
+    uri:  https://github.com/CNR-STIIMA-IRAS/subscription_notifier
+- git:
+    local-name: configuration_msgs
+    uri: https://github.com/CNR-STIIMA-IRAS/configuration_msgs
+- git:
+    local-name: cnr_hardware_interface
+    uri:  https://github.com/CNR-STIIMA-IRAS/cnr_hardware_interface.git
+- git:
+    local-name: rosdyn
+    uri:  https://github.com/CNR-STIIMA-IRAS/rosdyn.git
+- git:
+    local-name: rosdyn_utilities
+    uri:  https://github.com/CNR-STIIMA-IRAS/rosdyn_utilities.git
+- git:
+    local-name: binary_logger
+    uri: https://github.com/CNR-STIIMA-IRAS/binary_logger.git
+- git:
+    local-name: cnr_control_toolbox
+    uri: https://github.com/CNR-STIIMA-IRAS/cnr_control_toolbox
+- git:
+    local-name: eigen_utils
+    uri: https://github.com/CNR-STIIMA-IRAS/eigen_utils
+- git:
+    local-name: rosparam_utilities
+    uri: https://github.com/CNR-STIIMA-IRAS/rosparam_utilities.git
+- git:
+    local-name: motion/moveit/moveit_planning_helper
+    uri: https://github.com/CNR-STIIMA-IRAS/moveit_planning_helper
+- git:
+    local-name: test_depend/code_coverage
+    uri: https://github.com/mikeferguson/code_coverage.git
+    version: master
+- git:
+    local-name: test_dependencies/universal_robot
+    uri: https://github.com/fmauch/universal_robot.git
+    version: calibration_devel    
+

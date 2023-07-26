@@ -59,7 +59,12 @@ template<class T>
 Controller<T>::~Controller()
 {
   CNR_TRACE_START(m_logger);
-  shutdown("UNLOADED");
+  //shutdown("UNLOADED");
+  bool ret = shutdown("UNLOADED");
+  if(ret)
+  {
+    m_controller_nh_callback_queue.disable();
+  }
   CNR_TRACE(m_logger, "[ DONE]");
 }
 
@@ -177,15 +182,17 @@ bool Controller<T>::prepareInit(T* hw,
 
     l = __LINE__;
     m_logger.reset(new cnr_logger::TraceLogger());
-    if(!m_logger->init(m_hw_name + "-" + m_ctrl_name, ctrl_name, false, false))
+    std::string what;
+    if(!m_logger->init(m_hw_name + "-" + m_ctrl_name, ctrl_name, false, false, &what))
     {
-      if(!m_logger->init(m_hw_name + "-" + m_ctrl_name, hw_name, false, false))
+      if(!m_logger->init(m_hw_name + "-" + m_ctrl_name, hw_name, false, false, &what))
       {
         std::cerr << cnr_logger::RED() << __PRETTY_FUNCTION__ << ":" << __LINE__ << ": " ;
         std::cerr << "The logger cannot be configured:" << std::endl;
         std::cerr << " root ns (the namespace of the hw): " << hw_name << std::endl;
         std::cerr << " controller ns (the namespace of the ctrl): " << ctrl_name << cnr_logger::RST()
                   << std::endl;
+        std::cerr << "what: " << what << std::endl;
         return false;
       }
     }
@@ -196,7 +203,6 @@ bool Controller<T>::prepareInit(T* hw,
     m_controller_nh = controller_nh; // handle to callback and remapping
     m_hw            = hw;
 
-    std::string what;
     if(!rosparam_utilities::get(m_root_nh.getNamespace()+"/sampling_period", m_sampling_period, what))
     {
       CNR_RETURN_FALSE(m_logger, what);
@@ -255,32 +261,35 @@ template<class T>
 void Controller<T>::starting(const ros::Time& time)
 {
   CNR_TRACE_START(m_logger);
+  bool started = false;
+  bool aborted = false;
   try
   {
-    if(enterStarting() && doStarting(time) && exitStarting())
-    {
-      //dump_state("RUNNING");
-      CNR_RETURN_OK(m_logger, void(), "Starting Ok! Ready to go!");
-    }
-    else
-    {
-      CNR_ERROR(m_logger, "The starting of the controller failed. Abort Request to ControllerManager sent.");
-      if(controller_interface::Controller<T>::abortRequest(time))
-      {
-        //dump_state("ABORTED");
-      }
-      else
-      {
-        this->state_ = controller_interface::ControllerBase::ControllerState::ABORTED;
-        //dump_state("ERROR");
-      }
-    }
+    started = enterStarting() && doStarting(time) && exitStarting();
   }
   catch(std::exception& e)
   {
-    CNR_ERROR(m_logger, "The starting of the controller failed. Exception:" << e.what() );
+    CNR_ERROR(m_logger, "The starting of the controller failed. Exception: " << e.what() );
+    started = false;
   }
-  CNR_RETURN_NOTOK(m_logger, void());
+
+  if(!started)
+  {
+    try
+    {
+      CNR_ERROR(m_logger, "The starting of the controller failed. Abort Request to ControllerManager sent.");
+      aborted = controller_interface::Controller<T>::abortRequest(time);
+    }
+    catch(std::exception& e)
+    {
+      CNR_ERROR(m_logger, "The starting of the controller failed. Exception: " << e.what() );
+    }
+    if(!aborted)
+    {
+      throw std::runtime_error("The starting of the controller failed, as the abort!?!?!");
+    }
+  }
+  CNR_RETURN_VOID(m_logger, (started ? true : false));
 }
 
 template<class T>
@@ -515,12 +524,12 @@ template<class T>
 bool Controller<T>::exitStopping()
 {
   CNR_TRACE_START(m_logger);
-  bool ret = shutdown("STOPPED");
-  if(ret)
-  {
-    m_controller_nh_callback_queue.disable();
-  }
-  CNR_RETURN_BOOL(m_logger, ret);
+  // bool ret = shutdown("STOPPED");
+  // if(ret)
+  // {
+  //   m_controller_nh_callback_queue.disable();
+  // }
+  CNR_RETURN_BOOL(m_logger, true);
 }
 
 template<class T>
@@ -595,6 +604,8 @@ bool Controller<T>::dump_state()
 template<class T>
 bool Controller<T>::shutdown(const std::string& state_final)
 {
+  unused(state_final);
+  
   CNR_TRACE_START(m_logger);
   for(auto & t : m_sub)
   {

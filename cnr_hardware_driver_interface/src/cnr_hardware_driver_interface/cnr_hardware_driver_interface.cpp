@@ -193,6 +193,9 @@ RobotHwDriverInterface::~RobotHwDriverInterface()
     CNR_FATAL(m_logger, "Error in shuttind down the RobotHw: ");
   }
   CNR_TRACE(m_logger, "[ DONE] Shutted Down");
+
+  CNR_DEBUG(m_logger, "\n\n"+ cnr_logger::BOLDMAGENTA()+ "============= " + m_hw_name 
+    + " : driver desctructor ==========" + cnr_logger::RESET() + "\n\n");
 }
 
 bool RobotHwDriverInterface::init(const std::string& hw_name, const std::map<std::string, std::string>& remappings)
@@ -207,15 +210,17 @@ bool RobotHwDriverInterface::init(const std::string& hw_name, const std::map<std
   m_hw_name      = extractRobotName(m_hw_namespace);
   
   m_logger.reset(new cnr_logger::TraceLogger());
-  if( !m_logger->init("NL_" + m_hw_name, m_hw_namespace))
+  std::string what;
+  if( !m_logger->init("NL_" + m_hw_name, m_hw_namespace, false, true, &what))
   {
     std::cerr << __PRETTY_FUNCTION__ << ":" << __LINE__ <<": error in creating the logger" << std::endl;
+    std::cerr << what << std::endl;
     return false;
   }
-
+  CNR_DEBUG(m_logger, "\n\n"+ cnr_logger::BOLDMAGENTA()+ "============= " + m_hw_name 
+    + " : driver initialization ==========" + cnr_logger::RESET() + "\n\n");
   CNR_TRACE_START(m_logger);
   double sampling_period = 0.001;
-  std::string what;
   if (!rosparam_utilities::get(m_hw_nh.getNamespace() +"/sampling_period", sampling_period,what,&sampling_period))
   {
     CNR_WARN(m_logger, m_hw_namespace + "/sampling_period' does not exist, set equal to 0.001");
@@ -460,7 +465,7 @@ void RobotHwDriverInterface::run()
   struct periodic_info info;
   make_periodic( (m_period.toNSec() / 1000 ), &info);
 #elif defined(USE_WALLRATE)
-  ros::WallRate wr( m_period );
+  ros::Rate wr( m_period );
 #endif
 
   m_stop_run = false;
@@ -672,11 +677,13 @@ bool RobotHwDriverInterface::stopUnloadAllControllers(const ros::Duration& watch
 
 
 bool RobotHwDriverInterface::loadAndStartControllers(const std::vector<std::string>& next_controllers,
-                                                      const size_t& strictness, const ros::Duration& watchdog)
+                                                      const size_t& strictness, const ros::Duration& watchdog,const std::string& configuration_name)
 {
   CNR_TRACE_START(m_logger);
   try
   {
+    CNR_DEBUG(m_logger, "\n\n"+ cnr_logger::BOLDMAGENTA()+ "============= CONFIGURATION: " + configuration_name + ", HW: " + m_hw_name 
+    + ", load a new set of controllers (strictness: "+ std::to_string(strictness) +") ==========" + cnr_logger::RESET() + "\n\n");
     if(!m_cmi->switchControllers(strictness, next_controllers, watchdog))
     {
       CNR_ERROR(m_logger, m_hw_name << " Error in loading and starting the controllers:" 

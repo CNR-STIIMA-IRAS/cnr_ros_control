@@ -107,8 +107,14 @@ bool JointController<H,T>::enterInit()
 {
   std::string what;
   size_t l = __LINE__;
+  
+  
   try
   {
+    //====================================================
+    std::lock_guard<std::mutex> lock(this->m_chain_mtx);
+    //====================================================
+
     m_cfrmt = Eigen::IOFormat(Eigen::StreamPrecision, 0, ", ", "\n", "[", "]");
     CNR_TRACE_START(this->m_logger);
     if(!Controller<T>::enterInit())
@@ -194,11 +200,13 @@ bool JointController<H,T>::enterInit()
     NEW_HEAP(m_root_link, rosdyn::Link() );
     m_root_link->fromUrdf(GET(m_urdf_model->root_link_));
     std::string error;
-    if(!m_chain.init(error,m_root_link,base_link, tool_link))
+    if(!m_chain.init(error,m_root_link,base_link, tool_link)
+    || !m_chain_threaded.init(error,m_root_link,base_link, tool_link))
     {
       CNR_ERROR(this->m_logger, "Failing in creating the Chain from the URDF model:\n\t" + error + "");
       CNR_RETURN_FALSE(this->m_logger);
     }
+
     //=======================================
 
 
@@ -214,6 +222,8 @@ bool JointController<H,T>::enterInit()
       CNR_ERROR(this->m_logger, "Mismatch between the chain names and the controlled joint names. Abort.");
       CNR_RETURN_FALSE(this->m_logger);
     }
+    m_chain_threaded.setInputJointsName(joint_names);
+
     if(m_chain.getActiveJointsNumber()!=joint_names.size())
     {
       CNR_ERROR(this->m_logger, "Mismatch of the dimension of the chain names and the controlled joint names. Abort.");
@@ -253,9 +263,14 @@ bool JointController<H,T>::enterInit()
     {
       CNR_WARN(this->m_logger, "Warning in setting the kin limits.: '" + error + "'");
     }
+    m_chain_threaded.enforceLimitsFromRobotDescriptionParam(robot_description_planning_param, error);
 
 l = __LINE__;
-    m_rstate.init(m_chain);
+    {
+      std::lock_guard<std::mutex> lock(this->m_rstate_mtx);
+      m_rstate.init(m_chain);
+      m_rstate_threaded.init(m_chain);
+    }
 l = __LINE__;
     for(unsigned int iAx=0; iAx<m_chain.getActiveJointsNumber(); iAx++)
     {
@@ -285,6 +300,8 @@ l = __LINE__;
         "Controller '" + Controller<T>::getControllerNamespace() + std::string("'")
         + "The controlled joint named '" + m_chain.getActiveJointName(iAx) + "' is managed by hardware_interface");
     }
+    m_handler.init(m_chain);
+
     CNR_DEBUG(this->m_logger, "Q sup  : " << eigen_utils::to_string(m_chain.getQMax()  ));
     CNR_DEBUG(this->m_logger, "Q inf  : " << eigen_utils::to_string(m_chain.getQMin()  ));
     CNR_DEBUG(this->m_logger, "Qd max : " << eigen_utils::to_string(m_chain.getDQMax() ));
@@ -310,16 +327,19 @@ bool JointController<H,T>::enterStarting()
     CNR_RETURN_FALSE(this->m_logger);
   }
 
-  CNR_DEBUG(this->m_logger, "HW Status\n" << std::to_string(m_handler) );
-  CNR_DEBUG(this->m_logger, "Chain: " << std::to_string(m_chain.getActiveJointsNumber()) );
-  CNR_DEBUG(this->m_logger, "First joint name: " << m_chain.getActiveJointsName().front() );
-  CNR_DEBUG(this->m_logger, "Last joint name: " << m_chain.getActiveJointsName().back() );
-
-  m_handler.flush(m_rstate, m_chain);
-
-  CNR_DEBUG(this->m_logger, "Position: " << eigen_utils::to_string(m_rstate.q()) );
-  CNR_DEBUG(this->m_logger, "Velocity: " << eigen_utils::to_string(m_rstate.qd()) );
-  CNR_DEBUG(this->m_logger, "Effort  : " << eigen_utils::to_string(m_rstate.effort()) );
+  {  
+    CNR_DEBUG(this->m_logger, "HW Status\n" << std::to_string(m_handler) );
+    CNR_DEBUG(this->m_logger, "Chain: " << std::to_string(m_chain.getActiveJointsNumber()) );
+    CNR_DEBUG(this->m_logger, "First joint name: " << m_chain.getActiveJointsName().front() );
+    CNR_DEBUG(this->m_logger, "Last joint name: " << m_chain.getActiveJointsName().back() );
+    {
+      std::lock_guard<std::mutex> lock(this->m_rstate_mtx);
+      m_handler.flush(m_rstate);
+      CNR_DEBUG(this->m_logger, "Position: " << eigen_utils::to_string(m_rstate.q()) );
+      CNR_DEBUG(this->m_logger, "Velocity: " << eigen_utils::to_string(m_rstate.qd()) );
+      CNR_DEBUG(this->m_logger, "Effort  : " << eigen_utils::to_string(m_rstate.effort()) );
+    }
+  }
 
   CNR_RETURN_TRUE(this->m_logger);
 }
@@ -332,7 +352,29 @@ bool JointController<H,T>::exitStarting()
   int ffwd = rosdyn::ChainState::SECOND_ORDER | rosdyn::ChainState::FFWD_STATIC;
 
   if(m_fkin_update_period>0)
-    startUpdateTransformationsThread(ffwd, 1.0/this->m_fkin_update_period);
+  {
+    stop_update_transformations_ = false;
+    update_transformations_runnig_ = false;
+    CNR_DEBUG(this->logger(), "Creating the fkin update thread");
+
+    update_transformations_ = std::thread(
+        &JointController<H,T>::updateTransformationsThread, this, ffwd, 1.0/this->m_fkin_update_period);
+
+    CNR_DEBUG(this->logger(), "Fkin Thread created");
+
+    double timeout = 1.0;
+    ros::Time st = ros::Time::now();
+    while(!update_transformations_runnig_)
+    {
+      ros::Duration(0.005).sleep();
+      if((ros::Time::now()-st).toSec()>timeout)
+      {
+        CNR_ERROR(this->m_logger,"The thread that updates the fkin didn't start within the timeout of "<< timeout << ". Abort");
+        CNR_RETURN_TRUE(this->m_logger);
+      }
+    }
+  }
+  //startUpdateTransformationsThread(ffwd, 1.0/this->m_fkin_update_period);
 
   if(!Controller<T>::exitStarting())
   {
@@ -351,7 +393,11 @@ bool JointController<H,T>::enterUpdate()
     CNR_RETURN_FALSE(this->m_logger);
   }
 
-  m_handler.flush(m_rstate, m_chain);
+  {
+    std::lock_guard<std::mutex> lock(this->m_rstate_mtx);
+    m_handler.flush(m_rstate);
+  }
+  
   // NOTE: the transformations may take time, especially due the pseudo inversion of the Jacobian, to estimate the external wrench.
   // Therefore, they are executed in parallel
   //m_rstate.updateTransformations();
@@ -366,10 +412,12 @@ inline bool JointController<H,T>::startUpdateTransformationsThread(int ffwd_kin_
   stop_update_transformations_ = false;
   update_transformations_runnig_ = false;
   CNR_DEBUG(this->logger(), "Creating the fkin update thread");
+
   update_transformations_ = std::thread(
         &JointController<H,T>::updateTransformationsThread, this, ffwd_kin_type, hz);
+
   CNR_DEBUG(this->logger(), "Fkin Thread created");
-  
+
   double timeout = 1.0;
   ros::Time st = ros::Time::now();
   while(!update_transformations_runnig_)
@@ -400,24 +448,21 @@ inline void JointController<H,T>::stopUpdateTransformationsThread()
 template<class H,class T>
 inline void JointController<H,T>::updateTransformationsThread(int ffwd_kin_type, double hz)
 {
-  CNR_TRACE_START(this->m_logger);
-  rosdyn::ChainState rstate;
-
-  {
-    std::lock_guard<std::mutex> lock(this->mtx_);
-    if(!rstate.init(m_chain))
-    {
-       CNR_FATAL(this->m_logger, "Chain failure!");
-       CNR_RETURN_NOTOK(this->m_logger, void());
-    }
-  }
-
+  CNR_TRACE_START(this->logger());
   ros::Rate rt(hz);
-  while(!stop_update_transformations_)
+  while(!this->stop_update_transformations_)
   {
-    rstate.copy(m_rstate, m_rstate.ONLY_JOINT);
-    rstate.updateTransformations(m_chain, ffwd_kin_type);
-    m_rstate.copy(rstate, m_rstate.ONLY_CART);
+    {
+      std::lock_guard<std::mutex> lock(this->m_rstate_mtx);
+      m_rstate_threaded.copy(m_rstate, rosdyn::ChainState::ONLY_JOINT);
+    }
+    
+    m_rstate_threaded.updateTransformations(m_chain_threaded, ffwd_kin_type);
+    
+    {
+      std::lock_guard<std::mutex> lock(this->m_rstate_mtx);
+      m_rstate.copy(m_rstate_threaded, rosdyn::ChainState::ONLY_CART);
+    }
 
     if(!this->update_transformations_runnig_)
     {
@@ -426,88 +471,107 @@ inline void JointController<H,T>::updateTransformationsThread(int ffwd_kin_type,
     }
     rt.sleep();
   }
-  CNR_RETURN_OK(this->m_logger, void());
+  CNR_RETURN_OK(this->logger(), void());
+
 }
 
 template<class H,class T>
 inline const rosdyn::Chain& JointController<H,T>::chain() const
 {
+  std::lock_guard<std::mutex> lock(this->m_chain_mtx);
   return m_chain;
 }
+
+template<class H,class T>
+inline const unsigned int& JointController<H,T>::nAx( ) const 
+{
+  std::lock_guard<std::mutex> lock(this->m_chain_mtx);
+  return m_chain.getActiveJointsNumber(); 
+}
+
+template<class H,class T>
+inline const std::vector<std::string>& JointController<H,T>::jointNames( ) const
+{
+  std::lock_guard<std::mutex> lock(this->m_chain_mtx);
+  return m_chain.getActiveJointsName(); 
+}
+
 
 template<class H,class T>
 inline rosdyn::Chain& JointController<H,T>::chainNonConst()
 {
+  std::lock_guard<std::mutex> lock(this->m_chain_mtx);
   return m_chain;
 }
+
 
 template<class H,class T>
 inline const rosdyn::ChainState& JointController<H,T>::chainState() const
 {
-  std::lock_guard<std::mutex> lock(this->mtx_);
+  std::lock_guard<std::mutex> lock(this->m_rstate_mtx);
   return m_rstate;
 }
 
 template<class H,class T>
 inline rosdyn::ChainState& JointController<H,T>::chainState()
 {
-  std::lock_guard<std::mutex> lock(this->mtx_);
+  std::lock_guard<std::mutex> lock(this->m_rstate_mtx);
   return m_rstate;
 }
 
 template<class H,class T>
 inline const rosdyn::VectorXd& JointController<H,T>::getPosition( ) const
 {
-  std::lock_guard<std::mutex> lock(this->mtx_);
+  std::lock_guard<std::mutex> lock(this->m_rstate_mtx);
   return m_rstate.q();
 }
 
 template<class H,class T>
 inline const rosdyn::VectorXd& JointController<H,T>::getVelocity( ) const
 {
-  std::lock_guard<std::mutex> lock(this->mtx_);
+  std::lock_guard<std::mutex> lock(this->m_rstate_mtx);
   return m_rstate.qd();
 }
 
 template<class H,class T>
 inline const rosdyn::VectorXd& JointController<H,T>::getAcceleration( ) const
 {
-  std::lock_guard<std::mutex> lock(this->mtx_);
+  std::lock_guard<std::mutex> lock(this->m_rstate_mtx);
   return m_rstate.qdd();
 }
 
 template<class H,class T>
 inline const rosdyn::VectorXd& JointController<H,T>::getEffort( ) const
 {
-  std::lock_guard<std::mutex> lock(this->mtx_);
+  std::lock_guard<std::mutex> lock(this->m_rstate_mtx);
   return m_rstate.effort();
 }
 
 template<class H,class T>
 inline double JointController<H,T>::getPosition(int idx) const
 {
-  std::lock_guard<std::mutex> lock(this->mtx_);
+  std::lock_guard<std::mutex> lock(this->m_rstate_mtx);
   return m_rstate.q(idx);
 }
 
 template<class H,class T>
 inline double JointController<H,T>::getVelocity(int idx) const
 {
-  std::lock_guard<std::mutex> lock(this->mtx_);
+  std::lock_guard<std::mutex> lock(this->m_rstate_mtx);
   return m_rstate.qd(idx);
 }
 
 template<class H,class T>
 inline double JointController<H,T>::getAcceleration(int idx) const
 {
-  std::lock_guard<std::mutex> lock(this->mtx_);
+  std::lock_guard<std::mutex> lock(this->m_rstate_mtx);
   return m_rstate.qdd(idx);
 }
 
 template<class H,class T>
 inline double JointController<H,T>::getEffort(int idx) const
 {
-  std::lock_guard<std::mutex> lock(this->mtx_);
+  std::lock_guard<std::mutex> lock(this->m_rstate_mtx);
   return m_rstate.effort(idx);
 }
 
@@ -516,7 +580,7 @@ inline const Eigen::Affine3d& JointController<H,T>::getToolPose( ) const
 {
   if(m_fkin_update_period<=0)
     throw std::runtime_error("The 'kin_update_period' has not been set, and therefore the fkin is not computed!");
-  std::lock_guard<std::mutex> lock(this->mtx_);
+  std::lock_guard<std::mutex> lock(this->m_rstate_mtx);
   return m_rstate.toolPose();
 }
 
@@ -525,7 +589,7 @@ inline const Eigen::Vector6d& JointController<H,T>::getTwist( ) const
 {
   if(m_fkin_update_period<=0)
     throw std::runtime_error("The 'kin_update_period' has not been set, and therefore the fkin is not computed!");
-  std::lock_guard<std::mutex> lock(this->mtx_);
+  std::lock_guard<std::mutex> lock(this->m_rstate_mtx);
   return m_rstate.toolTwist();
 }
 
@@ -534,7 +598,7 @@ inline const Eigen::Vector6d& JointController<H,T>::getTwistd( ) const
 {
   if(m_fkin_update_period<=0)
     throw std::runtime_error("The 'kin_update_period' has not been set, and therefore the fkin is not computed!");
-  std::lock_guard<std::mutex> lock(this->mtx_);
+  std::lock_guard<std::mutex> lock(this->m_rstate_mtx);
   return m_rstate.toolTwistd();
 }
 
@@ -543,11 +607,20 @@ inline const rosdyn::Matrix6Xd& JointController<H,T>::getJacobian( ) const
 {
   if(m_fkin_update_period<=0)
     throw std::runtime_error("The 'kin_update_period' has not been set, and therefore the fkin is not computed!");
-  std::lock_guard<std::mutex> lock(this->mtx_);
+  std::lock_guard<std::mutex> lock(this->m_rstate_mtx);
   return m_rstate.toolJacobian();
 }
 
-
+template<class H,class T>
+inline double JointController<H,T>::getKinUpdatePeriod() const
+{
+  return m_fkin_update_period;
+}
+template<class H,class T>
+inline void JointController<H,T>::setKinUpdatePeriod(const double& fkin_update_period)
+{
+  m_fkin_update_period = fkin_update_period; 
+}
 
 }  // cnr_controller_interface
 }  // namespace cnr

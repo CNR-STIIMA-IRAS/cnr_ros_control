@@ -43,6 +43,8 @@
 #include <exception>
 
 #include <controller_manager_msgs/ListControllers.h>
+
+#include <configuration_msgs/StartConfigurationRequest.h>
 #include <cnr_controller_interface_params/cnr_controller_interface_params.h>
 #include <cnr_controller_manager_interface/internal/cnr_controller_manager_interface_base.h>
 
@@ -180,12 +182,13 @@ bool ControllerManagerInterfaceBase::switchControllers(const std::vector<control
 }
 
 bool ControllerManagerInterfaceBase::switchControllers(const int strictness,
-                                              const std::vector<std::string>& next_ctrl,
+                                              const std::vector<std::string>& next,
                                               const ros::Duration& watchdog)
 {
-  CNR_TRACE_START(logger_, "HW: " + getHwName());
+  CNR_TRACE_START(logger_, "============================== SWITCH OF CONTROLLERS (" + getHwName() + ") ==================================");
   try
   {
+    //============================================================================================
     std::vector< controller_manager_msgs::ControllerState > ctrl_running;
     std::vector< controller_manager_msgs::ControllerState > ctrl_stopped;
 
@@ -194,64 +197,113 @@ bool ControllerManagerInterfaceBase::switchControllers(const int strictness,
       CNR_RETURN_FALSE(logger_, "HW: " + getHwName() + " Getting the controller info failed: " + error_);
     }
 
-    std::vector<std::string> ctrl_running_names = cnr::control::ctrl_get_names(ctrl_running);
-    std::vector<std::string> ctrl_stopped_names = cnr::control::ctrl_get_names(ctrl_stopped);
-    std::vector<std::string> ctrl_loaded_names  = ctrl_running_names;
-    ctrl_loaded_names.insert(ctrl_loaded_names.end(), ctrl_stopped_names.begin(), ctrl_stopped_names.end());
-    std::vector<std::string> to_load_and_start_names;
+    std::vector<std::string> running = cnr::control::ctrl_get_names(ctrl_running);
+    std::vector<std::string> stopped = cnr::control::ctrl_get_names(ctrl_stopped);
+    std::vector<std::string> loaded  = running;
+    loaded.insert(loaded.end(), stopped.begin(), stopped.end());
 
-    std::vector<std::string> ctrl_to_stop_and_restart_names;
-    std::vector<std::string> to_stop_unload_names;
-    std::vector<std::string> to_restart_names;
-    std::vector<std::string> ctrl_to_unload_names;
+    CNR_DEBUG(logger_, "HW: " + getHwName() + "== Status and GOAL ============================  ");
+    CNR_DEBUG(logger_, "HW: " + getHwName() + to_string(next,          ", Next Controllers:    "));
+    CNR_DEBUG(logger_, "HW: " + getHwName() + to_string(running,       ", Running Controllers: "));
+    CNR_DEBUG(logger_, "HW: " + getHwName() + to_string(stopped,       ", Stopped Controllers: "));
+    CNR_DEBUG(logger_, "HW: " + getHwName() + to_string(loaded,        ", Loaded Controllers:  "));
+    //============================================================================================
 
-    std::vector<std::string> ctrl_next_names = next_ctrl;
 
-    extract(ctrl_next_names, ctrl_running_names, &to_load_and_start_names, &to_stop_unload_names, &ctrl_to_stop_and_restart_names);
-    //--
-    CNR_DEBUG(logger_, "HW: " + getHwName() + to_string(ctrl_next_names,                ", Next Controllers:    "));
-    CNR_DEBUG(logger_, "HW: " + getHwName() + to_string(ctrl_running_names,             ", Running Controllers: "));
-    CNR_DEBUG(logger_, "HW: " + getHwName() + to_string(ctrl_stopped_names,             ", Stopped Controllers: "));
-    CNR_DEBUG(logger_, "HW: " + getHwName() + to_string(ctrl_loaded_names,              ", Loaded Controllers:  "));
-    CNR_DEBUG(logger_, "HW: " + getHwName() + to_string(to_stop_unload_names,           ", To Stop and Unload:  "));
-    CNR_DEBUG(logger_, "HW: " + getHwName() + to_string(ctrl_to_stop_and_restart_names, ", To Stop and Restart: "));
+    //============================================================================================
+    std::vector<std::string> to_load_and_start;
+    std::vector<std::string> stopped_to_unload;
+    std::vector<std::string> to_stop_and_unload;
+    std::vector<std::string> already_running;
 
-    std::vector<std::string> to_load_and_start_names_;
-    extract(to_load_and_start_names, ctrl_stopped_names, &to_load_and_start_names_, &ctrl_to_unload_names, &to_restart_names);
-    to_load_and_start_names = to_load_and_start_names_;
+    extract<std::string>(next, loaded,  &to_load_and_start,  nullptr,      nullptr);
+    extract<std::string>(next, stopped, nullptr,             &stopped_to_unload,   nullptr);
+    extract<std::string>(running, next, &to_stop_and_unload, nullptr,      nullptr);
+    extract<std::string>(next, running, nullptr,             nullptr,      &already_running);
+    
+    CNR_DEBUG(logger_, "HW: " + getHwName() + "== Grouped ============================  ");
+    CNR_DEBUG(logger_, "HW: " + getHwName() + to_string(to_load_and_start,  ", To Load and Start:   "));
+    CNR_DEBUG(logger_, "HW: " + getHwName() + to_string(stopped_to_unload,  ", Stopped To Unload:   "));
+    CNR_DEBUG(logger_, "HW: " + getHwName() + to_string(to_stop_and_unload, ", To Stop and Unload:  "));
+    CNR_DEBUG(logger_, "HW: " + getHwName() + to_string(already_running,    ", Already Running:     "));
+    //============================================================================================
 
-    to_restart_names.insert(to_restart_names.begin(), ctrl_to_stop_and_restart_names.begin(), ctrl_to_stop_and_restart_names.end());
-    ctrl_to_unload_names .insert(ctrl_to_unload_names.begin(),  to_stop_unload_names.begin(),  to_stop_unload_names.end());
+    std::vector<std::string> to_stop_and_restart;
+    if(strictness==configuration_msgs::StartConfigurationRequest::FORCE_RESTART)
+    {
+      extract<std::string>(already_running, next, nullptr, nullptr, &to_stop_and_restart);
+    }
+    else
+    {
+      to_stop_and_restart.clear();
+    }
 
-    //--
-    CNR_DEBUG(logger_, "HW: "+getHwName() +to_string(to_load_and_start_names, ", To load and Start:     "));
-    CNR_DEBUG(logger_, "HW: "+getHwName() +to_string(ctrl_to_unload_names,    ", To Unload Controllers: "));
-    CNR_DEBUG(logger_, "HW: "+getHwName() +to_string(to_restart_names,        ", To Restart Controllers "));
+    std::vector<std::string> to_load; // onlty the ones that must be loaded and then started
+    to_load.insert(to_load.end(), to_load_and_start.begin(),to_load_and_start.end());
 
-    if(to_load_and_start_names.size()>0)
+    std::vector<std::string> to_start; // concat the ones to load and start, and the ones to stop and restart
+    to_start.insert(to_start.end(), to_load_and_start.begin(),to_load_and_start.end());
+    to_start.insert(to_start.end(), to_stop_and_restart.begin(),to_stop_and_restart.end());
+
+    std::vector<std::string> to_stop; // concat the ones to load and start, and the ones to stop and restart
+    to_stop.insert(to_stop.end(), to_stop_and_unload.begin(),to_stop_and_unload.end());
+    to_stop.insert(to_stop.end(), to_stop_and_restart.begin(),to_stop_and_restart.end());
+
+    std::vector<std::string> to_unload;
+    to_unload.insert(to_unload.end(), to_stop_and_unload.begin(),to_stop_and_unload.end());
+    to_unload.insert(to_unload.end(), stopped_to_unload.begin(),stopped_to_unload.end());
+
+    // std::vector<std::string> to_load_and_start_;
+    // extract(to_load_and_start, stopped, &to_load_and_start_, &to_unload, &to_restart);
+    // to_load_and_start = to_load_and_start_;
+
+    // to_restart.insert(to_restart.begin(), to_stop_and_restart.begin(),to_stop_and_restart.end());
+    // to_unload .insert(to_unload.begin(),  to_stop_unload.begin(),  to_stop_unload.end());
+
+    CNR_DEBUG(logger_, "HW: " + getHwName() + "== ACTIONS ============================  ");
+    CNR_DEBUG(logger_, "HW: "+getHwName() +to_string(to_load,   ", To Load  : "));
+    CNR_DEBUG(logger_, "HW: "+getHwName() +to_string(to_start,  ", To Start : "));
+    CNR_DEBUG(logger_, "HW: "+getHwName() +to_string(to_stop,   ", To Stop  : "));
+    CNR_DEBUG(logger_, "HW: "+getHwName() +to_string(to_unload, ", To Unload: "));
+
+    if(to_load.size()>0)
     {
       CNR_DEBUG(logger_, "LOAD CONTROLLERS....");
-      if (!loadControllers(to_load_and_start_names, watchdog))
+      if (!loadControllers(to_load, watchdog))
       {
         CNR_RETURN_FALSE(logger_, "Loading the controllers for HW '" + getHwName() + "' failed. Error: " + error());
       }
     }
+    // Stop controller that must be restarted .. a click is lost!
 
-    if(to_load_and_start_names.size()>0 || to_restart_names.size()>0 || to_stop_unload_names.size()>0 )
+    int ros_control_strictness = 
+      strictness!=configuration_msgs::StartConfigurationRequest::FORCE_RESTART ? controller_manager_msgs::SwitchControllerRequest::STRICT : 
+      strictness!=configuration_msgs::StartConfigurationRequest::STRICT ? controller_manager_msgs::SwitchControllerRequest::STRICT : 
+      controller_manager_msgs::SwitchControllerRequest::BEST_EFFORT; 
+
+    if(to_stop_and_restart.size()>0)
     {
-      CNR_DEBUG(logger_, "SWITCH CONTROLLERS....");
-      to_load_and_start_names.insert(to_load_and_start_names.end(), std::make_move_iterator(to_restart_names.begin()),
-                                        std::make_move_iterator(to_restart_names.end()));
-      if (!switchController(to_load_and_start_names, to_stop_unload_names, strictness,  watchdog))
+      CNR_DEBUG(logger_, "STOP THE CONTROLLERS THAT MUST BE RESTARTED (a tick will be lost)....");
+      if (!switchController({}, to_stop_and_restart, ros_control_strictness, watchdog))
       {
         CNR_RETURN_FALSE(logger_, "Switching the controllers '" + getHwName() + "'failed. Error: " + error());
       }
     }
 
-    if(ctrl_to_unload_names.size()>0)
+    // start controller and restart if needed. Stop controller not needed anymore
+    if(to_start.size()>0 || to_stop_and_unload.size()>0 )
+    {
+      CNR_DEBUG(logger_, "SWITCH CONTROLLERS....");
+      if (!switchController(to_start, to_stop_and_unload, ros_control_strictness,  watchdog))
+      {
+        CNR_RETURN_FALSE(logger_, "Switching the controllers '" + getHwName() + "'failed. Error: " + error());
+      }
+    }
+
+    if(to_unload.size()>0)
     {
       CNR_DEBUG(logger_, "UNLOAD CONTROLLERS....");
-      if (!unloadControllers(ctrl_to_unload_names, watchdog))
+      if (!unloadControllers(to_unload, watchdog))
       {
         CNR_RETURN_FALSE(logger_, "Unload the controllers '" + getHwName() + "'failed. Error: " + error());
       }
@@ -265,10 +317,10 @@ bool ControllerManagerInterfaceBase::switchControllers(const int strictness,
   {
     CNR_RETURN_FALSE(logger_, "Unhandled Exception in switch controllers. ");
   }
-  CNR_RETURN_TRUE(logger_, "HW: " + getHwName());
+  CNR_RETURN_TRUE(logger_, "============================== SWITCH OF CONTROLLERS (" + getHwName() + ") END ==============================");
 }
 
-bool ControllerManagerInterfaceBase::unloadControllers(const std::vector<std::string>& ctrl_to_unload_names,
+bool ControllerManagerInterfaceBase::unloadControllers(const std::vector<std::string>& to_unload,
                                               const ros::Duration& watchdog)
 {
   CNR_TRACE_START(logger_, "HW: " + getHwName());
@@ -286,7 +338,7 @@ bool ControllerManagerInterfaceBase::unloadControllers(const std::vector<std::st
     std::vector<std::string> to_be_stopped;
     for (const auto r : rr)
     {
-      if (std::find(ctrl_to_unload_names.begin(), ctrl_to_unload_names.end(), r) != ctrl_to_unload_names.end())
+      if (std::find(to_unload.begin(), to_unload.end(), r) != to_unload.end())
       {
         to_be_stopped.push_back(r);
       }
@@ -301,7 +353,7 @@ bool ControllerManagerInterfaceBase::unloadControllers(const std::vector<std::st
 
   for (const auto s : ss)
   {
-    if (std::find(ctrl_to_unload_names.begin(), ctrl_to_unload_names.end(), s) != ctrl_to_unload_names.end())
+    if (std::find(to_unload.begin(), to_unload.end(), s) != to_unload.end())
     {
       if (!unloadController(s, watchdog))
       {
@@ -313,31 +365,31 @@ bool ControllerManagerInterfaceBase::unloadControllers(const std::vector<std::st
   CNR_RETURN_TRUE(logger_, "HW: " + getHwName());
 }
 
-bool ControllerManagerInterfaceBase::unloadControllers(const std::vector<controller_manager_msgs::ControllerState>& ctrl_to_unload_names,
+bool ControllerManagerInterfaceBase::unloadControllers(const std::vector<controller_manager_msgs::ControllerState>& to_unload,
                                               const ros::Duration& watchdog)
 {
   CNR_TRACE_START(logger_, "HW: " + getHwName());
-  std::vector<std::string> _ctrl_to_unload_names(ctrl_to_unload_names.size()) ;
-  std::transform(ctrl_to_unload_names.begin(), ctrl_to_unload_names.end(), _ctrl_to_unload_names.begin(), [](auto v)
+  std::vector<std::string> _to_unload(to_unload.size()) ;
+  std::transform(to_unload.begin(), to_unload.end(), _to_unload.begin(), [](auto v)
   {
     return v.name;
   });
 
-  bool ret = unloadControllers(_ctrl_to_unload_names, watchdog);
+  bool ret = unloadControllers(_to_unload, watchdog);
   CNR_RETURN_BOOL(logger_, ret, "HW: " + getHwName());
 }
 
-bool ControllerManagerInterfaceBase::stopUnloadControllers(const std::vector<std::string>&  to_stop_unload_names,
+bool ControllerManagerInterfaceBase::stopUnloadControllers(const std::vector<std::string>&  to_stop_unload,
                                                   const ros::Duration&  watchdog)
 {
   static const std::vector<std::string> vs_empty;
   CNR_TRACE_START(logger_, "HW: " + getHwName());
-  if (!switchController(vs_empty, to_stop_unload_names, 1, watchdog))
+  if (!switchController(vs_empty, to_stop_unload, 1, watchdog))
   {
     CNR_RETURN_FALSE(logger_, "HW: " + getHwName());
   }
 
-  bool ret = unloadControllers(to_stop_unload_names, watchdog);
+  bool ret = unloadControllers(to_stop_unload, watchdog);
   CNR_RETURN_BOOL(logger_, ret, "HW: " + getHwName());
 }
 

@@ -266,6 +266,7 @@ bool ConfigurationLoader::unloadHw(const std::vector<std::string>& hw_to_unload_
 bool ConfigurationLoader::loadAndStartControllers(const std::string& hw_name,
                                                   const ConfigurationStruct& next_conf,
                                                   const size_t& strictness,
+                                                  const std::string& configuration_name,
                                                   std::string& error)
 {
   //================================================
@@ -309,7 +310,7 @@ bool ConfigurationLoader::loadAndStartControllers(const std::string& hw_name,
 
 
   //================================================
-  if (!drivers_[hw_name]->loadAndStartControllers(next_controllers, strictness, watchdog))
+  if (!drivers_[hw_name]->loadAndStartControllers(next_controllers, strictness, watchdog, configuration_name))
   {
     error = "Error in switching the controller: " 
             + drivers_[hw_name]->getControllerManagerInterface()->error();
@@ -325,6 +326,7 @@ bool ConfigurationLoader::loadAndStartControllers(const std::string& hw_name,
 bool ConfigurationLoader::loadAndStartControllers(const std::vector<std::string>& hw_next_names,
                                                   const ConfigurationStruct& next_conf,
                                                   const size_t& strictness, 
+                                                  const std::string& configuration_name,
                                                   std::string& error)
 {
   // PARALLEL START OF THE CONTROLLERS
@@ -358,7 +360,7 @@ bool ConfigurationLoader::loadAndStartControllers(const std::vector<std::string>
                               ? ros::Duration(0.0) : ros::Duration(2.0);
       }
 
-      ok = drivers_[hw_name]->loadAndStartControllers(next_controllers,strictness, watchdog);
+      ok = drivers_[hw_name]->loadAndStartControllers(next_controllers,strictness, watchdog, configuration_name);
     }
     catch(std::exception& e)
     {
